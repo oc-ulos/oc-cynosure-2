@@ -1,0 +1,5 @@
+onyCÿhellostdio-- linked to stdio and hello
+
+local printf = stdio.printf
+
+printf("%s %s!\n", hello.hello, hello.world)
