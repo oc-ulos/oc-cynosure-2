@@ -10,6 +10,16 @@ do
     library = 0x10
   }
 
+  local function read_file(file)
+    local handle, err = k.syscalls.open(file, {
+      O_RDONLY = true
+    })
+  end
+
+  local function parse_cex(string)
+  end
+
   local function load_cex(file)
+    return parse_cex(read_file(file))
   end
 end
