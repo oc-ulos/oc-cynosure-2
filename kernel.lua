@@ -106,6 +106,11 @@ do
 end
 --#include "src/platform/oc/logger.lua"
 --#include "src/logger.lua"
+-- wrap checkArg --
+
+do
+end
+--#include "src/checkArg.lua"
 -- system call registry --
 
 do
@@ -152,4 +157,3 @@ do
   end
 end
 --#include "src/scheduler.lua"
-while true do computer.pullSignal() end

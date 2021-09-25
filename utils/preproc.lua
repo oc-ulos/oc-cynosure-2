@@ -4,15 +4,36 @@ _G.env = setmetatable({}, {__index = function(t, k) return os.getenv(k) end})
 
 local proc, handle
 
-local dirs = {
+local included = {}
+local dirs
+dirs = {
+  {"%-%-#define ([^ ]+).-([^ ]+)", function(a, b)
+    dirs[#dirs + 1] = {"[^a-zA-Z0-9_]"..a.."[^a-zA-Z0-9_]", b}
+  end},
+  {"%-%-#undef ([^ }+)", function(a)
+    local done = false
+    for i=1, #dirs, 1 do
+      if dirs[i][1]:sub(13, -13) == a then
+        table.remove(dirs, i)
+        done = true
+        break
+      end
+    end
+    if not done then
+      error(a .. ": not defined")
+    end
+  end},
   {"$%[%{(.+)%}%]", function(ex)
     return assert(io.popen(ex, "r"):read("a")):gsub("\n$","")
   end},
   {"@%[%{(.+)%}%]", function(ex)
     return assert(load("return " .. ex, "=eval", "t", _G))()
   end},
-  {"%-%-#include \"(.+)\"", function(f)
-    return proc(f)
+  {"%-%-#include \"(.+)\" ?(.-)$", function(f, e)
+    if (e == "force") or not included[f] then
+      included[f] = true
+      return proc(f)
+    end
   end},
 }
 
