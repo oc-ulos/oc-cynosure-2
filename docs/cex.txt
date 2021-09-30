@@ -29,8 +29,9 @@ Numbers are little-endian.
 for each link:
   1 byte: length of library name
   N bytes: library name
-  if static:
-    2 bytes: length of library
-    N bytes: library data
 2 bytes: length of data
+/*
+ * In the case of static linking, linked-in
+ * libraries should be part of the data section.
+ */
 N bytes: data

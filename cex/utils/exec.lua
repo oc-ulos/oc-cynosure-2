@@ -73,19 +73,8 @@ load_cex = function(file, e)
     for i=1, nlinks, 1 do
       local nlen = data:sub(offset + i, offset + i):byte()
       local name = data:sub(offset + i + 1, offset + i + nlen)
-      local _data
-      if static then
-        local dlen = string.unpack("<I2", data:sub(offset+i+1+nlen,
-          offset+i+2+nlen))
-        local ldat = data:sub(offset+i+3+nlen, offset+i+3+nlen+dlen)
-        
-        offset = offset+i+1+nlen+dlen
-        _data = ldat
-      else
-        offset = offset + nlen
-        _data = load_cex("./lib/"..name..".cex")
-      end
-      print("LOAD LIB " .. name)
+      offset = offset + nlen
+      local _data = load_cex("./lib/"..name..".cex")
       libd = libd .. "local " .. name .. " = assert(load([======["
         .._data .. "]======], '=" .. name .. "', 't', _G))()\n"
     end
@@ -94,5 +83,4 @@ load_cex = function(file, e)
 end
 
 local dat = load_cex(file, true)
-print(dat)
 assert(load(dat, "="..file, "t", _G))()

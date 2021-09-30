@@ -80,10 +80,15 @@ if flags & 0x4 ~= 0 and not static then
   static = true
 end
 
-local header = string.pack("<I4I1I1I1", _MAGIC, flags, 255, #to_link)
+local header = string.pack("<I4I1I1I1", _MAGIC, flags, 255, (static and 0
+  or #to_link))
+
 local data = ""
+
 for i, file in ipairs(to_link) do
-  data = data .. string.pack("<I1c"..#file, #file, file)
+  if not static then
+    data = data .. string.pack("<I1c"..#file, #file, file)
+  end
   local path = _LINK_PATH:gsub("%?", file)
   local handle, err = io.open(path, "r")
   if not handle then
@@ -93,7 +98,8 @@ for i, file in ipairs(to_link) do
   if static then
     local _data = handle:read("a")
     local size = #_data
-    data = data .. string.pack("<I2c"..size, size, _data)
+    data = data .. "local " .. file .. " = assert(load([========[" .. _data ..
+      "]========], \"=" .. file .. "\", \"t\", _G))()\n"
   end
   handle:close()
 end

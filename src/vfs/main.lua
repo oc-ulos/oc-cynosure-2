@@ -90,7 +90,13 @@ do
     return n
   end
 
-  function k.syscall.read()
+  function k.syscall.read(fd, count)
+    checkArg(1, fd, "number")
+    checkArg(2, count, "number")
+    if not fds[fd] then
+      return nil, k.errno.EBADF
+    end
+    local read = ""
   end
 
   function k.syscall.write()
