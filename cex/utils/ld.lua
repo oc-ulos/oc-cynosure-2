@@ -20,6 +20,11 @@ Create and link a CEX executable.
                     library.
   -p,-plat PLATFORM Specify platform-specific
                     binary.
+  -i,-include DIR   Include DIR in the paths
+                    searched for a binary.  Will
+                    be searched for DIR/?.cex in
+                    the same manner as Lua's
+                    package.path entries.
 
 CEXUtils copyright (c) 2021 Ocawesome101 under the
 DSLv2.
