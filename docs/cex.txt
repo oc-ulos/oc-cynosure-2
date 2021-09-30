@@ -23,7 +23,6 @@ Numbers are little-endian.
   6   | Linux
   7   | macOS
   8   | Windows
-  9   | ULOS
   255 | N/A
 1 byte: number of links
 for each link:

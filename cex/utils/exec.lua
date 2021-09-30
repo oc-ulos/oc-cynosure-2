@@ -54,6 +54,11 @@ load_cex = function(file, e)
   local exec = flags & 0x8 ~= 0
   local lib = flags & 0x10 ~= 0
 
+  io.stderr:write("exec.cex: ", file, ": flags:",
+    "\n  static:     ", static and "\27[32myes" or "\27[31mno",
+    "\27[39m\n  executable: ", exec and "\27[32myes" or "\27[31mno",
+    "\27[39m\n  library:    ", lib and "\27[32myes" or "\27[31mno", "\27[39m\n")
+
   if e and not exec then
     io.stderr:write("exec.cex: ", file, ": not marked as executable\n")
     os.exit(1)
