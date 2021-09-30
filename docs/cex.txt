@@ -1,5 +1,5 @@
 CEX: Cynosure Executable format
-==============================
+===============================
 
 Numbers are little-endian.
 
