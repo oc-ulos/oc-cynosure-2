@@ -57,27 +57,37 @@ do
   function k.syscall.open(path, flags, mode)
     checkArg(1, path, "string")
     checkArg(2, flags, "table")
-    local node, err = find_node(path)
+    local fds = k.state.processes[k.syscall.getpid()].fds
+    local node, rpath = find_node(path)
     if node and flags.creat and flags.excl then
       return nil, k.errno.EEXIST
     end
     if not node then
       if flags.creat then
         checkArg(3, mode, "number")
-        local parent, err = find_node(path:match("(.+)/..-$"))
+        local parent, _rpath = find_node(path:match("(.+)/..-$"))
         if not parent then
-          return nil, err
+          return nil, _rpath
         end
-        local fd, err = parent:creat(clean_path(err .. "/"
+        local fd, err = parent:creat(clean_path(_rpath .. "/"
           .. path:match(".+/(..-)$")), mode)
         if not fd then
           return nil, err
         end
-        parent:close(fd)
+        local n = #fds + 1
+        fds[n] = {fd = fd, node = parent}
+        return n
       else
-        return nil, err
+        return nil, rpath
       end
     end
+    local fd, err = node:open(rpath, flags, mode)
+    if not fd then
+      return nil, err
+    end
+    local n = #fds + 1
+    fds[n] = {fd = fd, node = node}
+    return n
   end
 
   function k.syscall.read()
