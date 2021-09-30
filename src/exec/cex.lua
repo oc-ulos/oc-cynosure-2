@@ -12,8 +12,7 @@ do
 
   local function read_file(file)
     local handle, err = k.syscalls.open(file, {
-      O_EXEC = true,
-      O_RDONLY = true
+      rdonly = true
     })
     
     if not handle then

@@ -29,7 +29,7 @@ dirs = {
   {"@%[%{(.+)%}%]", function(ex)
     return assert(load("return " .. ex, "=eval", "t", _G))()
   end},
-  {"%-%-#include \"(.+)\" ?(.-)$", function(f, e)
+  {"(%-%-#include \")(.+)(\" ?)(.-)", function(_, f, _, e)
     if (e == "force") or not included[f] then
       included[f] = true
       return proc(f)
