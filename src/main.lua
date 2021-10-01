@@ -5,6 +5,7 @@ _G.k = { state = {}, common = {} }
 --#include "src/cmdline.lua"
 --#include "src/logger.lua"
 --#include "src/checkArg.lua"
+--#include "src/errno.lua"
 --#include "src/syscalls.lua"
 --#include "src/scheduler.lua"
 --#include "src/vfs/main.lua"
