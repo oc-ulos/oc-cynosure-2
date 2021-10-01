@@ -52,16 +52,18 @@ do
 
   local function find_node(path)
     path = clean_path(path)
-    local node, longest = nil, 0
+    local node, longest, __path = nil, 0, nil
     for _path, _node in pairs(mounts) do
       if path:sub(1, #_path) == _path and #_path > longest then
         longest = #_path
         node = _node
+        __path = path:sub(#_path + 1)
       end
     end
     if not node then
       return nil, k.errno.ENOENT
     end
+    return node, __path
   end
 
   local fds = {}
@@ -76,7 +78,7 @@ do
     }, mode)
   end
 
-  function k.syscall.mkdir()
+  function k.syscall.mkdir(path)
   end
 
   function k.syscall.link()
@@ -114,26 +116,91 @@ do
       return nil, err
     end
     local n = #fds + 1
-    fds[n] = {fd = fd, node = node}
+    fds[n] = {fd = fd, node = node, references = {}}
     return n
   end
 
   function k.syscall.read(fd, count)
     checkArg(1, fd, "number")
     checkArg(2, count, "number")
+    local fds = k.state.processes[k.syscall.getpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
     local read = ""
+    for chunk in function() return
+        (count > 0 and fds[fd].node:read(fds[fd].fd, count)) end do
+      count = count - #chunk
+      read = read .. chunk
+    end
+    return read
   end
 
-  function k.syscall.write()
+  function k.syscall.write(fd, data)
+    checkArg(1, fd, "number")
+    checkArg(2, data, "string")
+    local fds = k.state.processes[k.syscall.getpid()].fds
+    if not fds[fd] then
+      return nil, k.errno.EBADF
+    end
+    return fds[fd].node:write(fds[fd].fd, data)
   end
 
-  function k.syscall.seek()
+  function k.syscall.seek(fd, whence, offset)
+    checkArg(1, fd, "number")
+    checkArg(2, whence, "string")
+    checkArg(3, offset, "number")
+    local fds = k.state.processes[k.syscall.getpid()].fds
+    if not fds[fd] then
+      return nil, k.errno.EBADF
+    end
+    if whence == "set" or whence == "cur" or whence == "end" then
+      return nil, k.errno.EINVAL
+    end
+    return fds[fd].node:seek(fds[fd].fd, whence, offset)
   end
 
-  function k.syscall.close()
+  function k.syscall.dup(fd)
+    checkArg(1, fd, "number")
+    local fds = k.state.processes[k.syscall.getpid()].fds
+    if not fds[fd] then
+      return nil, k.errno.EBADF
+    end
+    fds[fd].references = fds[fd].references + 1
+    local n = #fds + 1
+    fds[n] = fds[fd]
+    return n
+  end
+
+  function k.syscall.dup2(fd, nfd)
+    checkArg(1, fd, "number")
+    checkArg(2, nfd, "number")
+    local fds = k.state.processes[k.syscall.getpid()].fds
+    if not fds[fd] then
+      return nil, k.errno.EBADF
+    end
+    if nfd == fd then
+      return nfd
+    end
+    if fds[nfd] then
+      k.syscall.close(nfd)
+    end
+    fds[nfd] = fds[fd]
+    return true
+  end
+
+  function k.syscall.close(fd)
+    checkArg(1, fd, "number")
+    local fds = k.state.processes[k.syscall.getpid()].fds
+    if not fds[fd] then
+      return nil, k.errno.EBADF
+    end
+    fds[fd].references = fds[fd].references - 1
+    if fds[fd].references == 0 then
+      fds[fd].node:close(fds[fd].fd)
+    end
+    fds[fd] = nil
+    return true
   end
 
   function k.syscall.mount(source, target, fstype, mountflags, fsopts)
@@ -142,9 +209,10 @@ do
     checkArg(3, fstype, "string")
     checkArg(4, mountflags, "table", "nil")
     checkArg(5, fsopts, "table", "nil")
+    local node, rest = find_node(target)
   end
 
-  function k.syscall.mount(target)
+  function k.syscall.umount(target)
     checkArg(1, target, "string")
   end
 end
