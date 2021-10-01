@@ -11,3 +11,43 @@ node:open(file:string, flags:table[, mode:number]): fd:number
 node:read(fd:number, count:number): read:string
   This function shall, if the specified `fd` is a valid file descriptor, read `count` bytes from the file to which that descriptor points.  Otherwise, it shall return `nil` and the value specified in `k.errno.EBADF`.
 
+node:write(fd:number, data:string)
+  This function shall, if the specified `fd` is a valid file descriptor, write the provided `data` to the file to which `fd` points.
+
+node:seek(fd:number, whence:string, offset:number): newoffset:number
+  This function shall, if the specified `fd` is a valid file descriptor, seek within the specified file `fd` to the specified `offset` relative to `whence`.  Possible values for `whence` are:
+    - set: The start of the file (base offset 0).
+    - cur: The current position within the file.
+    - end: The end of the file.
+
+node:close(fd:number)
+  This function shall close the specified file descriptor `fd` unless it is already closed.
+
+node:stat(file:string): statinfo:table
+  This function shall return the following information about the specified `file` in the following format:
+    {
+      ino     = number, -- Inode number
+      mode    = number, -- File type and mode
+      nlink   = number, -- Number of hard links
+      uid     = number, -- User ID of owner
+      gid     = number, -- Group ID of owner
+      size    = number, -- Total file size in bytes
+      blksize = number, -- Block size for filesystem I/O
+      blocks  = number, -- Number of 512-byte blocks allocated
+      atime   = number, -- Time of last access
+      mtime   = number, -- Time of last modification
+      ctime   = number  -- Time of file creation
+    }
+
+node:mkdir(path:string, mode:number)
+  This function shall create a directory at the specified `path`, unless it already exists.
+
+node:unlink(path:string)
+  Removes the file at the specified `path`.  If this is the last remaining link to the file, it shall be removed.
+
+node:link()
+
+node:mknod()
+
+node:fdlist(dirfd:number): files:table
+  Accepts a file descriptor `dirfd` returned when the `directory` flag is passed to `node:open()`.  Returns a table containing the names of all files in the directory.

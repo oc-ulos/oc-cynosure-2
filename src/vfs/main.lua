@@ -1,6 +1,31 @@
 -- a fairly smart filesystem mounting arrangement --
 
 do
+  k.common.fsmodes = {
+    f_socket = 0xC000,
+    f_symlink = 0xA000,
+    f_regular = 0x8000,
+    f_blkdev = 0x6000,
+    f_directory = 0x2000,
+    f_fifo = 0x1000,
+
+    setuid = 0x800,
+    setgid = 0x400,
+    sticky = 0x200,
+
+    owner_r = 0x100,
+    owner_w = 0x80,
+    owner_x = 0x40,
+
+    group_r = 0x20
+    group_w = 0x10,
+    group_x = 0x8,
+
+    other_r = 0x4,
+    other_w = 0x2,
+    other_x = 0x1
+  }
+
   local mounts = {}
 
   local function split_path(path)
@@ -21,6 +46,9 @@ do
     end
     return "/" .. table.concat(split_path(path), "/")
   end
+
+  k.common.split_path = split_path
+  k.common.clean_path = clean_path
 
   local function find_node(path)
     path = clean_path(path)

@@ -1,6 +1,6 @@
 -- main kernel source file --
 
-_G.k = { state = {} }
+_G.k = { state = {}, common = {} }
 --#include "src/version.lua"
 --#include "src/cmdline.lua"
 --#include "src/logger.lua"
