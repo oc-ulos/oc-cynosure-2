@@ -45,9 +45,11 @@ node:mkdir(path:string, mode:number)
 node:unlink(path:string)
   Removes the file at the specified `path`.  If this is the last remaining link to the file, it shall be removed.
 
-node:link()
+node:link(source:string, target:string)
+  This function shall create a hard link from `source` to `target`, increasing the reference count for the corresponding inode by one.  A hard link shall be indistinguishable from the original file, for they are the same file and share an inode.
 
 node:mknod()
+  -- not currently required, implemented, or documented --
 
-node:fdlist(dirfd:number): files:table
-  Accepts a file descriptor `dirfd` returned when the `directory` flag is passed to `node:open()`.  Returns a table containing the names of all files in the directory.
+node:fdlist(path:string): files:table
+  This function shall return a table containing the names of all files in the directory specified as `path`.

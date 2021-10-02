@@ -4,6 +4,7 @@ do
   local _proc = {}
 
   k.state.pid = 0
+  k.state.processes = {}
 
   function _proc:resume(...)
   end
@@ -11,7 +12,7 @@ do
   function _proc:new(parent, func)
     parent = parent or {}
     k.state.pid = k.state.pid + 1
-    return setmetatable({
+    local new = setmetatable({
       -- Process ID.
       pid = k.state.pid + 1,
       -- Parent process's PID.
@@ -58,5 +59,9 @@ do
         }
       },
     }, {__index = _proc, __call = _proc.resume})
+    
+    k.state.processes[k.state.pid] = new
+
+    return new
   end
 

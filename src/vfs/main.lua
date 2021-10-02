@@ -228,7 +228,16 @@ do
     return true
   end
 
-  k.state.source_handlers = {}
+  function k.syscall.listdir(path)
+    checkArg(1, path, "string")
+    local node, rpath = find_node(path)
+    if not node then
+      return nil, rpath
+    end
+    return node:list(rpath)
+  end
+
+  k.state.mount_sources = {}
   function k.syscall.mount(source, target, fstype, mountflags, fsopts)
     checkArg(1, source, "string")
     checkArg(2, target, "string")
