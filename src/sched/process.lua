@@ -7,9 +7,11 @@ do
   k.state.processes = {}
 
   function _proc:resume(...)
+    for i, thd in ipairs(self.threads) do
+    end
   end
 
-  function _proc:new(parent, func)
+  function _proc:new(parent, func, cmdline)
     parent = parent or {}
     k.state.pid = k.state.pid + 1
     local new = setmetatable({
