@@ -27,6 +27,7 @@ do
   }
 
   local mounts = {}
+  k.state.mounts = mounts
 
   local function split_path(path)
     local segments = {}
@@ -50,23 +51,27 @@ do
   k.common.split_path = split_path
   k.common.clean_path = clean_path
 
-  local function find_node(path)
+  local find_node
+  find_node = function(path)
     path = clean_path(path)
+    local rpath = ""
     local node, longest, __path = nil, 0, nil
     for _path, _node in pairs(mounts) do
       if path:sub(1, #_path) == _path and #_path > longest then
         longest = #_path
-        node = _node
+        if type(_node) == "string" then
+          node, rpath = find_node(_node)
+        else
+          node = _node
+        end
         __path = path:sub(#_path + 1)
       end
     end
     if not node then
       return nil, k.errno.ENOENT
     end
-    return node, __path
+    return node, clean_path(rpath .. "/" .. __path)
   end
-
-  local fds = {}
 
   function k.syscall.creat(path, mode)
     checkArg(1, path, "string")
@@ -79,9 +84,29 @@ do
   end
 
   function k.syscall.mkdir(path)
+    checkArg(1, path, "string")
+    local node, rpath = find_node(path)
+    if not node then
+      return nil, rpath
+    end
+    return node:mkdir(rpath)
   end
 
-  function k.syscall.link()
+  function k.syscall.link(path, new)
+    checkArg(1, path, "string")
+    checkArg(2, new, "string")
+    local node, rpath = find_node(path)
+    if not node then
+      return nil, rpath
+    end
+    local _node, _rpath = find_node(new)
+    if not _node then
+      return nil, _rpath
+    end
+    if node ~= _node then
+      return nil, k.errno.EXDEV
+    end
+    return node:link(rpath, _rpath)
   end
 
   function k.syscall.open(path, flags, mode)
@@ -203,16 +228,77 @@ do
     return true
   end
 
+  k.state.source_handlers = {}
   function k.syscall.mount(source, target, fstype, mountflags, fsopts)
     checkArg(1, source, "string")
     checkArg(2, target, "string")
     checkArg(3, fstype, "string")
     checkArg(4, mountflags, "table", "nil")
     checkArg(5, fsopts, "table", "nil")
-    local node, rest = find_node(target)
+    if k.syscall.getuid() ~= 0 then
+      return nil, k.errno.EACCES
+    end
+
+    mountflags = mountflags or {}
+    if source:find("/") then source = clean_path(source) end
+    target = clean_path(target)
+    
+    if mountflags.move then
+      if mounts[source] and source ~= "/" then
+        mounts[target] = mounts[source]
+        mounts[source] = nil
+        return true
+      else
+        return nil, k.errno.EINVAL
+      end
+    
+    else
+      
+      if k.state.mount_sources[source] then
+        local _source, err = k.state.source_handlers[source]()
+        
+        if not _source then
+          return nil, err
+        end
+        
+        source = _source
+      end
+
+      if mounts[target] then
+        if mountflags.remount then
+          mounts[target] = source
+        else
+          return nil, k.errno.EBUSY
+        end
+      end
+      
+      local node, rest = find_node(target)
+      if not node then
+        return nil, k.errno.ENOENT
+      end
+
+      mounts[target] = source
+
+      return true
+    end
   end
 
   function k.syscall.umount(target)
     checkArg(1, target, "string")
+    if k.syscall.getuid() ~= 0 then
+      return nil, k.errno.EACCES
+    end
+    target = clean_path(target)
+    if mounts[target] then
+      for pid, process in pairs(k.state.processes) do
+        if clean_path(process.root
+            .. "/" .. process.cwd):sub(1, #target) == target then
+          return nil, k.errno.EBUSY
+        end
+      end
+      mounts[target] = nil
+      return true
+    end
+    return nil, k.errno.EINVAL
   end
 end

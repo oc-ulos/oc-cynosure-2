@@ -27,9 +27,9 @@ do
       -- Whether the process is stopped.
       stopped = false,
       -- Session the process belongs to.
-      session = parent.session or 0,
+      sid = parent.sid or 0,
       -- Process group the process belongs to.
-      pgroup = parent.pgroup or 0,
+      pgid = parent.pgid or 0,
       -- Real user ID (process owner).
       uid = parent.uid or 0,
       -- Real group ID
