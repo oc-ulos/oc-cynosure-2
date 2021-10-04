@@ -51,5 +51,5 @@ node:link(source:string, target:string)
 node:mknod()
   -- not currently required, implemented, or documented --
 
-node:fdlist(path:string): files:table
+node:list(path:string): files:table
   This function shall return a table containing the names of all files in the directory specified as `path`.
