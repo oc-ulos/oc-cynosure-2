@@ -43,6 +43,42 @@ do
     }
   end
 
+  function _ramfs:_create(file, ftmode)
+    checkArg(1, file, "string")
+    checkArg(2, ftmode, "number")
+
+    local parent, name = self:_resolve(file, true)
+    if not parent then
+      return nil, name
+    end
+
+    if parent.children[name] then
+      return nil, k.errno.EEXIST
+    end
+
+    parent.children[name] = {
+      mode = ftmode |
+             k.common.fsmodes.owner_r |
+             k.common.fsmodes.owner_w |
+             k.common.fsmodes.group_r |
+             k.common.fsmodes.other_r,
+      uid = k.syscall.getuid() or 0,
+      gid = k.syscall.getgid() or 0,
+      ctime = os.time(),
+      mtime = os.time(),
+      atime = os.time(),
+      nlink = 1
+    }
+
+    if ftmode == k.common.fsmodes.f_directory then
+      parent.children[name].children = {}
+    else
+      parent.children[name].data = ""
+    end
+
+    return parent.children[name]
+  end
+
   local fds = {}
   function _ramfs:open(file, flags, mode)
     checkArg(1, file, "string")
@@ -54,25 +90,10 @@ do
       if flags.creat then
         checkArg(3, mode, "number")
     
-        local parent, name = self:_resolve(file, true)
-        if not parent then
-          return nil, name
+        node, err = self:_create(file, k.common.fsmodes.f_regular)
+        if not node then
+          return nil, err
         end
-        parent.children[name] = {
-          mode = k.common.fsmodes.f_regular |
-                 k.common.fsmodes.owner_r |
-                 k.common.fsmodes.owner_w |
-                 k.common.fsmodes.group_r |
-                 k.common.fsmodes.other_r,
-          uid = k.syscall.getuid() or 0,
-          gid = k.syscall.getgid() or 0,
-          ctime = os.time(),
-          mtime = os.time(),
-          atime = os.time(),
-          data = "",
-          nlink = 1
-        }
-        node = parent.children[name]
       else
         return nil, err
       end
@@ -180,30 +201,10 @@ do
   function _ramfs:mkdir(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number")
-
-    local parent, name = self:_resolve(path, true)
-    if parent.children[name] then
-      return nil, k.errno.EEXIST
-    end
-
-    parent.children[name] = {
-      mode = k.common.fsmodes.f_directory |
-              k.common.fsmodes.owner_r |
-              k.common.fsmodes.owner_w |
-              k.common.fsmodes.group_r |
-              k.common.fsmodes.other_r,
-      uid = k.syscall.getuid() or 0,
-      gid = k.syscall.getgid() or 0,
-      ctime = os.time(),
-      mtime = os.time(),
-      atime = os.time(),
-      nlink = 1,
-      size = 1024,
-      children = {},
-    }
+    return self:_create(path, mode | k.common.fsmodes.f_directory)
   end
 
-  function ramfs:link(old, new)
+  function _ramfs:link(old, new)
     checkArg(1, old, "string")
     checkArg(2, new, "string")
     
@@ -230,7 +231,7 @@ do
     return true
   end
 
-  function ramfs:unlink(path)
+  function _ramfs:unlink(path)
     checkArg(1, path, "string")
     
     local parent, name = self:_resolve(path, true)
@@ -254,7 +255,7 @@ do
     return true
   end
 
-  function ramfs:list(path)
+  function _ramfs:list(path)
     checkArg(1, path, "string")
     local node, err = self:_resolve(path)
     if not node then
@@ -269,9 +270,12 @@ do
     return flist
   end
 
-  function _ramfs.new()
+  function _ramfs.new(label)
     return setmetatable({
       tree = {children = {}},
+      label = label or "ramfs",
     }, {__index = _ramfs})
   end
+
+  k.common.ramfs = _ramfs
 end
