@@ -25,7 +25,7 @@ do
     function k.logio.write() end
   end
 
-  k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 0
+  k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
   
   function k.log(l, ...)
     local args = table.pack(...)

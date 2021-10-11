@@ -17,7 +17,7 @@ do
     owner_w = 0x80,
     owner_x = 0x40,
 
-    group_r = 0x20
+    group_r = 0x20,
     group_w = 0x10,
     group_x = 0x8,
 

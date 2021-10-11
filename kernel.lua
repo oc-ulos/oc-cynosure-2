@@ -15,7 +15,6 @@ do
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s",
     k._VERSION.major, k._VERSION.minor, k._VERSION.patch, k._VERSION.build_name)
 end
---#include "src/version.lua"
 -- kernel command line parsing --
 
 do
@@ -43,7 +42,6 @@ do
     cur[ksegs[#ksegs]] = val
   end
 end
---#include "src/cmdline.lua"
 -- logger stub --
 
 -- early boot logger --
@@ -73,7 +71,7 @@ do
     function k.logio.write() end
   end
 
-  k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 0
+  k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
   
   function k.log(l, ...)
     local args = table.pack(...)
@@ -104,8 +102,31 @@ do
     k.log(k.L_INFO, "Command line:", k.state.cmdline)
   end
 end
---#include "src/platform/oc/logger.lua"
---#include "src/logger.lua"
+
+do
+  function k.panic(reason)
+    k.log(k.L_EMERG, "============ kernel panic ============")
+    k.log(k.L_EMERG, reason)
+    for line in debug.traceback():gmatch("[^\n]+") do
+      k.log(k.L_EMERG, (line:gsub("\t", "  ")))
+    end
+    k.log(k.L_EMERG, "======================================")
+  end
+
+  local klogo = [[
+   ______                                     
+  / ____/_  ______  ____  _______  __________ 
+ / /   / / / / __ \/ __ \/ ___/ / / / ___/ _ \
+/ /___/ /_/ / / / / /_/ (__  ) /_/ / /  /  __/
+\____/\__, /_/ /_/\____/____/\__,_/_/   \___/
+     /____/  Stable.  Reliable.  Featureful.
+
+  ]]
+  for line in klogo:gmatch("[^\n]+") do
+    k.log(k.L_EMERG, line)
+  end
+end
+
 -- wrap checkArg --
 
 do
@@ -136,7 +157,6 @@ do
     end
   end
 end
---#include "src/checkArg.lua"
 -- all posible values for errno --
 
 do
@@ -277,7 +297,6 @@ do
     ENOTSUP = "Operation not supported",
   }
 end
---#include "src/errno.lua"
 -- system call registry --
 
 do
@@ -304,7 +323,6 @@ do
   function k.syscall.unlockmutex()
   end
 end
---#include "src/syscalls.lua"
 -- Cynosure kernel scheduler --
 
 -- processes --
@@ -376,12 +394,10 @@ do
     return new
   end
 
---#include "src/sched/process.lua"
 
   function k.syscall.execf()
   end
 end
---#include "src/scheduler.lua"
 -- a fairly smart filesystem mounting arrangement --
 
 do
@@ -401,7 +417,7 @@ do
     owner_w = 0x80,
     owner_x = 0x40,
 
-    group_r = 0x20
+    group_r = 0x20,
     group_w = 0x10,
     group_x = 0x8,
 
@@ -695,7 +711,6 @@ do
     return nil, k.errno.EINVAL
   end
 end
---#include "src/vfs/main.lua"
 -- base ramfs node --
 
 do
@@ -977,25 +992,24 @@ do
 
   k.common.ramfs = _ramfs
 end
---#include "src/ramfs.lua"
 -- sysfs --
 
 do
   k.state.sysfs = k.common.ramfs.new("sysfs")
+  k.state.mount_sources.sysfs = k.state.sysfs
 end
---#include "src/sysfs/main.lua"
 -- procfs --
 
 do
   k.state.procfs = k.common.ramfs.new("procfs")
+  k.state.mount_sources.procfs = k.state.procfs
 end
---#include "src/procfs/main.lua"
 -- devfs --
 
 do
   k.state.devfs = k.common.ramfs.new("devfs")
+  k.state.mount_sources.devfs = k.state.devfs
 end
---#include "src/devfs/main.lua"
 -- CEX loading --
 
 do
@@ -1051,5 +1065,4 @@ do
     return parse_cex(read_file(file))
   end
 end
---#include "src/exec/cex.lua"
 while true do computer.pullSignal() end

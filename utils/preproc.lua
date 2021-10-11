@@ -43,7 +43,9 @@ proc = function(f)
     for k, v in ipairs(dirs) do
       line = line:gsub(v[1], v[2])
     end
-    handle:write(line .. "\n")
+    if not line:match("#include") then
+      handle:write(line .. "\n")
+    end
   end
 end
 
