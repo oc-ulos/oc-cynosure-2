@@ -54,7 +54,7 @@ node:mknod()
 node:list(path:string): files:table
   This function shall return a table containing the names of all files in the directory specified as `path`.
 
-the following functions are optional:
+The following functions are optional:
   node:mount(flags)
     Mark the filesystem as mounted, with the provided optional flags.
 
