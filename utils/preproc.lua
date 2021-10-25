@@ -86,6 +86,21 @@ proc(args[1])
 
 handle:close()
 
+if args[3] == "-strip-comments" then
+  io.write("\27[93m * \27[39mStripping comments\n")
+  local rhand = assert(io.open(args[2], "r"))
+  local data = rhand:read("a")
+    :gsub(" *%-%-%[(=*)%[.-%]%1%]", "")
+    :gsub(" *%-%-[^\n]*\n", "")
+    :gsub("\n+", "\n")
+    :gsub("\nend\ndo", "")
+    :gsub("\n( +)([^/\\_ ])", "\n%2")
+  rhand:close()
+  local whand = assert(io.open(args[2], "w"))
+  whand:write(data)
+  whand:close()
+end
+
 io.write("\27[95m * \27[39mSuccess!\n")
 
 os.exit(0)

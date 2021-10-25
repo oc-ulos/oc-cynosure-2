@@ -1,0 +1,8 @@
+Cynosure 2.0 System Calls
+=========================
+
+Cynosure 2 has a distinct system call interface through the `syscall` function, invoked as follows:
+
+  `syscall(SYSCALL_NAME, ...)`
+
+It will return the results of the system call, and yield if the process's time budget has been exhausted.

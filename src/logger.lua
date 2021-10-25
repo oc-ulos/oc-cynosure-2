@@ -19,6 +19,20 @@
 --#include "src/platform/@[{os.getenv('KPLATFORM') == 'cc' and 'cc' or 'oc'}]/logger.lua"
 
 do
+  k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
+  
+  function k.log(l, ...)
+    local args = table.pack(...)
+    if type(l) == "string" then table.insert(args, 1, l) l = 1 end
+    local msg = ""
+    for i=1, args.n, 1 do
+      msg = msg .. (i > 1 and i < args.n and " " or "") .. tostring(args[i])
+    end
+    if l <= k.cmdline.loglevel then
+      k.logio:write(msg, "\n")
+    end
+    return true
+  end
   function k.panic(reason)
     k.log(k.L_EMERG, "============ kernel panic ============")
     k.log(k.L_EMERG, reason)

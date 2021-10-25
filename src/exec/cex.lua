@@ -29,7 +29,7 @@ do
   }
 
   local function read_file(file)
-    local handle, err = k.syscalls.open(file, {
+    local handle, err = k.syscall.open(file, {
       rdonly = true
     })
     
@@ -37,8 +37,8 @@ do
       return nil, err
     end
     
-    local data = k.syscalls.read(handle, math.huge)
-    k.syscalls.close(handle)
+    local data = k.syscall.read(handle, math.huge)
+    k.syscall.close(handle)
     
     return data
   end

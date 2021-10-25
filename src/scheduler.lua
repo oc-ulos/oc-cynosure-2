@@ -18,6 +18,27 @@
 
 --#include "src/sched/process.lua"
 
-  function k.syscall.execf()
+  --@syscall execf()
+  --@arg file string
+  --@arg args table
+  --@arg env table
+  --@shortdesc execute program
+  --@startdocs
+  -- This execve() mostly conforms to the POSIX-specified behavior.  It will
+  -- replace the program currently being run by the calling process with the
+  -- script or executable specified by @arg[file].
+  --@enddocs
+  function k.syscall.execve(file, args, env)
+    checkArg(1, file, "string")
+    checkArg(2, args, "table")
+    checkArg(3, env, "table")
+  end
+
+  --@syscall getpid()
+  --@shortdesc get process identification
+  --@startdocs
+  -- getpid() returns the process ID of the calling process.
+  --@enddocs
+  function k.syscall.getpid()
   end
 end

@@ -1,5 +1,5 @@
 --[[
-    Early boot logger for OpenComputers.
+    Cynosure 2.0's improved VT100 emulator.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -17,28 +17,14 @@
   ]]--
 
 do
-  local gpu, screen = component.list("gpu", true)(),
-    component.list("screen", true)()
+  local commands = {}
 
-  k.logio = {y = 1}
+  local _tty = {}
 
-  local time = computer.uptime()
+  function _tty:write(str)
+    checkArg(1, str, "string")
+  end
 
-  if gpu and screen then
-    gpu = component.proxy(gpu)
-    gpu.bind(screen)
-    local w, h = gpu.maxResolution()
-    gpu.setResolution(w, h)
-    gpu.fill(1,1,w,h," ")
-    function k.logio:write(msg)
-      if k.logio.y > h then
-        gpu.copy(1, 1, w, h, 0, -1)
-        gpu.fill(1, h, w, 1, " ")
-      end
-      gpu.set(1, k.logio.y, (msg:gsub("\n","")))
-      k.logio.y = k.logio.y + 1
-    end
-  else
-    function k.logio.write() end
+  function k.opentty()
   end
 end

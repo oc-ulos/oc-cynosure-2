@@ -22,6 +22,7 @@ do
   local _proc = {}
 
   k.state.pid = 0
+  k.state.cpid = 0
   k.state.processes = {}
 
   function _proc:resume(...)
@@ -29,12 +30,14 @@ do
     end
   end
 
-  function _proc:new(parent, func, cmdline)
+  function _proc:new(parent, func)
     parent = parent or {}
     k.state.pid = k.state.pid + 1
     local new = setmetatable({
+      -- process command line
+      cmdline = {},
       -- Process ID.
-      pid = k.state.pid + 1,
+      pid = k.state.pid,
       -- Parent process's PID.
       ppid = parent.pid or 0,
       -- Open file handles.
@@ -85,3 +88,23 @@ do
     return new
   end
 
+  --@syscall fork()
+  --@arg func function
+  --@shortdesc create a child process
+  --@startdocs
+  -- This fork() takes a single function argument, this being some code to
+  -- execute in both the new process and the parent process; this function
+  -- is called with the result of the `fork()` system call as its argument.
+  --
+  -- This result is `0` if the function is the child process, an error string
+  -- on failure, and a number if the function is the parent process.
+  --
+  -- The recommended use for this function is to `exec()` some more code, as
+  -- its capabilities and syntax leave much to be desired.
+  --@enddocs
+  function k.syscall.fork(func)
+    checkArg(1, func, "function")
+    local nproc = _proc:new(k.state.processes[k.state.cpid], func)
+    func(nproc.pid)
+    return 0
+  end

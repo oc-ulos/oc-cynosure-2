@@ -89,6 +89,13 @@ do
     return node, clean_path(rpath .. "/" .. __path)
   end
 
+  --@syscall creat
+  --@arg path string
+  --@arg mode number
+  --@shortdesc create a file
+  --@startdocs
+  -- Creates a regular file at the specified @arg[path].
+  --@enddocs
   function k.syscall.creat(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number")
@@ -99,6 +106,9 @@ do
     }, mode)
   end
 
+  --@syscall mkdir
+  --@arg path string
+  --@shortdesc create a directory.
   function k.syscall.mkdir(path)
     checkArg(1, path, "string")
     local node, rpath = find_node(path)
@@ -108,6 +118,10 @@ do
     return node:mkdir(rpath)
   end
 
+  --@syscall link
+  --@arg path string
+  --@arg new string
+  --@shortdesc create a link
   function k.syscall.link(path, new)
     checkArg(1, path, "string")
     checkArg(2, new, "string")
@@ -125,6 +139,12 @@ do
     return node:link(rpath, _rpath)
   end
 
+  --@syscall open
+  --@arg path string
+  --@arg flags table
+  --@optarg mode number
+  --@return fd number
+  --@shortdesc open or create a file
   function k.syscall.open(path, flags, mode)
     checkArg(1, path, "string")
     checkArg(2, flags, "table")
@@ -161,6 +181,11 @@ do
     return n
   end
 
+  --@syscall read
+  --@arg fd number
+  --@arg count number
+  --@return data string
+  --@shortdesc read from a file descriptor
   function k.syscall.read(fd, count)
     checkArg(1, fd, "number")
     checkArg(2, count, "number")
@@ -177,6 +202,8 @@ do
     return read
   end
 
+  --@syscall write
+  --@arg 
   function k.syscall.write(fd, data)
     checkArg(1, fd, "number")
     checkArg(2, data, "string")
