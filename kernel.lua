@@ -907,8 +907,26 @@ end
 k.common.ramfs = _ramfs
 k.state.sysfs = k.common.ramfs.new("sysfs")
 k.state.mount_sources.sysfs = k.state.sysfs
-k.state.procfs = k.common.ramfs.new("procfs")
-k.state.mount_sources.procfs = k.state.procfs
+local procfs = k.common.ramfs.new("procfs")
+k.state.procfs = procfs
+k.state.mount_sources.procfs = procfs
+function procfs.registerStaticFile(path, data)
+local ent = procfs:_create(path, k.common.fsmodes.f_regular)
+ent.writer = function() end
+ent.data = k.state.cmdline
+end
+local function mkdblwrap(func)
+return function(n)
+return function(...)
+return func(n, ...)
+end
+end
+end
+function procfs.registerDynamicFile(path, reader, writer)
+local ent = procfs:_create(path, k.common.fsmodes.f_regular)
+ent.reader = mkdblwrap(reader)
+ent.writer = mkdblwrap(writer)
+end
 k.state.devfs = k.common.ramfs.new("devfs")
 k.state.mount_sources.devfs = k.state.devfs
 local magic = 0x43796e6f

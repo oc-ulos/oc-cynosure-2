@@ -1,5 +1,5 @@
 --[[
-    Cynosure's /proc filesystem.
+    A short description.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -17,27 +17,4 @@
   ]]--
 
 do
-  local procfs = k.common.ramfs.new("procfs")
-  k.state.procfs = procfs
-  k.state.mount_sources.procfs = procfs
-
-  function procfs.registerStaticFile(path, data)
-    local ent = procfs:_create(path, k.common.fsmodes.f_regular)
-    ent.writer = function() end
-    ent.data = k.state.cmdline
-  end
-
-  local function mkdblwrap(func)
-    return function(n)
-      return function(...)
-        return func(n, ...)
-      end
-    end
-  end
-
-  function procfs.registerDynamicFile(path, reader, writer)
-    local ent = procfs:_create(path, k.common.fsmodes.f_regular)
-    ent.reader = mkdblwrap(reader)
-    ent.writer = mkdblwrap(writer)
-  end
 end

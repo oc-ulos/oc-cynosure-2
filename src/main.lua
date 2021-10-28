@@ -29,5 +29,5 @@ _G.k = { state = {}, common = {} }
 --#include "src/sysfs/main.lua"
 --#include "src/procfs/main.lua"
 --#include "src/devfs/main.lua"
---#include "src/exec/cex.lua"
+--#include "src/exec/binfmt.lua"
 while true do computer.pullSignal() end
