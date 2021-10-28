@@ -311,7 +311,7 @@ end
 local _proc = {}
 k.state.pid = 0
 k.state.cpid = 0
-k.state.processes = {}
+k.state.processes = {[0] = {}}
 function _proc:resume(...)
 for i, thd in ipairs(self.threads) do
 end
@@ -366,6 +366,19 @@ checkArg(2, args, "table")
 checkArg(3, env, "table")
 end
 function k.syscall.getpid()
+return k.state.cpid
+end
+function k.syscall.getuid()
+return k.state.processes[k.state.cpid].uid
+end
+function k.syscall.geteuid()
+return k.state.processes[k.state.cpid].euid
+end
+function k.syscall.getgid()
+return k.state.processes[k.state.cpid].gid
+end
+function k.syscall.getegid()
+return k.state.processes[k.state.cpid].egid
 end
 k.common.fsmodes = {
 f_socket = 0xC000,
@@ -929,50 +942,39 @@ ent.writer = mkdblwrap(writer)
 end
 k.state.devfs = k.common.ramfs.new("devfs")
 k.state.mount_sources.devfs = k.state.devfs
-local magic = 0x43796e6f
-local flags = {
-lua53 = 0x1,
-static = 0x2,
-bootable = 0x4,
-executable = 0x8,
-library = 0x10
+local procfs = k.state.procfs
+k.state.binfmt = {
+cex = {
+type = "CEX",
+magic = "onyC",
+offset = 0,
+interpreter = k.load_cex,
+flags = {P = true, C = true}
 }
-local function read_file(file)
-local handle, err = k.syscall.open(file, {
-rdonly = true
-})
+}
 
-    if not handle then
+  procfs.registerDynamicFile("/binfmt", function()end, function(_, data)
+local name, mtype, offset, magic, mask, interpreter, flags = data:match(
+":([^;]+):([^:]+):(%d-):([^:]+):(0x[%x]-):([^:]+):(.-)")
+if not name then return nil, k.errno.EINVAL end
+if mtype ~= "E" and mtype ~= "M" then return nil, k.errno.EINVAL end
+k.state.binfmt[name] = {
+type = mtype,
+extension = mtype == "E" and magic,
+magic = mtype == "M" and magic,
+offset = tonumber(offset) or 0,
+interpreter = interpreter,
+flags = {}
+}
+for c in flags:gmatch(".") do k.state.binfmt[name].flags[c] = true end
+if k.state.binfmt[name].flags.F then
+local err
+k.state.binfmt[name].interpreter, err = k.load_executable(interpreter)
+if not k.state.binfmt[name].interpreter then
 return nil, err
 end
-
-    local data = k.syscall.read(handle, math.huge)
-k.syscall.close(handle)
-
-    return data
 end
-local _flags = {
-lua53 = 0x1,
-static = 0x2,
-boot = 0x4,
-exec = 0x8,
-library = 0x10,
-}
-local function parse_cex(str)
-local header, str = k.util.pop(str, 4)
-if header ~= "onyC" then
-return nil, "invalid magic number"
-end
-local flags, str = k.util.pop(str, 1)
-flags = flags:byte()
-local osid, str = k.util.pop(str, 1)
-osid = osid:byte()
-if osid ~= 0 and isod ~= 255 then
-return nil, "bad OSID"
-end
-end
-local function load_cex(file)
-return parse_cex(read_file(file))
-end
+return true
+end)
 end
 while true do computer.pullSignal() end

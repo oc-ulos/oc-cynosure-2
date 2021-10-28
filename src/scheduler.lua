@@ -16,7 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
---#include "src/sched/process.lua"
+do
+  --#include "src/sched/process.lua"
 
   --@syscall execf()
   --@arg file string
@@ -35,10 +36,38 @@
   end
 
   --@syscall getpid()
-  --@shortdesc get process identification
-  --@startdocs
-  -- getpid() returns the process ID of the calling process.
-  --@enddocs
+  --@shortdesc get process identifier
   function k.syscall.getpid()
+    return k.state.cpid
+  end
+
+  --@syscall getpid()
+  --@shortdesc get parent process's identifier
+  function k.syscall.getppid()
+    return k.state.processes[k.state.cpid].uid
+  end
+
+  --@syscall getuid()
+  --@shortdesc get process's real uid
+  function k.syscall.getuid()
+    return k.state.processes[k.state.cpid].uid
+  end
+
+  --@syscall geteuid()
+  --@shortdesc get process's effective uid
+  function k.syscall.geteuid()
+    return k.state.processes[k.state.cpid].euid
+  end
+
+  --@syscall getgid()
+  --@shortdesc get process's real group identifier
+  function k.syscall.getgid()
+    return k.state.processes[k.state.cpid].gid
+  end
+
+  --@syscall getegid()
+  --@shortdesc get process's effective group identifier
+  function k.syscall.getegid()
+    return k.state.processes[k.state.cpid].egid
   end
 end

@@ -29,8 +29,11 @@ for each link:
   1 byte: length of library name
   N bytes: library name
 2 bytes: length of data
-/*
- * In the case of static linking, linked-in
- * libraries should be part of the data section.
- */
+  In the case of static linking, libraries should
+  be copied into the data section at link time.
+  
+  Otherwise, the first linked library must be an
+  absolute path to an interpreter (e.g.
+  /lib/ld-cex.so).
+
 N bytes: data

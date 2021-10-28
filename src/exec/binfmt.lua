@@ -23,8 +23,8 @@ do
       type = "CEX",
       magic = "onyC",
       offset = 0,
-      interpreter = "@[{os.getenv('INTERPRETER_PATH') or '/lib/ld-cex.lua'}]",
-      flags = {C = true}
+      interpreter = k.load_cex,
+      flags = {P = true, C = true}
     }
   }
   
@@ -42,5 +42,13 @@ do
       flags = {}
     }
     for c in flags:gmatch(".") do k.state.binfmt[name].flags[c] = true end
+    if k.state.binfmt[name].flags.F then
+      local err
+      k.state.binfmt[name].interpreter, err = k.load_executable(interpreter)
+      if not k.state.binfmt[name].interpreter then
+        return nil, err
+      end
+    end
+    return true
   end)
 end

@@ -18,12 +18,11 @@
 
   ]]--
 
-do
   local _proc = {}
 
   k.state.pid = 0
   k.state.cpid = 0
-  k.state.processes = {}
+  k.state.processes = {[0] = {}}
 
   function _proc:resume(...)
     for i, thd in ipairs(self.threads) do
