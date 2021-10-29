@@ -28,21 +28,6 @@ do
     library = 0x10
   }
 
-  local function read_file(file)
-    local handle, err = k.syscall.open(file, {
-      rdonly = true
-    })
-    
-    if not handle then
-      return nil, err
-    end
-    
-    local data = k.syscall.read(handle, math.huge)
-    k.syscall.close(handle)
-    
-    return data
-  end
-
   local _flags = {
     lua53 = 0x1,
     static = 0x2,
@@ -51,23 +36,53 @@ do
     library = 0x10,
   }
 
-  local function parse_cex(str)
-    local header, str = k.util.pop(str, 4)
+  local function parse_cex(fd)
+    local header = k.syscall.read(fd, 4)
     if header ~= "onyC" then
-      return nil, "invalid magic number"
+      return nil, k.errno.ENOEXEC
     end
 
-    local flags, str = k.util.pop(str, 1)
+    local flags = k.common.pop(fd, 1)
     flags = flags:byte()
-    local osid, str = k.util.pop(str, 1)
+    local osid = k.common.pop(fd, 1)
     osid = osid:byte()
 
     if osid ~= 0 and isod ~= 255 then
-      return nil, "bad OSID"
+      return nil, k.errno.ENOEXEC
+    end
+
+    local _
+    if flags & flags.static == 0 then
+      local nlink
+      nlink = k.syscall.read(fd, 1)
+      nlink = nlink:byte()
+      if nlink == 0 then
+        -- no interpreter!
+        return nil, k.errno.ENOEXEC
+      end
+      local nlib = k.syscall.read(fd, 1):byte()
+      local itpfile = k.syscall.read(fd, nlib)
+      local func = k.load_executable(itpfile)
+      k.syscall.seek(fd, "set", 0)
+      return function(...)
+        return func(fd, ...)
+      end
+    else
+      k.syscall.read(fd, 3)
+      local str = k.syscall.read(fd, math.huge)
+      k.syscall.close(fd)
+      return load(str)
     end
   end
 
-  local function load_cex(file)
-    return parse_cex(read_file(file))
+  function k.load_cex(file, flags)
+    local fd, err = k.syscall.open(file, {
+      rdonly = true
+    })
+    if not fd then
+      return nil, err
+    end
+
+    return parse_cex(fd)
   end
 end

@@ -308,6 +308,7 @@ end
 mutexes[mtxid] = nil
 end
 end
+do
 local _proc = {}
 k.state.pid = 0
 k.state.cpid = 0
@@ -360,6 +361,7 @@ local nproc = _proc:new(k.state.processes[k.state.cpid], func)
 func(nproc.pid)
 return 0
 end
+end
 function k.syscall.execve(file, args, env)
 checkArg(1, file, "string")
 checkArg(2, args, "table")
@@ -367,6 +369,9 @@ checkArg(3, env, "table")
 end
 function k.syscall.getpid()
 return k.state.cpid
+end
+function k.syscall.getppid()
+return k.state.processes[k.state.cpid].uid
 end
 function k.syscall.getuid()
 return k.state.processes[k.state.cpid].uid
@@ -663,6 +668,18 @@ return true
 end
 return nil, k.errno.EINVAL
 end
+local modes = k.common.fsmodes
+local checks = {
+r = {modes.owner_r, modes.group_r, modes.other_r},
+w = {modes.owner_w, modes.group_w, modes.other_w},
+x = {modes.owner_x, modes.group_x, modes.other_x}
+}
+function k.common.has_permission(info, perm)
+local uid = k.syscall.geteuid()
+local gid = k.syscall.getegid()
+local level = (info.uid == uid and 1) or (info.gid == gid and 2) or 3
+return info.mode & checks[perm][level] ~= 0
+end
 local _ramfs = {}
 function _ramfs:_resolve(path, parent)
 local segments = k.common.split_path(path)
@@ -942,6 +959,64 @@ ent.writer = mkdblwrap(writer)
 end
 k.state.devfs = k.common.ramfs.new("devfs")
 k.state.mount_sources.devfs = k.state.devfs
+local magic = 0x43796e6f
+local flags = {
+lua53 = 0x1,
+static = 0x2,
+bootable = 0x4,
+executable = 0x8,
+library = 0x10
+}
+local _flags = {
+lua53 = 0x1,
+static = 0x2,
+boot = 0x4,
+exec = 0x8,
+library = 0x10,
+}
+local function parse_cex(fd)
+local header = k.syscall.read(fd, 4)
+if header ~= "onyC" then
+return nil, k.errno.ENOEXEC
+end
+local flags = k.common.pop(fd, 1)
+flags = flags:byte()
+local osid = k.common.pop(fd, 1)
+osid = osid:byte()
+if osid ~= 0 and isod ~= 255 then
+return nil, k.errno.ENOEXEC
+end
+local _
+if flags & flags.static == 0 then
+local nlink
+nlink = k.syscall.read(fd, 1)
+nlink = nlink:byte()
+if nlink == 0 then
+return nil, k.errno.ENOEXEC
+end
+local nlib = k.syscall.read(fd, 1):byte()
+local itpfile = k.syscall.read(fd, nlib)
+local func = k.load_executable(itpfile)
+k.syscall.seek(fd, "set", 0)
+return function(...)
+return func(fd, ...)
+end
+else
+k.syscall.read(fd, 3)
+local str = k.syscall.read(fd, math.huge)
+k.syscall.close(fd)
+return load(str)
+end
+end
+function k.load_cex(file, flags)
+local fd, err = k.syscall.open(file, {
+rdonly = true
+})
+if not fd then
+return nil, err
+end
+return parse_cex(fd)
+end
 local procfs = k.state.procfs
 k.state.binfmt = {
 cex = {
@@ -949,7 +1024,7 @@ type = "CEX",
 magic = "onyC",
 offset = 0,
 interpreter = k.load_cex,
-flags = {P = true, C = true}
+flags = {P = true, C = true, O = true}
 }
 }
 
@@ -974,7 +1049,24 @@ if not k.state.binfmt[name].interpreter then
 return nil, err
 end
 end
+if k.state.binfmt[name].flags.C then
+k.state.binfmt[name].flags.O = true
+end
 return true
 end)
+function k.load_executable(file)
+local info, err = k.syscall.stat(file)
+if not info then
+return nil, err
+end
+if not k.common.has_permission(
+{mode = info.mode, uid = info.uid, gid = info.gid}, "x") then
+return nil, k.errno.EACCES
+end
+local fd, err = k.syscall.open(file, {rdonly = true})
+if not fd then
+return nil, err
+end
+end
 end
 while true do computer.pullSignal() end

@@ -17,7 +17,7 @@
   ]]--
 
 do
-  --#include "src/sched/process.lua"
+  --#include "src/scheduler/process.lua"
 
   --@syscall execf()
   --@arg file string

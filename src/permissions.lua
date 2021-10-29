@@ -1,5 +1,5 @@
 --[[
-    Main source file for the Cynosure kernel.
+    Permissions-related utilities.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,18 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
-_G.k = { state = {}, common = {} }
---#include "src/version.lua"
---#include "src/cmdline.lua"
---#include "src/logger.lua"
---#include "src/checkArg.lua"
---#include "src/errno.lua"
---#include "src/syscalls.lua"
---#include "src/scheduler/main.lua"
---#include "src/vfs/main.lua"
---#include "src/permissions.lua"
---#include "src/ramfs.lua"
---#include "src/sysfs/main.lua"
---#include "src/procfs/main.lua"
---#include "src/devfs/main.lua"
---#include "src/exec/main.lua"
-while true do computer.pullSignal() end
+do
+  local modes = k.common.fsmodes
+  local checks = {
+    r = {modes.owner_r, modes.group_r, modes.other_r},
+    w = {modes.owner_w, modes.group_w, modes.other_w},
+    x = {modes.owner_x, modes.group_x, modes.other_x}
+  }
+
+  function k.common.has_permission(info, perm)
+    local uid = k.syscall.geteuid()
+    local gid = k.syscall.getegid()
+    local level = (info.uid == uid and 1) or (info.gid == gid and 2) or 3
+    return info.mode & checks[perm][level] ~= 0
+  end
+end

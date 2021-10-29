@@ -1,5 +1,5 @@
 --[[
-    Main source file for the Cynosure kernel.
+    Executable loading.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,22 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
-_G.k = { state = {}, common = {} }
---#include "src/version.lua"
---#include "src/cmdline.lua"
---#include "src/logger.lua"
---#include "src/checkArg.lua"
---#include "src/errno.lua"
---#include "src/syscalls.lua"
---#include "src/scheduler/main.lua"
---#include "src/vfs/main.lua"
---#include "src/permissions.lua"
---#include "src/ramfs.lua"
---#include "src/sysfs/main.lua"
---#include "src/procfs/main.lua"
---#include "src/devfs/main.lua"
---#include "src/exec/main.lua"
-while true do computer.pullSignal() end
+--#include "src/exec/cex.lua"
+--#include "src/exec/binfmt.lua"
+
+do
+  function k.load_executable(file)
+    local info, err = k.syscall.stat(file)
+    if not info then
+      return nil, err
+    end
+    if not k.common.has_permission(
+        {mode = info.mode, uid = info.uid, gid = info.gid}, "x") then
+      return nil, k.errno.EACCES
+    end
+    local fd, err = k.syscall.open(file, {rdonly = true})
+    if not fd then
+      return nil, err
+    end
+  end
+end

@@ -18,6 +18,7 @@
 
   ]]--
 
+do
   local _proc = {}
 
   k.state.pid = 0
@@ -107,3 +108,4 @@
     func(nproc.pid)
     return 0
   end
+end

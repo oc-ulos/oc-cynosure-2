@@ -24,7 +24,7 @@ do
       magic = "onyC",
       offset = 0,
       interpreter = k.load_cex,
-      flags = {P = true, C = true}
+      flags = {P = true, C = true, O = true}
     }
   }
   
@@ -48,6 +48,9 @@ do
       if not k.state.binfmt[name].interpreter then
         return nil, err
       end
+    end
+    if k.state.binfmt[name].flags.C then
+      k.state.binfmt[name].flags.O = true
     end
     return true
   end)

@@ -1,5 +1,5 @@
 --[[
-    Main source file for the Cynosure kernel.
+    A short description.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,10 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
-_G.k = { state = {}, common = {} }
---#include "src/version.lua"
---#include "src/cmdline.lua"
---#include "src/logger.lua"
---#include "src/checkArg.lua"
---#include "src/errno.lua"
---#include "src/syscalls.lua"
---#include "src/scheduler/main.lua"
---#include "src/vfs/main.lua"
---#include "src/permissions.lua"
---#include "src/ramfs.lua"
---#include "src/sysfs/main.lua"
---#include "src/procfs/main.lua"
---#include "src/devfs/main.lua"
---#include "src/exec/main.lua"
-while true do computer.pullSignal() end
+do
+  function k.common.pop(str, n)
+    local ret = str:sub(1, n)
+    str = str:sub(n + 1)
+    return ret, str
+  end
+end
