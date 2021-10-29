@@ -23,7 +23,7 @@ do
 
   k.state.pid = 0
   k.state.cpid = 0
-  k.state.processes = {[0] = {}}
+  k.state.processes = {[0] = {fds = {}}}
 
   function _proc:resume(...)
     for i, thd in ipairs(self.threads) do

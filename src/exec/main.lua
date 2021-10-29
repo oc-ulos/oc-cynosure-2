@@ -20,6 +20,21 @@
 --#include "src/exec/binfmt.lua"
 
 do
+  local function ld_exec(data, fd)
+    local interp
+    if type(data.interpreter) == "function" then
+      interp = data.interpreter
+    else
+      local err
+      interp, err = k.load_executable(data.interpreter)
+      if not interp then
+        k.syscall.close(fd)
+        return nil, err
+      end
+    end
+    
+  end
+
   function k.load_executable(file)
     local info, err = k.syscall.stat(file)
     if not info then
@@ -32,6 +47,23 @@ do
     local fd, err = k.syscall.open(file, {rdonly = true})
     if not fd then
       return nil, err
+    end
+
+    local extension = file:match(".(^%.)+$")
+    local magic = k.syscall.read(fd, 128)
+    for name, data in pairs(k.state.binfmt) do
+      if data.type == "E" then -- type matching file extension
+        if data.extension == extension then
+          -- match!
+          return ld_exec(data, fd)
+        end
+      elseif data.type == "M" then -- magic number
+        local maybe = magic:sub(data.offset, data.offset + #data.magic)
+        if data.magic == maybe then
+          -- match!
+          return ld_exec(data, fd)
+        end
+      end
     end
   end
 end

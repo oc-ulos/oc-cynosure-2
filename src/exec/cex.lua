@@ -62,10 +62,28 @@ do
       end
       local nlib = k.syscall.read(fd, 1):byte()
       local itpfile = k.syscall.read(fd, nlib)
-      local func = k.load_executable(itpfile)
+      local func, err = k.load_executable(itpfile)
+      if not func then
+        k.syscall.close(fd)
+        return nil, err
+      end
       k.syscall.seek(fd, "set", 0)
       return function(...)
-        return func(fd, ...)
+        -- This function will take over a process.
+        -- We need to do the following:
+        --   1) Allocate a new file descriptor for the interpreter (this
+        --      process).
+        local fds = k.state.processes[k.state.cpid].fds
+        local n = #fds + 1
+        --   2) Assign the kernel's old file descriptor (from process 0) to the
+        --      newly allocated file descriptor belonging to this process.
+        fds[n] = k.state.processes[0].fds[fd]
+        --   3) Remove the kernel's old file descriptor.
+        k.state.processes[0].fds[fd] = nil
+        --   4) Pass this process's new file descriptor to the interpreter, for
+        --      use in further parsing the executable file.  Also pass any
+        --      command-line arguments.
+        return func(tonumber(fd), ...)
       end
     else
       k.syscall.read(fd, 3)
@@ -75,14 +93,7 @@ do
     end
   end
 
-  function k.load_cex(file, flags)
-    local fd, err = k.syscall.open(file, {
-      rdonly = true
-    })
-    if not fd then
-      return nil, err
-    end
-
+  function k.load_cex(fd)
     return parse_cex(fd)
   end
 end
