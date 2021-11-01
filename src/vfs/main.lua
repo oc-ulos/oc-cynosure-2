@@ -64,6 +64,14 @@ do
     return "/" .. table.concat(split_path(path), "/")
   end
 
+  local function fsgetpid()
+    if not k.state.from_proc then
+      return 0
+    else
+      return k.state.cpid
+    end
+  end
+
   k.common.split_path = split_path
   k.common.clean_path = clean_path
 
@@ -148,7 +156,7 @@ do
   function k.syscall.open(path, flags, mode)
     checkArg(1, path, "string")
     checkArg(2, flags, "table")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     local node, rpath = find_node(path)
     if node and flags.creat and flags.excl then
       return nil, k.errno.EEXIST
@@ -189,7 +197,7 @@ do
   function k.syscall.read(fd, count)
     checkArg(1, fd, "number")
     checkArg(2, count, "number")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -207,7 +215,7 @@ do
   function k.syscall.write(fd, data)
     checkArg(1, fd, "number")
     checkArg(2, data, "string")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -218,7 +226,7 @@ do
     checkArg(1, fd, "number")
     checkArg(2, whence, "string")
     checkArg(3, offset, "number")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -230,7 +238,7 @@ do
 
   function k.syscall.dup(fd)
     checkArg(1, fd, "number")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -243,7 +251,7 @@ do
   function k.syscall.dup2(fd, nfd)
     checkArg(1, fd, "number")
     checkArg(2, nfd, "number")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -259,7 +267,7 @@ do
 
   function k.syscall.close(fd)
     checkArg(1, fd, "number")
-    local fds = k.state.processes[k.syscall.getpid()].fds
+    local fds = k.state.processes[fsgetpid()].fds
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
