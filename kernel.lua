@@ -312,7 +312,7 @@ do
 local _proc = {}
 k.state.pid = 0
 k.state.cpid = 0
-k.state.processes = {[0] = {}}
+k.state.processes = {[0] = {fds = {}}}
 function _proc:resume(...)
 for i, thd in ipairs(self.threads) do
 end
@@ -424,6 +424,13 @@ path = k.syscall.getcwd() .. "/" .. path
 end
 return "/" .. table.concat(split_path(path), "/")
 end
+local function fsgetpid()
+if not k.state.from_proc then
+return 0
+else
+return k.state.cpid
+end
+end
 k.common.split_path = split_path
 k.common.clean_path = clean_path
 local find_node
@@ -483,7 +490,7 @@ end
 function k.syscall.open(path, flags, mode)
 checkArg(1, path, "string")
 checkArg(2, flags, "table")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 local node, rpath = find_node(path)
 if node and flags.creat and flags.excl then
 return nil, k.errno.EEXIST
@@ -518,7 +525,7 @@ end
 function k.syscall.read(fd, count)
 checkArg(1, fd, "number")
 checkArg(2, count, "number")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
@@ -533,7 +540,7 @@ end
 function k.syscall.write(fd, data)
 checkArg(1, fd, "number")
 checkArg(2, data, "string")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
@@ -543,7 +550,7 @@ function k.syscall.seek(fd, whence, offset)
 checkArg(1, fd, "number")
 checkArg(2, whence, "string")
 checkArg(3, offset, "number")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
@@ -554,7 +561,7 @@ return fds[fd].node:seek(fds[fd].fd, whence, offset)
 end
 function k.syscall.dup(fd)
 checkArg(1, fd, "number")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
@@ -566,7 +573,7 @@ end
 function k.syscall.dup2(fd, nfd)
 checkArg(1, fd, "number")
 checkArg(2, nfd, "number")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
@@ -581,7 +588,7 @@ return true
 end
 function k.syscall.close(fd)
 checkArg(1, fd, "number")
-local fds = k.state.processes[k.syscall.getpid()].fds
+local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
@@ -996,10 +1003,18 @@ return nil, k.errno.ENOEXEC
 end
 local nlib = k.syscall.read(fd, 1):byte()
 local itpfile = k.syscall.read(fd, nlib)
-local func = k.load_executable(itpfile)
+local func, err = k.load_executable(itpfile)
+if not func then
+k.syscall.close(fd)
+return nil, err
+end
 k.syscall.seek(fd, "set", 0)
 return function(...)
-return func(fd, ...)
+local fds = k.state.processes[k.state.cpid].fds
+local n = #fds + 1
+fds[n] = k.state.processes[0].fds[fd]
+k.state.processes[0].fds[fd] = nil
+return func(tonumber(fd), ...)
 end
 else
 k.syscall.read(fd, 3)
@@ -1008,13 +1023,7 @@ k.syscall.close(fd)
 return load(str)
 end
 end
-function k.load_cex(file, flags)
-local fd, err = k.syscall.open(file, {
-rdonly = true
-})
-if not fd then
-return nil, err
-end
+function k.load_cex(fd)
 return parse_cex(fd)
 end
 local procfs = k.state.procfs
@@ -1054,18 +1063,61 @@ k.state.binfmt[name].flags.O = true
 end
 return true
 end)
+local function ld_exec(file, data, fd)
+local interp, istat
+if type(data.interpreter) == "function" then
+interp, istat = data.interpreter, {}
+else
+interp, istat = k.load_executable(data.interpreter)
+if not interp then
+k.syscall.close(fd)
+return nil, istat
+end
+end
+if data.flags.C then
+istat = file
+end
+if not k.common.has_permission(
+{mode = istat.mode, uid = istat.uid, gid = istat.gid}, "x") then
+k.syscall.close(fd)
+return nil, k.errno.EACCES
+end
+if data.flags.O then
+return function(...)
+return interp(fd, ...)
+end
+else
+k.syscall.close(fd)
+return function(...)
+return interp(file.name, ...)
+end
+end
+end
 function k.load_executable(file)
 local info, err = k.syscall.stat(file)
 if not info then
 return nil, err
 end
-if not k.common.has_permission(
-{mode = info.mode, uid = info.uid, gid = info.gid}, "x") then
-return nil, k.errno.EACCES
-end
+info.name = file
 local fd, err = k.syscall.open(file, {rdonly = true})
 if not fd then
 return nil, err
+end
+local extension = file:match(".(^%.)+$")
+local magic = k.syscall.read(fd, 128)
+k.syscall.seek(fd, "set", 0)
+for name, data in pairs(k.state.binfmt) do
+if data.type == "E" then        if data.extension == extension then
+return ld_exec(info, data, fd)
+end
+elseif data.type == "M" then        local maybe = magic:sub(data.offset, data.offset + #data.magic)
+if data.magic == maybe then
+return ld_exec(info, data, fd)
+end
+else
+k.syscall.close(fd)
+return nil, k.errno.EINVAL
+end
 end
 end
 end

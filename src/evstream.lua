@@ -38,8 +38,8 @@ do
     return table.remove(self.queue, 1)
   end
 
-  local ps = computer.pullSignal
-  function computer.pullSignal(tout)
+  local ps = k.pullSignal
+  function k.pullSignal(tout)
     checkArg(1, tout, "number", "nil")
     local sig = table.pack(ps(tout))
     if sig.n > 0 then

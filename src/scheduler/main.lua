@@ -70,4 +70,36 @@ do
   function k.syscall.getegid()
     return k.state.processes[k.state.cpid].egid
   end
+
+  function k.schedloop()
+    -- Here's how yielding works:
+    -- If all the processes yielded because of pre-emption, and the
+    -- last time we yielded was less than five seconds ago, and the
+    -- last cycle took less than the time remaining before we will
+    -- hit a too-long-without-yielding error, then simply resume all
+    -- processes again.  This timing is taken into account while
+    -- determining how strict to be with yield delays also.
+    local shouldYield = false
+    while k.state.processes[1] do
+      local to_run = {}
+
+      -- filter out stopped/dead processes
+      for k, v in pairs(k.state.processes) do
+        if k ~= 0 and not (v.stopped or v.dead) then
+          to_run[#to_run+1] = v
+        end
+      end
+
+      -- sort by priority
+      table.sort(to_run, function(a, b)
+        return a.nice > b.nice
+      end)
+
+      -- run all the processes
+      for i, proc in ipairs(to_run) do
+        local ok, err = coroutine.resume(proc)
+      end
+    end
+    k.shutdown()
+  end
 end

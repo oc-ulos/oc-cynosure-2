@@ -21,12 +21,18 @@
 do
   local _proc = {}
 
+  -- the PID of the last created process
   k.state.pid = 0
+  -- the PID of the currently executing process
   k.state.cpid = 0
+  -- the ID of the current thread in the current process
+  k.state.ctid = 0
+  -- table of all the processes
   k.state.processes = {[0] = {fds = {}}}
 
   function _proc:resume(...)
     for i, thd in ipairs(self.threads) do
+      local ok, err = coroutine.resume(thd)
     end
   end
 
@@ -50,6 +56,8 @@ do
       cputime = 0,
       -- Whether the process is stopped.
       stopped = false,
+      -- Whether the process is dead.
+      dead = false,
       -- Session the process belongs to.
       sid = parent.sid or 0,
       -- Process group the process belongs to.
@@ -73,10 +81,13 @@ do
       cwd = parent.cwd or "/",
       -- root directory
       root = parent.root or "/",
+      -- nice value
+      nice = 0,
+      -- all the threads
       threads = {
         [1] = {
           errno = 0,
-          sigmask = 0,
+          sigmask = {},
           tid = 1,
           coroutine = coroutine.create(func)
         }
@@ -107,5 +118,14 @@ do
     local nproc = _proc:new(k.state.processes[k.state.cpid], func)
     func(nproc.pid)
     return 0
+  end
+
+  --@syscall nice()
+  --@arg num number
+  --@shortdesc change process's nice value
+  function k.syscall.nice(num)
+    checkArg(1, num, "number")
+    local cproc = k.state.processes[k.state.cpid]
+    cproc.nice = math.min(19, math.max(-20, cproc.nice + num))
   end
 end
