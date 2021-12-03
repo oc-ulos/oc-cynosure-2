@@ -71,15 +71,33 @@ do
     return k.state.processes[k.state.cpid].egid
   end
 
+  -- Determine if we should yield.
+  local lastYield = 0
+  local function shouldYield(procs)
+  end
+
+  -- bland empty signal table for memory usage reasons
+  -- not a huge deal, but has some slight benefit.
+  local emptySignal {n = 0}
   function k.schedloop()
     -- Here's how yielding works:
     -- If all the processes yielded because of pre-emption, and the
     -- last time we yielded was less than five seconds ago, and the
     -- last cycle took less than the time remaining before we will
-    -- hit a too-long-without-yielding error, then simply resume all
-    -- processes again.  This timing is taken into account while
-    -- determining how strict to be with yield delays also.
-    local shouldYield = false
+    -- hit a too-long-without-yielding error, then the scheduler will
+    -- simply resume all processes again.  This timing is taken into
+    -- account while determining how strict to be with pre-emption
+    -- yields also.
+    --
+    -- Tf any process has explicitly yielded, the scheduler will not
+    -- resume that process until its yield duration is exceeded or it
+    -- receives a signal.  Signals sitting in the process's queue
+    -- count as receiving a signal, so if these are present then the
+    -- scheduler will not yield*.
+    --
+    -- In any case, if the time since the last yield has reached the
+    -- configured maximum limit, the scheduler will yield for the
+    -- maxmum possible amount of time.
     while k.state.processes[1] do
       local to_run = {}
 
@@ -95,9 +113,14 @@ do
         return a.nice > b.nice
       end)
 
+      local signal = emptySignal
+      if shouldYield(to_run) then
+        signal = table.pack(k.pullSignal())
+      end
+
       -- run all the processes
       for i, proc in ipairs(to_run) do
-        local ok, err = coroutine.resume(proc)
+        local ok, err = proc:resume(sig)
       end
     end
     k.shutdown()

@@ -33,6 +33,8 @@ do
   function _proc:resume(...)
     for i, thd in ipairs(self.threads) do
       local ok, err = coroutine.resume(thd)
+      if not ok then
+      end
     end
   end
 
@@ -83,12 +85,20 @@ do
       root = parent.root or "/",
       -- nice value
       nice = 0,
+      -- the process's global signal queue
+      signals = {},
       -- all the threads
       threads = {
         [1] = {
+          -- the thread's errno value
           errno = 0,
+          -- signals the thread does not want to receive
           sigmask = {},
+          -- the thread's ID (locally unique to a process)
           tid = 1,
+          -- how long to wait before resuming the thread again
+          wait = 0,
+          -- the thread's coroutine
           coroutine = coroutine.create(func)
         }
       },
