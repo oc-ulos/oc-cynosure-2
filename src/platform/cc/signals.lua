@@ -1,5 +1,5 @@
 --[[
-    Include the correct signaling setup functions.
+    Signal handling for ComputerCraft.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,4 +16,25 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
---#include "src/platform/@[{os.getenv('KPLATFORM') or 'oc'}]/signals.lua"
+do
+  local timers = {}
+  local currentTimer
+  function k.pullSignal(timeout)
+    -- start a new timer for that timeout
+    currentTimer = os.startTimer(timeout)
+    timers[currentTimer] = timeout
+    while true do
+      local signal = table.pack(os.pullEvent())
+      if signal[1] == "timer" and timers[signal[2]] then
+        local tid = signal[2]
+        timers[tid] = nil
+        if tid == currentTimer then
+          break
+        end
+      else
+        return table.unpack(signal, 1, signal.n)
+      end
+    end
+    return nil
+  end
+end

@@ -1,5 +1,5 @@
 --[[
-    Include the correct signaling setup functions.
+    OpenComputers signal handling functions.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,4 +16,6 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
---#include "src/platform/@[{os.getenv('KPLATFORM') or 'oc'}]/signals.lua"
+do
+  k.pullSignal = computer.pullSignal
+end

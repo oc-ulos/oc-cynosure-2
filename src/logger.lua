@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
---#include "src/platform/@[{os.getenv('KPLATFORM') == 'cc' and 'cc' or 'oc'}]/logger.lua"
+--#include "src/platform/@[{os.getenv('KPLATFORM') 'oc'}]/logger.lua"
 
 do
   k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
