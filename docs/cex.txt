@@ -42,4 +42,4 @@ for each link:
 N bytes: data
 
 
-The CEX interpreter under Cynosure 2.0 must take a file descriptor as its first argument.  This file descriptor is to be used 
+The CEX interpreter under Cynosure 2.0 must take a file descriptor as its first argument.  This file descriptor is to be used to read the executable file data, and closed.
