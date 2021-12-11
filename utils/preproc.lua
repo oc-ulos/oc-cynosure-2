@@ -19,7 +19,7 @@
 
 _G.env = setmetatable({}, {__index = function(t, k) return os.getenv(k) end})
 
-local proc, handle
+local handle
 
 local included = {}
 local dirs
@@ -54,7 +54,7 @@ dirs = {
   end},
 }
 
-proc = function(f)
+_G.proc = function(f)
   io.write("\27[36m *\27[39m processing " .. f .. "\n")
   for line in io.lines(f) do
     for k, v in ipairs(dirs) do
@@ -102,5 +102,8 @@ if args[3] == "-strip-comments" then
 end
 
 io.write("\27[95m * \27[39mSuccess!\n")
+
+_G.env = nil
+_G.proc = nil
 
 os.exit(0)

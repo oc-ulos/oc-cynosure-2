@@ -2,4 +2,4 @@
 # build Cynosure 2.0
 
 preproc=utils/preproc.lua
-$preproc src/main.lua kernel.lua -strip-comments
+env $(cat .buildconfig) $preproc src/main.lua kernel.lua -strip-comments

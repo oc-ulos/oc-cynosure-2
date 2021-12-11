@@ -6,7 +6,7 @@ This document describes the functions required of a Cynosure-compatible filesyst
 See `docs/filemodes.txt` for details on the `mode` argument that some functions accept.
 
 node:open(file:string, flags:table[, mode:number]): fd:number
-  This function shall open the specified `file` in accordance with the specified `flags`.  It shall return a numeric file descriptor, which does not have to be unique except to the filesystem node to which it belongs.
+  This function shall open the specified `file` in accordance with the specified `flags`.  It shall return a numeric file descriptor, which does not have to be unique except to the filesystem node to which it belongs.  If the file does not exist, but its parent directory does, then the file must be created.
 
 node:read(fd:number, count:number): read:string
   This function shall, if the specified `fd` is a valid file descriptor, read `count` bytes from the file to which that descriptor points.  Otherwise, it shall return `nil` and the value specified in `k.errno.EBADF`.

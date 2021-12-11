@@ -362,3 +362,5 @@ do
     return nil, k.errno.EINVAL
   end
 end
+
+--#include "src/fs/main.lua"

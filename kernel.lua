@@ -261,6 +261,7 @@ ERFKILL = "Operation not possible due to RF-kill",
 EHWPOISON = "Memory page has hardware error",
 ENOTSUP = "Operation not supported",
 }
+k.pullSignal = computer.pullSignal
 k.syscall = {}
 do
 local mutexes = {}
@@ -312,9 +313,13 @@ do
 local _proc = {}
 k.state.pid = 0
 k.state.cpid = 0
+k.state.ctid = 0
 k.state.processes = {[0] = {fds = {}}}
 function _proc:resume(...)
 for i, thd in ipairs(self.threads) do
+local ok, err = coroutine.resume(thd)
+if not ok then
+end
 end
 end
 function _proc:new(parent, func)
@@ -331,6 +336,7 @@ handles = {
 },
 cputime = 0,
 stopped = false,
+dead = false,
 sid = parent.sid or 0,
 pgid = parent.pgid or 0,
 uid = parent.uid or 0,
@@ -342,11 +348,14 @@ sgid = parent.sgid or 0,
 umask = 255,
 cwd = parent.cwd or "/",
 root = parent.root or "/",
+nice = 0,
+signals = {},
 threads = {
 [1] = {
 errno = 0,
-sigmask = 0,
+sigmask = {},
 tid = 1,
+wait = 0,
 coroutine = coroutine.create(func)
 }
 },
@@ -360,6 +369,11 @@ checkArg(1, func, "function")
 local nproc = _proc:new(k.state.processes[k.state.cpid], func)
 func(nproc.pid)
 return 0
+end
+function k.syscall.nice(num)
+checkArg(1, num, "number")
+local cproc = k.state.processes[k.state.cpid]
+cproc.nice = math.min(19, math.max(-20, cproc.nice + num))
 end
 end
 function k.syscall.execve(file, args, env)
@@ -384,6 +398,31 @@ return k.state.processes[k.state.cpid].gid
 end
 function k.syscall.getegid()
 return k.state.processes[k.state.cpid].egid
+end
+local lastYield = 0
+local function shouldYield(procs)
+end
+local emptySignal {n = 0}
+function k.schedloop()
+while k.state.processes[1] do
+local to_run = {}
+for k, v in pairs(k.state.processes) do
+if k ~= 0 and not (v.stopped or v.dead) then
+to_run[#to_run+1] = v
+end
+end
+table.sort(to_run, function(a, b)
+return a.nice > b.nice
+end)
+local signal = emptySignal
+if shouldYield(to_run) then
+signal = table.pack(k.pullSignal())
+end
+for i, proc in ipairs(to_run) do
+local ok, err = proc:resume(sig)
+end
+end
+k.shutdown()
 end
 k.common.fsmodes = {
 f_socket = 0xC000,
@@ -674,6 +713,79 @@ mounts[target] = nil
 return true
 end
 return nil, k.errno.EINVAL
+end
+k.state.cmdline["fs.managed.blocksize"] =
+k.state.cmdline["fs.managed.blocksize"] or
+2048
+local node = {}
+local blocksize = k.state.cmdline["fs.managed.blocksize"]
+local attr = "<I2I2I2LLLLI2"
+function node:_readpfile(file)
+local fd = self.fs.open(file:gsub("([^/+])$", ".%1.attr"), "r")
+if not fd then
+return nil
+end
+local data = self.fs.read(fd, math.huge)
+self.fs.close(fd)
+return data
+end
+
+  function node:_writepfile(file, data)
+local fd = self.fs.open(file:gsub("([^/+])$", ".%1.attr"), "w")
+self.fs.write(fd, data)
+self.fs.close(fd)
+end
+function node:_attributes(file, new, raw)
+local data = self:_readpfile(file)
+local mode, uid, gid, ctime, atime, mtime, size, nlink
+if data then
+if data:sub(1,4) == "LINK" then
+file = data:sub(5)
+mode, uid, gid, ctime, atime, mtime, size, nlink =
+self:_attributes(file, nil, true)
+else
+mode, uid, gid, ctime, atime, mtime, size, nlink = attr:unpack(data)
+end
+end
+if new then
+mode, uid, gid, ctime, atime, mtime, size, nlink =
+new.mode or mode, new.uid or uid, new.gid or gid,
+new.ctime or ctime, new.atime or atime, new.mtime = mtime,
+new.size or size, new.nlink or nlink
+self:_writepfile(file, attr:pack(mode, uid, gid, ctime, atime, mtime,
+size, nlink) .. (new.path or ""))
+end
+if raw then
+return mode, uid, gid, ctime, atime, mtime, size, nlink
+else
+return {
+mode = mode,
+uid = uid,
+gid = gid,
+ctime = ctime,
+atime = atime,
+mtime = mtime,
+size = size,
+nlink = nlink,
+path = #data > 72 and data:sub(72)
+}
+end
+end
+function node:stat(file)
+local attr = self:_attributes(file)
+return {
+ino = -1,
+mode = attr.mode,
+nlink = attr.nlink,
+uid = attr.uid,
+gid = attr.gid,
+size = attr.size,
+blksize = k.,
+blocks = 
+}
+end
+function node:open(file, flags, mode)
+local fd = 
 end
 local modes = k.common.fsmodes
 local checks = {
@@ -1121,4 +1233,4 @@ end
 end
 end
 end
-while true do computer.pullSignal() end
+while true do k.pullSignal() end
