@@ -78,7 +78,7 @@ do
 
   -- bland empty signal table for memory usage reasons
   -- not a huge deal, but has some slight benefit.
-  local emptySignal {n = 0}
+  local emptySignal = {n = 0}
   function k.schedloop()
     -- Here's how yielding works:
     -- If all the processes yielded because of pre-emption, and the

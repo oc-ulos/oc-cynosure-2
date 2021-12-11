@@ -67,13 +67,14 @@ do
     if new then
       mode, uid, gid, ctime, atime, mtime, size, nlink =
         new.mode or mode, new.uid or uid, new.gid or gid,
-        new.ctime or ctime, new.atime or atime, new.mtime = mtime,
+        new.ctime or ctime, new.atime or atime, new.mtime or mtime,
         new.size or size, new.nlink or nlink
       self:_writepfile(file, attr:pack(mode, uid, gid, ctime, atime, mtime,
         size, nlink) .. (new.path or ""))
     end
     if raw then
-      return mode, uid, gid, ctime, atime, mtime, size, nlink
+      return mode, uid, gid, ctime, atime, mtime, size, nlink,
+        #data > 72 and data:sub(73), file
     else
       return {
         mode = mode,
@@ -84,7 +85,8 @@ do
         mtime = mtime,
         size = size,
         nlink = nlink,
-        path = #data > 72 and data:sub(72)
+        file = file,
+        path = #data > 72 and data:sub(73)
       }
     end
   end
@@ -98,12 +100,34 @@ do
       uid = attr.uid,
       gid = attr.gid,
       size = attr.size,
-      blksize = k.,
-      blocks = 
+      blksize = blocksize,
+      blocks = math.ceil(attr.size / blocksize),
+      atime = attr.atime,
+      mtime = attr.mtime,
+      ctime = attr.ctime
     }
   end
 
   function node:open(file, flags, mode)
-    local fd = 
+    if not self.fs.exists(file) then
+      if not flags.creat then
+        return nil
+      else
+        self:create(file, mode)
+      end
+    end
+    local attr = self:_attributes(file)
+    if attr.mode & 0xF000 == k.common.fsmodes.f_directory then
+      return nil, k.errno.EISDIR
+    end
+    local mode = ""
+    if flags.rdonly then mode = "r" end
+    if flags.wronly then mode = "w" end
+    if flags.rdwr then mode = "rw" end
+    local fd = self.fs.open(file, mode)
+    if not fd then
+      return nil, k.errno.ENOENT
+    end
+    return fd
   end
 end

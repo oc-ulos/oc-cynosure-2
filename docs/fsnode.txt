@@ -52,7 +52,14 @@ node:mknod()
   -- not currently required, implemented, or documented --
 
 node:list(path:string): files:table
-  This function shall return a table containing the names of all files in the directory specified as `path`.
+  This function shall return a table containing tables for files in the directory specified by `path`.  Each of these subtables shall contain:
+    
+    {
+      path = string,
+      type = number,
+    }
+
+  If 'type' is 0 it will be ignored.
 
 The following functions are optional:
   node:mount(flags)

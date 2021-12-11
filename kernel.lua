@@ -402,7 +402,7 @@ end
 local lastYield = 0
 local function shouldYield(procs)
 end
-local emptySignal {n = 0}
+local emptySignal = {n = 0}
 function k.schedloop()
 while k.state.processes[1] do
 local to_run = {}
@@ -750,7 +750,7 @@ end
 if new then
 mode, uid, gid, ctime, atime, mtime, size, nlink =
 new.mode or mode, new.uid or uid, new.gid or gid,
-new.ctime or ctime, new.atime or atime, new.mtime = mtime,
+new.ctime or ctime, new.atime or atime, new.mtime or mtime,
 new.size or size, new.nlink or nlink
 self:_writepfile(file, attr:pack(mode, uid, gid, ctime, atime, mtime,
 size, nlink) .. (new.path or ""))

@@ -42,6 +42,17 @@ do
     other_x = 0x1
   }
 
+  k.common.inodetypes = {
+    unknown = 0,
+    reg_file = 1,
+    dir = 2,
+    chrdev = 3,
+    blkdev = 4,
+    fifo = 5,
+    sock = 6,
+    symlink = 7
+  }
+
   local mounts = {}
   k.state.mounts = mounts
 
