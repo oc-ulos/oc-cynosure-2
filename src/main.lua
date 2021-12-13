@@ -21,7 +21,7 @@ _G.k = { state = {}, common = {} }
 --#include "src/cmdline.lua"
 --#include "src/logger.lua"
 --#include "src/checkArg.lua"
---@[{os.getenv('KLUAVERSION') ~= '5.3' and '#include "src/bit32.lua"' or ''}]
+--@[{os.getenv('KLUAVERSION') == '5.3' and '#include "src/bit32.lua"' or ''}]
 --#include "src/errno.lua"
 --#include "src/signals.lua"
 --#include "src/syscalls.lua"
