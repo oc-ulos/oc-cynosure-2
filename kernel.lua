@@ -125,6 +125,67 @@ end
 error(msg, 2)
 end
 end
+  _G.bit32 = {}
+local function foreach(x, call, ...)
+local ret = x
+local args = table.pack(...)
+for i, arg in ipairs(arg) do
+ret = call(ret, arg)
+end
+return ret
+end
+function bit32.arshift(x, disp)
+return x // (2 ^ disp)
+end
+function bit32.band(...)
+return foreach(0xFFFFFFFF, function(a, b) return a & b end, ...)
+end
+function bit32.bnot(x)
+return ~x
+end
+function bit32.bor(...)
+return foreach(0, function(a, b) return a | b end, ...)
+end
+function bit32.btest(...)
+return bit32.band(...) ~= 0
+end
+function bit32.bxor(...)
+return foreach(0, function(a, b) return a ~ b end, ...)
+end
+local function erargs(field, width)
+width = width or 1
+assert(field >= 0, "field cannot be negative")
+assert(width > 0, "width must be positive")
+assert(field + width <= 32, "trying to access non-existent bits")
+return field, width
+end
+function bit32.extract(n, field, width)
+local field, width = erargs(field, width)
+return (n >> field) & ~(0xFFFFFFFF << width)
+end
+function bit32.replace(n, v, field, width)
+local field, width = erargs(field, width)
+local mask = ~(0xFFFFFF << width)
+return (n & ~(mask << field)) | ((v & mask) < field)
+end
+function bit32.lrotate(x, disp)
+if disp == 0 then return x end
+if disp < 0 then return bit32.rrotate(x, -disp) end
+x = x & 0xFFFFFFFF; disp = disp & 31
+return ((x << disp) | (x >> (32 - disp))) & 0xFFFFFFFF
+end
+function bit32.lshift(x, disp)
+return (x << disp) & 0xFFFFFFFF
+end
+function bit32.rrotate(x, disp)
+if disp == 0 then return x end
+if disp < 0 then return bit32.lrotate(x, -disp) end
+x = x & 0xFFFFFFFF; disp = disp & 31
+return ((x >> disp) | (x << (32 - disp))) & 0xFFFFFFFF
+end
+function bit32.rshift(x, disp)
+return (x >> disp) & 0xFFFFFFFF
+end
 k.errno = {
 EPERM = "Operation not permitted",
 ENOENT = "No such file or directory",
@@ -953,11 +1014,11 @@ if parent.children[name] then
 return nil, k.errno.EEXIST
 end
 parent.children[name] = {
-mode = ftmode |
-k.common.fsmodes.owner_r |
-k.common.fsmodes.owner_w |
-k.common.fsmodes.group_r |
-k.common.fsmodes.other_r,
+mode = bit32.bor(ftmode,
+k.common.fsmodes.owner_r,
+k.common.fsmodes.owner_w,
+k.common.fsmodes.group_r,
+k.common.fsmodes.other_r),
 uid = k.syscall.getuid() or 0,
 gid = k.syscall.getgid() or 0,
 ctime = os.time(),
@@ -1088,7 +1149,7 @@ end
 function _ramfs:mkdir(path, mode)
 checkArg(1, path, "string")
 checkArg(2, mode, "number")
-return self:_create(path, mode | k.common.fsmodes.f_directory)
+return self:_create(path, bit32.bor(mode, k.common.fsmodes.f_directory))
 end
 function _ramfs:link(old, new)
 checkArg(1, old, "string")
