@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "vfs/main")
+
 do
   k.common.fsmodes = {
     f_socket = 0xC000,

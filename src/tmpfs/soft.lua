@@ -17,6 +17,7 @@
   ]]--
 
 --#include "src/ramfs.lua"
+k.log(k.L_INFO, "tmpfs/soft")
 do
   k.state.mount_sources.tmpfs = k.common.ramfs.new("tmpfs")
 end

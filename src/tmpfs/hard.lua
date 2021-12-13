@@ -17,6 +17,7 @@
   ]]--
 
 --@[{os.getenv('KPLATFORM') == 'cc' and error('computercraft does not have a hardware tmpfs', 0)}]
+k.log(k.L_INFO, "tmpfs/hard")
 do
   local tmpfs = component.proxy(computer.tmpAddress())
   k.state.mount_sources.tmpfs = k.devsearchers.filesystem.create(tmpfs)

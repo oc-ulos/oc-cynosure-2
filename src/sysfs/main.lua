@@ -17,6 +17,7 @@
   ]]--
 
 --#include "src/ramfs.lua"
+k.log(k.L_INFO, "sysfs/main")
 do
   k.state.sysfs = k.common.ramfs.new("sysfs")
   k.state.mount_sources.sysfs = k.state.sysfs

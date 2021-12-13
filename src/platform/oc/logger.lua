@@ -31,9 +31,10 @@ do
     gpu.setResolution(w, h)
     gpu.fill(1,1,w,h," ")
     function k.logio:write(msg)
-      if k.logio.y > h then
-        gpu.copy(1, 1, w, h, 0, -1)
+      if  k.logio.y > h then
+        gpu.copy(1, 9, w, h, 0, -1)
         gpu.fill(1, h, w, 1, " ")
+        k.logio.y = k.logio.y - 1
       end
       gpu.set(1, k.logio.y, (msg:gsub("\n","")))
       k.logio.y = k.logio.y + 1

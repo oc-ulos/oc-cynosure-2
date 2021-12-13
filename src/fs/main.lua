@@ -16,5 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "fs/main")
+
 -- hooray for cursed single-line expressions!
 --@[{(function() for filesystem in os.getenv("BUILTIN_FILESYSTEMS"):gmatch("[^,]+") do print(filesystem); proc("src/fs/"..filesystem..".lua") end end)()}]

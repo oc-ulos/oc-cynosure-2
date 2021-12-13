@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "util")
+
 do
   function k.common.pop(str, n)
     local ret = str:sub(1, n)

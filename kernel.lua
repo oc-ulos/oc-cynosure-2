@@ -44,9 +44,10 @@ local w, h = gpu.maxResolution()
 gpu.setResolution(w, h)
 gpu.fill(1,1,w,h," ")
 function k.logio:write(msg)
-if k.logio.y > h then
-gpu.copy(1, 1, w, h, 0, -1)
+if  k.logio.y > h then
+gpu.copy(1, 9, w, h, 0, -1)
 gpu.fill(1, h, w, 1, " ")
+k.logio.y = k.logio.y - 1
 end
 gpu.set(1, k.logio.y, (msg:gsub("\n","")))
 k.logio.y = k.logio.y + 1
@@ -101,6 +102,9 @@ k._VERSION.build_user, k._VERSION.build_host, _VERSION))
 if #k.state.cmdline > 0 then
 k.log(k.L_INFO, "Command line:", k.state.cmdline)
 end
+end
+k.log(k.L_INFO, "checkArg")
+do
 function _G.checkArg(n, have, ...)
 have = type(have)
 local function check(want, ...)
@@ -125,11 +129,14 @@ end
 error(msg, 2)
 end
 end
+end
+k.log(k.L_INFO, "bit32")
+do
   _G.bit32 = {}
 local function foreach(x, call, ...)
 local ret = x
 local args = table.pack(...)
-for i, arg in ipairs(arg) do
+for i, arg in ipairs(args) do
 ret = call(ret, arg)
 end
 return ret
@@ -186,6 +193,9 @@ end
 function bit32.rshift(x, disp)
 return (x >> disp) & 0xFFFFFFFF
 end
+end
+k.log(k.L_INFO, "errno")
+do
 k.errno = {
 EPERM = "Operation not permitted",
 ENOENT = "No such file or directory",
@@ -322,8 +332,16 @@ ERFKILL = "Operation not possible due to RF-kill",
 EHWPOISON = "Memory page has hardware error",
 ENOTSUP = "Operation not supported",
 }
+end
+k.log(k.L_INFO, "signals")
+k.log(k.L_INFO, "platform/oc/signals")
+do
 k.pullSignal = computer.pullSignal
+end
+k.log(k.L_INFO, "syscalls")
+do
 k.syscall = {}
+k.log(k.L_INFO, "safety/mutex")
 do
 local mutexes = {}
 function k.syscall.newmutex()
@@ -370,6 +388,11 @@ end
 mutexes[mtxid] = nil
 end
 end
+end
+k.log(k.L_INFO, "scheduler/main")
+
+do
+k.log(k.L_INFO, "scheduler/process")
 do
 local _proc = {}
 k.state.pid = 0
@@ -485,6 +508,9 @@ end
 end
 k.shutdown()
 end
+end
+k.log(k.L_INFO, "vfs/main")
+do
 k.common.fsmodes = {
 f_socket = 0xC000,
 f_symlink = 0xA000,
@@ -798,8 +824,12 @@ return true
 end
 return nil, k.errno.EINVAL
 end
-k.state.cmdline["fs.managed.blocksize"] =
-k.state.cmdline["fs.managed.blocksize"] or
+end
+k.log(k.L_INFO, "fs/main")
+k.log(k.L_INFO, "fs/managed")
+do
+k.cmdline["fs.managed.blocksize"] =
+k.cmdline["fs.managed.blocksize"] or
 2048
 local node = {}
 local blocksize = k.state.cmdline["fs.managed.blocksize"]
@@ -952,6 +982,9 @@ create = function(fsnode)
 return setmetatable({fs = fsnode, }, {__index = node})
 end
 }
+end
+k.log(k.L_INFO, "permissions")
+do
 local modes = k.common.fsmodes
 local checks = {
 r = {modes.owner_r, modes.group_r, modes.other_r},
@@ -964,6 +997,9 @@ local gid = k.syscall.getegid()
 local level = (info.uid == uid and 1) or (info.gid == gid and 2) or 3
 return info.mode & checks[perm][level] ~= 0
 end
+end
+k.log(k.L_INFO, "src/ramfs")
+do
 local _ramfs = {}
 function _ramfs:_resolve(path, parent)
 local segments = k.common.split_path(path)
@@ -1219,9 +1255,18 @@ label = label or "ramfs",
 }, {__index = _ramfs})
 end
 k.common.ramfs = _ramfs
+end
+k.log(k.L_INFO, "tmpfs/soft")
+do
 k.state.mount_sources.tmpfs = k.common.ramfs.new("tmpfs")
+end
+k.log(k.L_INFO, "sysfs/main")
+do
 k.state.sysfs = k.common.ramfs.new("sysfs")
 k.state.mount_sources.sysfs = k.state.sysfs
+end
+k.log(k.L_INFO, "procfs/main")
+do
 local procfs = k.common.ramfs.new("procfs")
 k.state.procfs = procfs
 k.state.mount_sources.procfs = procfs
@@ -1242,8 +1287,14 @@ local ent = procfs:_create(path, k.common.fsmodes.f_regular)
 ent.reader = mkdblwrap(reader)
 ent.writer = mkdblwrap(writer)
 end
+end
+k.log(k.L_INFO, "devfs/main")
+do
 k.state.devfs = k.common.ramfs.new("devfs")
 k.state.mount_sources.devfs = k.state.devfs
+end
+k.log(k.L_INFO, "exec/cex")
+do
 local magic = 0x43796e6f
 local flags = {
 lua53 = 0x1,
@@ -1304,6 +1355,9 @@ end
 function k.load_cex(fd)
 return parse_cex(fd)
 end
+end
+k.log(k.L_INFO, "exec/binfmt")
+do
 local procfs = k.state.procfs
 k.state.binfmt = {
 cex = {
@@ -1341,6 +1395,9 @@ k.state.binfmt[name].flags.O = true
 end
 return true
 end)
+end
+k.log(k.L_INFO, "exec/main")
+do
 local function ld_exec(file, data, fd)
 local interp, istat
 if type(data.interpreter) == "function" then
@@ -1399,4 +1456,14 @@ end
 end
 end
 end
+k.log(k.L_INFO, "tty")
+do
+local _tty = {}
+function _tty:write(str)
+checkArg(1, str, "string")
+end
+function k.opentty()
+end
+end
+k.log(k.L_INFO, "entering idle loop")
 while true do k.pullSignal() end

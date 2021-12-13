@@ -18,6 +18,8 @@
 
   ]]--
 
+k.log(k.L_INFO, "exec/cex")
+
 do
   local magic = 0x43796e6f
   local flags = {

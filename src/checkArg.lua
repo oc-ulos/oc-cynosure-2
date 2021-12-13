@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "checkArg")
+
 do
   function _G.checkArg(n, have, ...)
     have = type(have)

@@ -17,6 +17,9 @@
   ]]--
 
 --#include "src/ramfs.lua"
+
+k.log(k.L_INFO, "procfs/main")
+
 do
   local procfs = k.common.ramfs.new("procfs")
   k.state.procfs = procfs

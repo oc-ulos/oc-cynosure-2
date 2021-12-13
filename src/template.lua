@@ -16,5 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "template")
+
 do
 end

@@ -18,6 +18,8 @@
 
   ]]--
 
+k.log(k.L_INFO, "scheduler/process")
+
 do
   local _proc = {}
 

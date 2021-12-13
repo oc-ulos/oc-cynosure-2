@@ -17,6 +17,7 @@
   ]]--
 
 --#include "src/ramfs.lua"
+k.log(k.L_INFO, "devfs/main")
 do
   k.state.devfs = k.common.ramfs.new("devfs")
   k.state.mount_sources.devfs = k.state.devfs

@@ -16,13 +16,15 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "bit32")
+
 do
   _G.bit32 = {}
 
   local function foreach(x, call, ...)
     local ret = x
     local args = table.pack(...)
-    for i, arg in ipairs(arg) do
+    for i, arg in ipairs(args) do
       ret = call(ret, arg)
     end
     return ret

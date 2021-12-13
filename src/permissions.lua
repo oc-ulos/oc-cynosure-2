@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "permissions")
+
 do
   local modes = k.common.fsmodes
   local checks = {

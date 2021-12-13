@@ -16,11 +16,13 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "fs/managed")
+
 do
   -- use this command line argument if your server has the
   -- filesystem IO blocksize configured differently
-  k.state.cmdline["fs.managed.blocksize"] =
-    k.state.cmdline["fs.managed.blocksize"] or
+  k.cmdline["fs.managed.blocksize"] =
+    k.cmdline["fs.managed.blocksize"] or
     @[{os.getenv("MANAGED_BLOCKSIZE") or 2048}]
   local node = {}
   local blocksize = k.state.cmdline["fs.managed.blocksize"]

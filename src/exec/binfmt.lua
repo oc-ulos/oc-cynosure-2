@@ -16,6 +16,8 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+k.log(k.L_INFO, "exec/binfmt")
+
 do
   local procfs = k.state.procfs
   k.state.binfmt = {

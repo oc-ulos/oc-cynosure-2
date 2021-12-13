@@ -19,6 +19,8 @@
 --#include "src/exec/cex.lua"
 --#include "src/exec/binfmt.lua"
 
+k.log(k.L_INFO, "exec/main")
+
 do
   local function ld_exec(file, data, fd)
     local interp, istat

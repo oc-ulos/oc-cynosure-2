@@ -16,9 +16,9 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
-do
-  local commands = {}
+k.log(k.L_INFO, "tty")
 
+do
   local _tty = {}
 
   function _tty:write(str)
