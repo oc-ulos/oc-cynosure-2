@@ -23,8 +23,10 @@ do
     patch = "@[{os.getenv 'KV_PATCH' or '0'}]",
     build_host = "$[{hostnamectl hostname}]",
     build_user = "@[{os.getenv 'USER' or 'none'}]",
-    build_name = "@[{os.getenv 'KNAME' or 'default'}]"
+    build_name = "@[{os.getenv 'KNAME' or 'default'}]",
+    build_rev = "$[{git rev-parse --short HEAD}]"
   }
-  _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s",
-    k._VERSION.major, k._VERSION.minor, k._VERSION.patch, k._VERSION.build_name)
+  _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
+    k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
+    k._VERSION.build_rev, k._VERSION.build_name)
 end

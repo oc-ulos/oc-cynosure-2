@@ -7,10 +7,12 @@ minor = "0",
 patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
-build_name = "default"
+build_name = "default",
+build_rev = "0587dd3"
 }
-  _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s",
-k._VERSION.major, k._VERSION.minor, k._VERSION.patch, k._VERSION.build_name)
+  _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
+k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
+k._VERSION.build_rev, k._VERSION.build_name)
 k.cmdline = {}
 local _args = table.pack(...)
 k.state.cmdline = table.concat(_args, " ", 1, _args.n)
@@ -45,7 +47,7 @@ gpu.setResolution(w, h)
 gpu.fill(1,1,w,h," ")
 function k.logio:write(msg)
 if  k.logio.y > h then
-gpu.copy(1, 9, w, h, 0, -1)
+gpu.copy(1, k.logio.sy, w, h, 0, -1)
 gpu.fill(1, h, w, 1, " ")
 k.logio.y = k.logio.y - 1
 end
@@ -102,6 +104,7 @@ k._VERSION.build_user, k._VERSION.build_host, _VERSION))
 if #k.state.cmdline > 0 then
 k.log(k.L_INFO, "Command line:", k.state.cmdline)
 end
+k.logio.sy = k.logio.y + 1
 end
 k.log(k.L_INFO, "checkArg")
 do

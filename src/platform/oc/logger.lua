@@ -32,7 +32,7 @@ do
     gpu.fill(1,1,w,h," ")
     function k.logio:write(msg)
       if  k.logio.y > h then
-        gpu.copy(1, 9, w, h, 0, -1)
+        gpu.copy(1, k.logio.sy, w, h, 0, -1)
         gpu.fill(1, h, w, 1, " ")
         k.logio.y = k.logio.y - 1
       end

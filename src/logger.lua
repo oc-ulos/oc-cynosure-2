@@ -64,5 +64,6 @@ do
   if #k.state.cmdline > 0 then
     k.log(k.L_INFO, "Command line:", k.state.cmdline)
   end
+  k.logio.sy = k.logio.y + 1
 end
 
