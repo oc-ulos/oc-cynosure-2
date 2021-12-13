@@ -46,7 +46,9 @@ node:unlink(path:string)
   Removes the file at the specified `path`.  If this is the last remaining link to the file, it shall be removed.
 
 node:link(source:string, target:string)
-  This function shall create a hard link from `source` to `target`, increasing the reference count for the corresponding inode by one.  A hard link shall be indistinguishable from the original file, for they are the same file and share an inode.
+  This function shall create a hard link from `source` to `target`, increasing the reference count for the corresponding inode by one.  A hard link shall be indistinguishable from the original file, for they are the same file and share an inode.  If hard links are unsupported by the filesystem, this function shall return `nil` and `ENOSYS`.
+
+node:symlink(source:string, target:string)
 
 node:mknod()
   -- not currently required, implemented, or documented --

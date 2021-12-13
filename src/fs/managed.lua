@@ -29,15 +29,13 @@ do
   -- so for example the attributes of /bin/ls are stored at /bin/.ls.attr
   -- and the attributes of /bin are stored at /.bin.attr
   -- mode, uid, gid, ctime, atime, mtime, size, nlink
-  local attr = "<I2I2I2LLLLI2"
-  -- but, if the file is a hard link, then its attributes contain the
-  -- string "LINK" followed by a path, ex. /.bin.attr could contain
-  -- "LINK/usr/bin"
-  -- or, if the file is a soft link, then the path is stored at the end
+  local attr = "<I2I2I2LLLL"
+  -- if the file is a soft link, then the path is stored at the end
   -- of the inode data
+  -- hard links are unsupported
 
   function node:_readpfile(file)
-    local fd = self.fs.open(file:gsub("([^/+])$", ".%1.attr"), "r")
+    local fd = self.fs.open(file:gsub("([^/]+)/?$", ".%1.attr"), "r")
     if not fd then
       return nil
     end
@@ -47,7 +45,7 @@ do
   end
   
   function node:_writepfile(file, data)
-    local fd = self.fs.open(file:gsub("([^/+])$", ".%1.attr"), "w")
+    local fd = self.fs.open(file:gsub("([^/]+)/?$", ".%1.attr"), "w")
     self.fs.write(fd, data)
     self.fs.close(fd)
   end
@@ -56,24 +54,18 @@ do
     local data = self:_readpfile(file)
     local mode, uid, gid, ctime, atime, mtime, size, nlink
     if data then
-      if data:sub(1,4) == "LINK" then
-        file = data:sub(5)
-        mode, uid, gid, ctime, atime, mtime, size, nlink =
-          self:_attributes(file, nil, true)
-      else
-        mode, uid, gid, ctime, atime, mtime, size, nlink = attr:unpack(data)
-      end
+      mode, uid, gid, ctime, atime, mtime, size = attr:unpack(data)
     end
     if new then
-      mode, uid, gid, ctime, atime, mtime, size, nlink =
+      mode, uid, gid, ctime, atime, mtime, size =
         new.mode or mode, new.uid or uid, new.gid or gid,
         new.ctime or ctime, new.atime or atime, new.mtime or mtime,
-        new.size or size, new.nlink or nlink
+        new.size or size
       self:_writepfile(file, attr:pack(mode, uid, gid, ctime, atime, mtime,
-        size, nlink) .. (new.path or ""))
+        size) .. (new.path or ""))
     end
     if raw then
-      return mode, uid, gid, ctime, atime, mtime, size, nlink,
+      return mode, uid, gid, ctime, atime, mtime, size,
         #data > 72 and data:sub(73), file
     else
       return {
@@ -84,7 +76,6 @@ do
         atime = atime,
         mtime = mtime,
         size = size,
-        nlink = nlink,
         file = file,
         path = #data > 72 and data:sub(73)
       }
@@ -96,7 +87,7 @@ do
     return {
       ino = -1,
       mode = attr.mode,
-      nlink = attr.nlink,
+      nlink = 1,
       uid = attr.uid,
       gid = attr.gid,
       size = attr.size,
@@ -108,12 +99,48 @@ do
     }
   end
 
+  local function parent(path)
+    local s = k.common.split_path(path)
+    return "/" .. table.concat(s, "/", 1, s.n - 1)
+  end
+  
+  function node:_create(path, mode)
+    local p = parent(path)
+    if not (self.fs.exists(p) and self.fs.isDir(p)) then
+      return nil, k.errno.ENOENT
+    end
+    if mode & 0xF000 == k.common.fsmodes.f_directory then
+      self.fs.makeDirectory(path)
+    else
+      self.fs.close(self.fs.open(path, "w"))
+    end
+    local parent = self:_attributes(p)
+    self:_attributes(path, {
+      mode = mode,
+      uid = k.syscall.getuid(),
+      gid = (mode & k.common.fsmodes.setgid ~= 0) and parent.gid or
+        k.syscall.getgid(),
+      ctime = os.time(),
+      mtime = os.time(),
+      atime = os.time(),
+      size = 0,
+    })
+    return true
+  end
+
+  function node:mkdir(path, mode)
+    return self:_create(path, mode | k.common.fsmodes.f_directory)
+  end
+
   function node:open(file, flags, mode)
     if not self.fs.exists(file) then
       if not flags.creat then
         return nil
       else
-        self:create(file, mode)
+        local ok, err = self:_create(file, mode)
+        if not ok and err then
+          return nil, err
+        end
       end
     end
     local attr = self:_attributes(file)
@@ -128,6 +155,36 @@ do
     if not fd then
       return nil, k.errno.ENOENT
     end
-    return fd
+    local n = #self.fds+1
+    self.fds[n] = fd
+    return n
+  end
+
+  function node:read(fd, count)
+    local data = ""
+    repeat
+      local chunk = self.fs.read(fds[fd], count)
+      data = data .. chunk
+      count = count - #chunk
+    until count <= 0
+    return data
+  end
+
+  function node:write(fd, data)
+    return self.fs:write(self.fds[fd], data)
+  end
+
+  function node:seek(fd, whence, offset)
+    return self.fs:seek(self.fds[fd], whence, offset)
+  end
+
+  function node:close(fd)
+    if self.fds[fd] then
+      self.fs:close(self.fds[fd])
+    end
+  end
+
+  function node:unlink(path)
+    self.fs.remove(path)
   end
 end
