@@ -21,13 +21,14 @@ _G.k = { state = {}, common = {} }
 --#include "src/cmdline.lua"
 --#include "src/logger.lua"
 --#include "src/checkArg.lua"
+--@[{os.getenv('KLUAVERSION') ~= '5.3' and '#include "src/bit32.lua"' or ''}]
 --#include "src/errno.lua"
 --#include "src/signals.lua"
 --#include "src/syscalls.lua"
 --#include "src/scheduler/main.lua"
 --#include "src/vfs/main.lua"
 --#include "src/permissions.lua"
---@[{os.getenv('KUSE_SOFTWARE_TMPFS') == 'y' and '#include "src/ramfs.lua"' or ''}]
+--@[{os.getenv('KUSE_SOFTWARE_TMPFS') == 'y' and '#include "src/tmpfs/soft.lua"' or 'src/tmpfs/hard.lua'}]
 --@[{os.getenv('KINCLUDE_SYSFS') == 'y' and '#include "src/sysfs/main.lua"' or ''}]
 --@[{os.getenv('KINCLUDE_PROCFS') == 'y' and '#include "src/procfs/main.lua"' or ''}]
 --@[{os.getenv('KINCLUDE_DEVFS') == 'y' and '#include "src/devfs/main.lua"' or ''}]
