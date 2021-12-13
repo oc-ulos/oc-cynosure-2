@@ -444,6 +444,16 @@ other_r = 0x4,
 other_w = 0x2,
 other_x = 0x1
 }
+k.common.inodetypes = {
+unknown = 0,
+reg_file = 1,
+dir = 2,
+chrdev = 3,
+blkdev = 4,
+fifo = 5,
+sock = 6,
+symlink = 7
+}
 local mounts = {}
 k.state.mounts = mounts
 local function split_path(path)
@@ -647,6 +657,7 @@ end
 return node:list(rpath)
 end
 k.state.mount_sources = {}
+k.state.fs_types = {}
 function k.syscall.mount(source, target, fstype, mountflags, fsopts)
 checkArg(1, source, "string")
 checkArg(2, target, "string")
@@ -679,6 +690,18 @@ return nil, err
 end
 
         source = _source
+elseif k.state.fs_types[fstype] then
+local node, err = k.lookup_device(source)
+if not node then
+return nil, err
+end
+local _source, err = k.state.fs_types[fstype].create(node)
+if not _source then
+return nil, err
+end
+source = _source
+else
+return nil, k.errno.EINVAL
 end
 if mounts[target] then
 if mountflags.remount then
@@ -719,9 +742,9 @@ k.state.cmdline["fs.managed.blocksize"] or
 2048
 local node = {}
 local blocksize = k.state.cmdline["fs.managed.blocksize"]
-local attr = "<I2I2I2LLLLI2"
+local attr = "<I2I2I2LLLL"
 function node:_readpfile(file)
-local fd = self.fs.open(file:gsub("([^/+])$", ".%1.attr"), "r")
+local fd = self.fs.open(file:gsub("([^/]+)/?$", ".%1.attr"), "r")
 if not fd then
 return nil
 end
@@ -731,7 +754,7 @@ return data
 end
 
   function node:_writepfile(file, data)
-local fd = self.fs.open(file:gsub("([^/+])$", ".%1.attr"), "w")
+local fd = self.fs.open(file:gsub("([^/]+)/?$", ".%1.attr"), "w")
 self.fs.write(fd, data)
 self.fs.close(fd)
 end
@@ -739,24 +762,19 @@ function node:_attributes(file, new, raw)
 local data = self:_readpfile(file)
 local mode, uid, gid, ctime, atime, mtime, size, nlink
 if data then
-if data:sub(1,4) == "LINK" then
-file = data:sub(5)
-mode, uid, gid, ctime, atime, mtime, size, nlink =
-self:_attributes(file, nil, true)
-else
-mode, uid, gid, ctime, atime, mtime, size, nlink = attr:unpack(data)
-end
+mode, uid, gid, ctime, atime, mtime, size = attr:unpack(data)
 end
 if new then
-mode, uid, gid, ctime, atime, mtime, size, nlink =
+mode, uid, gid, ctime, atime, mtime, size =
 new.mode or mode, new.uid or uid, new.gid or gid,
 new.ctime or ctime, new.atime or atime, new.mtime or mtime,
-new.size or size, new.nlink or nlink
+new.size or size
 self:_writepfile(file, attr:pack(mode, uid, gid, ctime, atime, mtime,
-size, nlink) .. (new.path or ""))
+size) .. (new.path or ""))
 end
 if raw then
-return mode, uid, gid, ctime, atime, mtime, size, nlink
+return mode, uid, gid, ctime, atime, mtime, size,
+#data > 72 and data:sub(73), file
 else
 return {
 mode = mode,
@@ -766,8 +784,8 @@ ctime = ctime,
 atime = atime,
 mtime = mtime,
 size = size,
-nlink = nlink,
-path = #data > 72 and data:sub(72)
+file = file,
+path = #data > 72 and data:sub(73)
 }
 end
 end
@@ -776,17 +794,103 @@ local attr = self:_attributes(file)
 return {
 ino = -1,
 mode = attr.mode,
-nlink = attr.nlink,
+nlink = 1,
 uid = attr.uid,
 gid = attr.gid,
 size = attr.size,
-blksize = k.,
-blocks = 
+blksize = blocksize,
+blocks = math.ceil(attr.size / blocksize),
+atime = attr.atime,
+mtime = attr.mtime,
+ctime = attr.ctime
 }
 end
-function node:open(file, flags, mode)
-local fd = 
+local function parent(path)
+local s = k.common.split_path(path)
+return "/" .. table.concat(s, "/", 1, s.n - 1)
 end
+
+  function node:_create(path, mode)
+local p = parent(path)
+if not (self.fs.exists(p) and self.fs.isDir(p)) then
+return nil, k.errno.ENOENT
+end
+if mode & 0xF000 == k.common.fsmodes.f_directory then
+self.fs.makeDirectory(path)
+else
+self.fs.close(self.fs.open(path, "w"))
+end
+local parent = self:_attributes(p)
+self:_attributes(path, {
+mode = mode,
+uid = k.syscall.getuid(),
+gid = (mode & k.common.fsmodes.setgid ~= 0) and parent.gid or
+k.syscall.getgid(),
+ctime = os.time(),
+mtime = os.time(),
+atime = os.time(),
+size = 0,
+})
+return true
+end
+function node:mkdir(path, mode)
+return self:_create(path, mode | k.common.fsmodes.f_directory)
+end
+function node:open(file, flags, mode)
+if not self.fs.exists(file) then
+if not flags.creat then
+return nil
+else
+local ok, err = self:_create(file, mode)
+if not ok and err then
+return nil, err
+end
+end
+end
+local attr = self:_attributes(file)
+if attr.mode & 0xF000 == k.common.fsmodes.f_directory then
+return nil, k.errno.EISDIR
+end
+local mode = ""
+if flags.rdonly then mode = "r" end
+if flags.wronly then mode = "w" end
+if flags.rdwr then mode = "rw" end
+local fd = self.fs.open(file, mode)
+if not fd then
+return nil, k.errno.ENOENT
+end
+local n = #self.fds+1
+self.fds[n] = fd
+return n
+end
+function node:read(fd, count)
+local data = ""
+repeat
+local chunk = self.fs.read(fds[fd], count)
+data = data .. chunk
+count = count - #chunk
+until count <= 0
+return data
+end
+function node:write(fd, data)
+return self.fs:write(self.fds[fd], data)
+end
+function node:seek(fd, whence, offset)
+return self.fs:seek(self.fds[fd], whence, offset)
+end
+function node:close(fd)
+if self.fds[fd] then
+self.fs:close(self.fds[fd])
+end
+end
+function node:unlink(path)
+self.fs.remove(path)
+end
+k.state.fs_types.managed = {
+create = function(fsnode)
+return setmetatable({fs = fsnode, }, {__index = node})
+end
+}
 local modes = k.common.fsmodes
 local checks = {
 r = {modes.owner_r, modes.group_r, modes.other_r},
@@ -1056,28 +1160,6 @@ end
 k.common.ramfs = _ramfs
 k.state.sysfs = k.common.ramfs.new("sysfs")
 k.state.mount_sources.sysfs = k.state.sysfs
-local procfs = k.common.ramfs.new("procfs")
-k.state.procfs = procfs
-k.state.mount_sources.procfs = procfs
-function procfs.registerStaticFile(path, data)
-local ent = procfs:_create(path, k.common.fsmodes.f_regular)
-ent.writer = function() end
-ent.data = k.state.cmdline
-end
-local function mkdblwrap(func)
-return function(n)
-return function(...)
-return func(n, ...)
-end
-end
-end
-function procfs.registerDynamicFile(path, reader, writer)
-local ent = procfs:_create(path, k.common.fsmodes.f_regular)
-ent.reader = mkdblwrap(reader)
-ent.writer = mkdblwrap(writer)
-end
-k.state.devfs = k.common.ramfs.new("devfs")
-k.state.mount_sources.devfs = k.state.devfs
 local magic = 0x43796e6f
 local flags = {
 lua53 = 0x1,

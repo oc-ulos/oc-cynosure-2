@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+--#include "src/ramfs.lua"
 do
   k.state.devfs = k.common.ramfs.new("devfs")
   k.state.mount_sources.devfs = k.state.devfs

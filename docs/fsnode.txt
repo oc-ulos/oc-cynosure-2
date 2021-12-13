@@ -5,6 +5,8 @@ This document describes the functions required of a Cynosure-compatible filesyst
 
 See `docs/filemodes.txt` for details on the `mode` argument that some functions accept.
 
+See `docs/internal_api.txt` under the `Filesystems` section for details on registering your filesystem with the kernel.
+
 node:open(file:string, flags:table[, mode:number]): fd:number
   This function shall open the specified `file` in accordance with the specified `flags`.  It shall return a numeric file descriptor, which does not have to be unique except to the filesystem node to which it belongs.  If the file does not exist, but its parent directory does, then the file must be created.
 

@@ -16,6 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
+--#include "src/ramfs.lua"
 do
   local procfs = k.common.ramfs.new("procfs")
   k.state.procfs = procfs

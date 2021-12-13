@@ -27,9 +27,9 @@ _G.k = { state = {}, common = {} }
 --#include "src/scheduler/main.lua"
 --#include "src/vfs/main.lua"
 --#include "src/permissions.lua"
---#include "src/ramfs.lua"
---#include "src/sysfs/main.lua"
---#include "src/procfs/main.lua"
---#include "src/devfs/main.lua"
+--@[{os.getenv('KUSE_SOFTWARE_TMPFS') == 'y' and '#include "src/ramfs.lua"' or ''}]
+--@[{os.getenv('KINCLUDE_SYSFS') == 'y' and '#include "src/sysfs/main.lua"' or ''}]
+--@[{os.getenv('KINCLUDE_PROCFS') == 'y' and '#include "src/procfs/main.lua"' or ''}]
+--@[{os.getenv('KINCLUDE_DEVFS') == 'y' and '#include "src/devfs/main.lua"' or ''}]
 --#include "src/exec/main.lua"
 while true do k.pullSignal() end

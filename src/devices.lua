@@ -1,5 +1,5 @@
 --[[
-    Cynosure's /sys file system.
+    Device management as an abstraction over components.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,8 +16,17 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
---#include "src/ramfs.lua"
+-- base API
 do
-  k.state.sysfs = k.common.ramfs.new("sysfs")
-  k.state.mount_sources.sysfs = k.state.sysfs
+  k.state.devsearchers = {}
+  function k.lookup_device(node)
+    for k, v in pairs(k.state.devsearchers) do
+      if v.matches(node) then
+        return v.setup(node)
+      end
+    end
+    return nil, k.errno.ENXIO
+  end
 end
+
+--#include "src/platform/@[{os.getenv('KPLATFORM') or 'oc'}]/devices.lua"

@@ -187,4 +187,10 @@ do
   function node:unlink(path)
     self.fs.remove(path)
   end
+
+  k.state.fs_types.managed = {
+    create = function(fsnode)
+      return setmetatable({fs = fsnode, }, {__index = node})
+    end
+  }
 end

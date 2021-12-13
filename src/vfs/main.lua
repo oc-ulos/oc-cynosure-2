@@ -300,6 +300,7 @@ do
   end
 
   k.state.mount_sources = {}
+  k.state.fs_types = {}
   function k.syscall.mount(source, target, fstype, mountflags, fsopts)
     checkArg(1, source, "string")
     checkArg(2, target, "string")
@@ -333,6 +334,18 @@ do
         end
         
         source = _source
+      elseif k.state.fs_types[fstype] then
+        local node, err = k.lookup_device(source)
+        if not node then
+          return nil, err
+        end
+        local _source, err = k.state.fs_types[fstype].create(node)
+        if not _source then
+          return nil, err
+        end
+        source = _source
+      else
+        return nil, k.errno.EINVAL
       end
 
       if mounts[target] then
