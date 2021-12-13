@@ -73,11 +73,11 @@ do
     end
 
     parent.children[name] = {
-      mode = ftmode |
-             k.common.fsmodes.owner_r |
-             k.common.fsmodes.owner_w |
-             k.common.fsmodes.group_r |
-             k.common.fsmodes.other_r,
+      mode = bit32.bor(ftmode,
+             k.common.fsmodes.owner_r,
+             k.common.fsmodes.owner_w,
+             k.common.fsmodes.group_r,
+             k.common.fsmodes.other_r),
       uid = k.syscall.getuid() or 0,
       gid = k.syscall.getgid() or 0,
       ctime = os.time(),
@@ -217,7 +217,7 @@ do
   function _ramfs:mkdir(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number")
-    return self:_create(path, mode | k.common.fsmodes.f_directory)
+    return self:_create(path, bit32.bor(mode, k.common.fsmodes.f_directory))
   end
 
   function _ramfs:link(old, new)
