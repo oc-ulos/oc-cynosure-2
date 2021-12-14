@@ -8,7 +8,7 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "0587dd3"
+build_rev = "218bc52"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
@@ -513,7 +513,185 @@ k.shutdown()
 end
 end
 k.log(k.L_INFO, "vfs/main")
+k.log(k.L_INFO, "buffer")
 do
+local buffer = {}
+local bufsize = k.cmdline["io.bufsize"] or 512
+function buffer:readline()
+if self.bufmode == "none" then
+if self.stream.readline then
+if self.call == "." then return self.stream.readline()
+else return self.stream:readline() end
+else
+local dat = ""
+
+        repeat
+local n = self.stream:read(1) dat = dat .. (n or "")
+until n == "\n" or not n
+
+        return dat
+end
+
+    else
+
+      while not self.rbuf:match("\n") do
+local chunk
+if self.call == "." then chunk = self.stream.read(bufsize)
+else chunk = self.stream:read(bufsize) end
+if not chunk then break end
+self.rbuf = self.rbuf .. chunk
+end
+local n = self.rbuf:find("\n") or #self.rbuf
+
+      local dat = self.rbuf:sub(1, n)
+self.rbuf = self.rbuf:sub(n + 1)
+
+      return dat
+end
+end
+function buffer:readnum()
+local dat = ""
+if self.bufmode == "none" then
+error(
+"bad argument to 'read' (format 'n' not supported in unbuffered mode)",
+0)
+end
+
+    local breakonwhitespace = false
+while true do
+local ch = self:readn(1)
+if not ch then
+break
+end
+if ch:match("[%s]") then
+if breakonwhitespace then
+self.rbuf = ch .. self.rbuf
+break
+end
+else
+breakonwhitespace = true
+
+        if not tonumber(dat .. ch .. "0") then
+self.rbuf = ch .. self.rbuf
+break
+end
+dat = dat .. ch
+end
+end
+return tonumber(dat)
+end
+function buffer:readn(n)
+while #self.rbuf < n do
+local chunk
+
+      if self.call == "." then chunk = self.stream.read(n)
+else chunk = self.stream:read(n) end
+if not chunk then break end
+
+      self.rbuf = self.rbuf .. chunk
+n = n - #chunk
+end
+local data = self.rbuf:sub(1, n)
+self.rbuf = self.rbuf:sub(n + 1)
+return data
+end
+function buffer:readfmt(fmt)
+if type(fmt) == "number" then
+return self:readn(fmt)
+else
+fmt = fmt:gsub("%*", "")
+if fmt == "a" then        return self:readn(math.huge)
+elseif fmt == "l" then        local line = self:readline()
+return line:gsub("\n$", "")
+elseif fmt == "L" then        return self:readline()
+elseif fmt == "n" then        return self:readnum()
+else        error("bad argument to 'read' (format '"..fmt.."' not supported)", 0)
+end
+end
+end
+local function chvarargs(...)
+local args = table.pack(...)
+for i=1, args.n, 1 do
+checkArg(i, args[i], "string", "number")
+end
+return args
+end
+function buffer:read(...)
+local args = chvarargs(...)
+local ret = {}
+for i=1, args.n, 1 do
+ret[#ret+1] = self:readfmt(args[i])
+end
+return table.unpack(ret, 1, args.n)
+end
+function buffer:write(...)
+local args = chvarargs(...)
+for i=1, args.n, 1 do
+self.wbuf = self.wbuf .. tostring(args[i])
+end
+local dat
+if self.bufmode == "full" then
+if #self.wbuf <= bufsize then
+return self
+end
+
+      dat = self.wbuf
+self.wbuf = ""
+
+    elseif self.bufmode == "line" then
+local lastnl = #self.wbuf - (self.wbuf:reverse():find("\n") or 0)
+
+      dat = self.wbuf:sub(1, lastnl)
+self.wbuf = self.wbuf:sub(lastnl + 1)
+
+    else
+dat = self.wbuf
+self.wbuf = ""
+end
+if self.call == "." then self.stream.write(dat)
+else self.stream:write(dat) end
+return self
+end
+function buffer:seek(whence, offset)
+end
+function buffer:flush()
+end
+function buffer:close()
+end
+function k.common.fncreatebuffer(read, write, seek, flush, close, mode)
+checkArg(1, read, "function")
+checkArg(2, write, "function")
+checkArg(3, seek, "function")
+checkArg(4, flush, "function")
+checkArg(5, close, "function")
+checkArg(6, mode, "string")
+return setmetatable({
+stream = {
+read = read,
+write = write,
+seek = seek,
+flush = flush,
+close = close
+},
+call = ".",
+mode = k.common.charize(mode),
+rbuf = "",
+wbuf = "",
+bufmode = "full"
+}, {__index = buffer})
+end
+function k.common.screatebuffer(stream, mode)
+checkArg(1, stream, "table")
+checkArg(2, mode, "string")
+return setmetatable({
+stream = stream,
+call = ":",
+mode = k.common.charize(mode),
+rbuf = "",
+wbuf = "",
+bufmode = "full"
+}, {__index = buffer})
+end
 k.common.fsmodes = {
 f_socket = 0xC000,
 f_symlink = 0xA000,
@@ -570,6 +748,21 @@ else
 return k.state.cpid
 end
 end
+local fshand = {
+read = function(self, n)
+return self.node:read(self.fd, n)
+end,
+write = function(self, dat)
+return self.node:write(self.fd, dat)
+end,
+seek = function(self, whence, offset)
+return self.node:seek(self.fd, whence, offset)
+end,
+flush = function() end,
+close = function(self)
+return self.node:close(self.fd)
+end
+}
 k.common.split_path = split_path
 k.common.clean_path = clean_path
 local find_node
@@ -647,7 +840,9 @@ if not fd then
 return nil, err
 end
 local n = #fds + 1
-fds[n] = {fd = fd, node = parent}
+fds[n] = k.common.screatebuffer(
+setmetatable({fd = fd, node = parent, references = 1},
+{__index = fshand}), mode)
 return n
 else
 return nil, rpath
@@ -658,7 +853,9 @@ if not fd then
 return nil, err
 end
 local n = #fds + 1
-fds[n] = {fd = fd, node = node, references = {}}
+fds[n] = k.common.screatebuffer(
+setmetatable({fd = fd, node = node, references = 1}, {__index = fshand}),
+mode)
 return n
 end
 function k.syscall.read(fd, count)
@@ -670,7 +867,7 @@ return nil, k.errno.EBADF
 end
 local read = ""
 for chunk in function() return
-(count > 0 and fds[fd].node:read(fds[fd].fd, count)) end do
+(count > 0 and fds[fd]:read(count)) end do
 count = count - #chunk
 read = read .. chunk
 end
@@ -683,7 +880,7 @@ local fds = k.state.processes[fsgetpid()].fds
 if not fds[fd] then
 return nil, k.errno.EBADF
 end
-return fds[fd].node:write(fds[fd].fd, data)
+return fds[fd]:write(data)
 end
 function k.syscall.seek(fd, whence, offset)
 checkArg(1, fd, "number")
@@ -696,7 +893,7 @@ end
 if whence == "set" or whence == "cur" or whence == "end" then
 return nil, k.errno.EINVAL
 end
-return fds[fd].node:seek(fds[fd].fd, whence, offset)
+return fds[fd]:seek(whence, offset)
 end
 function k.syscall.dup(fd)
 checkArg(1, fd, "number")
@@ -733,7 +930,7 @@ return nil, k.errno.EBADF
 end
 fds[fd].references = fds[fd].references - 1
 if fds[fd].references == 0 then
-fds[fd].node:close(fds[fd].fd)
+fds[fd]:close()
 end
 fds[fd] = nil
 return true
@@ -1296,7 +1493,7 @@ do
 k.state.devfs = k.common.ramfs.new("devfs")
 k.state.mount_sources.devfs = k.state.devfs
 end
-k.log(k.L_INFO, "exec/cex")
+k.log(k.L_INFO, "exec/cyx")
 do
 local magic = 0x43796e6f
 local flags = {
@@ -1313,7 +1510,7 @@ boot = 0x4,
 exec = 0x8,
 library = 0x10,
 }
-local function parse_cex(fd)
+local function parse_cyx(fd)
 local header = k.syscall.read(fd, 4)
 if header ~= "onyC" then
 return nil, k.errno.ENOEXEC
@@ -1355,19 +1552,19 @@ k.syscall.close(fd)
 return load(str)
 end
 end
-function k.load_cex(fd)
-return parse_cex(fd)
+function k.load_cyx(fd)
+return parse_cyx(fd)
 end
 end
 k.log(k.L_INFO, "exec/binfmt")
 do
 local procfs = k.state.procfs
 k.state.binfmt = {
-cex = {
-type = "CEX",
+cyx = {
+type = "CYX",
 magic = "onyC",
 offset = 0,
-interpreter = k.load_cex,
+interpreter = k.load_cyx,
 flags = {P = true, C = true, O = true}
 }
 }
@@ -1464,8 +1661,17 @@ do
 local _tty = {}
 function _tty:write(str)
 checkArg(1, str, "string")
+self.wbuf = self.wbuf .. str
+repeat
+local idx = self.wbuf:find("\n")
+if idx then
+local chunk = self.wbuf:sub(1, idx)
+self.wbuf = self.wbuf:sub(#chunk + 1)
+self:internalwrite(chunk)
 end
-function k.opentty()
+until not idx
+end
+function k.opentty(gpu, screen)
 end
 end
 k.log(k.L_INFO, "entering idle loop")

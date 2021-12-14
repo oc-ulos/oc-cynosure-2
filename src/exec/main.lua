@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
---#include "src/exec/cex.lua"
+--@[{(function() for exec in os.getenv("BUILTIN_EXECS"):gmatch("[^,]+") do print(exec); proc("src/exec/"..exec..".lua") end end)()}]
 --#include "src/exec/binfmt.lua"
 
 k.log(k.L_INFO, "exec/main")

@@ -23,8 +23,17 @@ do
 
   function _tty:write(str)
     checkArg(1, str, "string")
+    self.wbuf = self.wbuf .. str
+    repeat
+      local idx = self.wbuf:find("\n")
+      if idx then
+        local chunk = self.wbuf:sub(1, idx)
+        self.wbuf = self.wbuf:sub(#chunk + 1)
+        self:internalwrite(chunk)
+      end
+    until not idx
   end
 
-  function k.opentty()
+  function k.opentty(gpu, screen)
   end
 end

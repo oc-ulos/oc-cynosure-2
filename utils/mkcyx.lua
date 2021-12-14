@@ -1,6 +1,6 @@
 #!/usr/bin/env lua
 --[[
-    Create a CEX file from a Lua script.
+    Create a CYX file from a Lua script.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -20,8 +20,8 @@
 local args = table.pack(...)
 
 local usage = [[
-usage: mkcex [options] INFILE OUTFILE
-Create a CEX file from a Lua script, following the
+usage: mkcyx [options] INFILE OUTFILE
+Create a CYX file from a Lua script, following the
 provided options.
   -link FILE    Repeat as many times as necessary to link to a file.
   -lua53        Requires Lua 5.3
@@ -53,7 +53,7 @@ for i, arg in ipairs(args) do
     if arg:sub(1,1) == "-" then
       if pflags[arg:sub(2)] then
         if arg == "-static" then
-          io.stderr:write("mkcex: static linking is not possible\n")
+          io.stderr:write("mkcyx: static linking is not possible\n")
           os.exit(1)
         end
         flags = flags | pflags[arg:sub(2)]
@@ -63,7 +63,7 @@ for i, arg in ipairs(args) do
         io.stderr:write(usage)
         os.exit(0)
       else
-        io.stderr:write("mkcex: invalid option '", arg:sub(2), "'\n")
+        io.stderr:write("mkcyx: invalid option '", arg:sub(2), "'\n")
         os.exit(1)
       end
     else
@@ -80,7 +80,7 @@ end
 
 local header = string.pack("<I4I1I1", magic, flags, #link)
 for i=1, #link, 1 do
-  io.stderr:write("mkcex: linking to ", link[i], "\n")
+  io.stderr:write("mkcyx: linking to ", link[i], "\n")
   header = header .. string.pack("<I1", #link[i])
             .. string.pack("<c"..#link[i], link[i])
 end

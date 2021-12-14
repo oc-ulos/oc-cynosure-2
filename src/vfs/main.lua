@@ -18,6 +18,8 @@
 
 k.log(k.L_INFO, "vfs/main")
 
+--#include "src/buffer.lua"
+
 do
   k.common.fsmodes = {
     f_socket = 0xC000,
@@ -84,6 +86,22 @@ do
       return k.state.cpid
     end
   end
+
+  local fshand = {
+    read = function(self, n)
+      return self.node:read(self.fd, n)
+    end,
+    write = function(self, dat)
+      return self.node:write(self.fd, dat)
+    end,
+    seek = function(self, whence, offset)
+      return self.node:seek(self.fd, whence, offset)
+    end,
+    flush = function() end,
+    close = function(self)
+      return self.node:close(self.fd)
+    end
+  }
 
   k.common.split_path = split_path
   k.common.clean_path = clean_path
@@ -187,7 +205,9 @@ do
           return nil, err
         end
         local n = #fds + 1
-        fds[n] = {fd = fd, node = parent}
+        fds[n] = k.common.screatebuffer(
+          setmetatable({fd = fd, node = parent, references = 1},
+          {__index = fshand}), mode)
         return n
       else
         return nil, rpath
@@ -198,7 +218,9 @@ do
       return nil, err
     end
     local n = #fds + 1
-    fds[n] = {fd = fd, node = node, references = {}}
+    fds[n] = k.common.screatebuffer(
+      setmetatable({fd = fd, node = node, references = 1}, {__index = fshand}),
+      mode)
     return n
   end
 
@@ -216,7 +238,7 @@ do
     end
     local read = ""
     for chunk in function() return
-        (count > 0 and fds[fd].node:read(fds[fd].fd, count)) end do
+        (count > 0 and fds[fd]:read(count)) end do
       count = count - #chunk
       read = read .. chunk
     end
@@ -232,7 +254,7 @@ do
     if not fds[fd] then
       return nil, k.errno.EBADF
     end
-    return fds[fd].node:write(fds[fd].fd, data)
+    return fds[fd]:write(data)
   end
 
   function k.syscall.seek(fd, whence, offset)
@@ -246,7 +268,7 @@ do
     if whence == "set" or whence == "cur" or whence == "end" then
       return nil, k.errno.EINVAL
     end
-    return fds[fd].node:seek(fds[fd].fd, whence, offset)
+    return fds[fd]:seek(whence, offset)
   end
 
   function k.syscall.dup(fd)
@@ -286,7 +308,7 @@ do
     end
     fds[fd].references = fds[fd].references - 1
     if fds[fd].references == 0 then
-      fds[fd].node:close(fds[fd].fd)
+      fds[fd]:close()
     end
     fds[fd] = nil
     return true

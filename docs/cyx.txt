@@ -1,4 +1,4 @@
-CEX: The Cynosure Executable
+CYX: the CYnosure eXecutable
 ============================
 
 Numbers are little-endian.
@@ -34,12 +34,12 @@ for each link:
   
   Otherwise, the first linked library must be an
   absolute path to an interpreter (e.g.
-  /lib/ld-cex.so).  Note that this requirement is
+  /lib/ld-cyx.so).  Note that this requirement is
   currently only enforced under Cynosure 2, but is
   good practice and should at least be supported
-  by CEX loaders.
+  by CYX loaders.
 
 N bytes: data
 
 
-The CEX interpreter under Cynosure 2.0 must take a file descriptor as its first argument.  This file descriptor is to be used to read the executable file data, and closed.
+The CYX interpreter under Cynosure 2.0 must take a file descriptor as its first argument.  This file descriptor is to be used to read the executable file data, and closed.

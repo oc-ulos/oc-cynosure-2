@@ -24,4 +24,10 @@ do
     str = str:sub(n + 1)
     return ret, str
   end
+
+  function k.common.charize(str)
+    local c = {}
+    for _c in str:gmatch(".") do c[#c+1] = _c end
+    return c
+  end
 end

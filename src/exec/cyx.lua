@@ -18,7 +18,7 @@
 
   ]]--
 
-k.log(k.L_INFO, "exec/cex")
+k.log(k.L_INFO, "exec/cyx")
 
 do
   local magic = 0x43796e6f
@@ -38,7 +38,7 @@ do
     library = 0x10,
   }
 
-  local function parse_cex(fd)
+  local function parse_cyx(fd)
     local header = k.syscall.read(fd, 4)
     if header ~= "onyC" then
       return nil, k.errno.ENOEXEC
@@ -95,7 +95,7 @@ do
     end
   end
 
-  function k.load_cex(fd)
-    return parse_cex(fd)
+  function k.load_cyx(fd)
+    return parse_cyx(fd)
   end
 end

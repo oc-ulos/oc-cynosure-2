@@ -21,11 +21,11 @@ k.log(k.L_INFO, "exec/binfmt")
 do
   local procfs = k.state.procfs
   k.state.binfmt = {
-    cex = {
-      type = "CEX",
+    cyx = {
+      type = "CYX",
       magic = "onyC",
       offset = 0,
-      interpreter = k.load_cex,
+      interpreter = k.load_cyx,
       flags = {P = true, C = true, O = true}
     }
   }
