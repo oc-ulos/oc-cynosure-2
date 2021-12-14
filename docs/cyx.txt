@@ -12,8 +12,8 @@ Numbers are little-endian.
   0x8   | is executable
   0x10  | is library
   0x20  | big-endian (otherwise little-endian)
-  0x40  | unused
-  0x80  | unused
+  0x40  | has no interpreter
+  0x80  | code is lzss-compressed
 1 byte: OS ID:
   0   | Cynosure 2.0
   1   | OpenOS

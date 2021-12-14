@@ -21,9 +21,9 @@ Supported flags:
 | `0x10` | `CEX_LIBRARY` | File is a library (can be linked to)  |
 | `0x20` | `CEX_BIGEND`  | Numbers are big-endian                |
 | `0x40` | `CEX_NOINTERP`| File has no interpreter               |
-| `0x80` | unused        | This flag has no use                  |
+| `0x80` | `CEX_COMPRESS`| Data is compressed with LZSS          |
 
-The `link` structure occurs for every link in the file, directly after the header.  If flag `CYX_NOINTERP` is unset, the first link in the file is an absolute path to the interpreter.
+The `link` structure occurs for every link in the file, directly after the header.  If flag `CYX_NOINTERP` is **not** set, the first link in the file is an absolute path to the interpreter.
 ```c
 struct link {
   char nlen;
