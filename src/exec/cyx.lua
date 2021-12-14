@@ -1,6 +1,6 @@
 --[[
     
-    A loader for the Cynosure Executable Format.
+    A loader for the CYnosure eXecutable (CYX) format.
     Copyright (C) 2021 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -38,26 +38,25 @@ do
     library = 0x10,
   }
 
+  local accepted = {[0] = true, [5] = true}
+
   local function parse_cyx(fd)
     local header = k.syscall.read(fd, 4)
     if header ~= "onyC" then
       return nil, k.errno.ENOEXEC
     end
 
-    local flags = k.common.pop(fd, 1)
-    flags = flags:byte()
-    local osid = k.common.pop(fd, 1)
-    osid = osid:byte()
+    local version = k.syscall.read(fd, 1):byte()
+    local flags = k.syscall.read(fd, 1):byte()
+    local osid = k.syscall.read(fd, 1):byte()
 
-    if osid ~= 0 and isod ~= 255 then
+    if not accepted[osid] then
       return nil, k.errno.ENOEXEC
     end
 
     local _
     if flags & flags.static == 0 then
-      local nlink
-      nlink = k.syscall.read(fd, 1)
-      nlink = nlink:byte()
+      local nlink = k.syscall.read(fd, 1):byte()
       if nlink == 0 then
         -- no interpreter!
         return nil, k.errno.ENOEXEC
@@ -85,10 +84,13 @@ do
         --   4) Pass this process's new file descriptor to the interpreter, for
         --      use in further parsing the executable file.  Also pass any
         --      command-line arguments.
-        return func(tonumber(fd), ...)
+        return func(fd, ...)
       end
     else
-      k.syscall.read(fd, 3)
+      local nlink = k.syscall.read(fd, 1):byte()
+      if nlink > 0 then
+        return nil, k.errno.ENOEXEC
+      end
       local str = k.syscall.read(fd, math.huge)
       k.syscall.close(fd)
       return load(str)

@@ -8,7 +8,7 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "218bc52"
+build_rev = "85d6466"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
@@ -1510,23 +1510,21 @@ boot = 0x4,
 exec = 0x8,
 library = 0x10,
 }
+local accepted = {[0] = true, [5] = true}
 local function parse_cyx(fd)
 local header = k.syscall.read(fd, 4)
 if header ~= "onyC" then
 return nil, k.errno.ENOEXEC
 end
-local flags = k.common.pop(fd, 1)
-flags = flags:byte()
-local osid = k.common.pop(fd, 1)
-osid = osid:byte()
-if osid ~= 0 and isod ~= 255 then
+local version = k.syscall.read(fd, 1):byte()
+local flags = k.syscall.read(fd, 1):byte()
+local osid = k.syscall.read(fd, 1):byte()
+if not accepted[osid] then
 return nil, k.errno.ENOEXEC
 end
 local _
 if flags & flags.static == 0 then
-local nlink
-nlink = k.syscall.read(fd, 1)
-nlink = nlink:byte()
+local nlink = k.syscall.read(fd, 1):byte()
 if nlink == 0 then
 return nil, k.errno.ENOEXEC
 end
@@ -1543,10 +1541,13 @@ local fds = k.state.processes[k.state.cpid].fds
 local n = #fds + 1
 fds[n] = k.state.processes[0].fds[fd]
 k.state.processes[0].fds[fd] = nil
-return func(tonumber(fd), ...)
+return func(fd, ...)
 end
 else
-k.syscall.read(fd, 3)
+local nlink = k.syscall.read(fd, 1):byte()
+if nlink > 0 then
+return nil, k.errno.ENOEXEC
+end
 local str = k.syscall.read(fd, math.huge)
 k.syscall.close(fd)
 return load(str)

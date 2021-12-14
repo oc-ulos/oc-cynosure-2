@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
-k.log(k.L_INFO, "src/ramfs")
+k.log(k.L_INFO, "ramfs")
 
 do
   local _ramfs = {}
