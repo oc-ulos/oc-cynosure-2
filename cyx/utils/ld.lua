@@ -60,6 +60,7 @@ read_libdata = function(file)
     os.exit(1)
   end
   assert(handle:read(4) == "onyC", "invalid CYX signature for " .. file)
+  local version = handle:read(1):byte()
   local flags = handle:read(1):byte()
   handle:read(1) -- we don't use OSID
   local nlinks = handle:read(1):byte()
@@ -151,7 +152,7 @@ if flags & 0x4 ~= 0 and not static then
   static = true
 end
 
-local header = string.pack("<I4I1I1I1", _MAGIC, flags, 255, (static and 0
+local header = string.pack("<I4I1I1I1I1", _MAGIC, 0, flags, 255, (static and 0
   or #to_link))
 
 local data = ""
@@ -175,7 +176,6 @@ for i, file in ipairs(to_link) do
   end
   if static then
     local _data = read_libdata(path)
-    local size = #_data
     data = data .. "local " .. file .. " = assert(load([========[" .. _data ..
       "]========], \"=" .. file .. "\", \"t\", _G))()\n"
   end

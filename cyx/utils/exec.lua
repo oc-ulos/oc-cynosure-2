@@ -58,8 +58,10 @@ load_cyx = function(file, e)
     io.stderr:write("exec.cyx: ", file, ": file has invalid magic number\n")
     os.exit(1)
   end
+
+  local version = data:sub(5,5):byte()
   
-  local flags = data:sub(5,5):byte()
+  local flags = data:sub(6,6):byte()
   
   if flags & 0x1 ~= 0 and _VERSION < "Lua 5.3" then
     io.stderr:write("exec.cyx: executable requires Lua 5.3 or newer\n")
@@ -83,9 +85,9 @@ load_cyx = function(file, e)
     os.exit(1)
   end
 
-  local osid = data:sub(6,6):byte()
-  local nlinks = data:sub(7,7):byte()
-  data = data:sub(8)
+  local osid = data:sub(7,7):byte()
+  local nlinks = data:sub(8,8):byte()
+  data = data:sub(9)
   if nlinks == 0 then
     return data
   else

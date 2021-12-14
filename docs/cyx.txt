@@ -4,6 +4,7 @@ CYX: the CYnosure eXecutable
 Numbers are little-endian.
 
 4 bytes: magic number 0x43796e6f
+1 byte: executable version (this document describes version 0)
 1 byte: flags:
   0x1   | lua 5.3 only
   0x2   | static linked (libraries bundled)?
@@ -28,7 +29,6 @@ Numbers are little-endian.
 for each link:
   1 byte: length of library name
   N bytes: library name
-2 bytes: length of data
   In the case of static linking, libraries should
   be copied into the data section at link time.
   
