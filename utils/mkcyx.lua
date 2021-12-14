@@ -23,16 +23,34 @@ local usage = [[
 usage: mkcyx [options] INFILE OUTFILE
 Create a CYX file from a Lua script, following the
 provided options.
-  -link FILE    Repeat as many times as necessary to link to a file.
+  -link FILE    Link to FILE.  Can be repeated as
+                many times as necessary.
   -lua53        Requires Lua 5.3
   -bootable     Is bootable
   -executable   Is executable
   -library      Usable as a library
+  -osid ID      Set OSID
 
 Copyright (C) 2021 Ocawesome101 under the GPLv3.
 ]]
 
 local magic = 0x43796e6f
+local osid = 0
+
+local osids = {
+  none = 0,
+  generic = 0,
+  openos = 1,
+  plan9k = 2,
+  psychos = 3,
+  minios = 4,
+  cynosure = 5,
+  ulos = 5,
+  tsuki = 6,
+  fuchas = 69,
+  bios = 127,
+  linux = 255
+}
 
 local pflags = {
   lua53 = 0x1,
@@ -47,8 +65,15 @@ local link = {}
 local infile, outfile
 local ignext = false
 for i, arg in ipairs(args) do
-  if ignext then
+  if ignext == 1 then
     link[#link+1] = arg
+  elseif ignext == 2 then
+    arg = osids[arg] or tonumber(arg)
+    if not arg then
+      io.stderr:write("mkcyx: bad argument for `-osid'\n")
+      os.exit(1)
+    end
+    osid = osids[arg] or tonumber(arg)
   else
     if arg:sub(1,1) == "-" then
       if pflags[arg:sub(2)] then
@@ -58,7 +83,9 @@ for i, arg in ipairs(args) do
         end
         flags = flags | pflags[arg:sub(2)]
       elseif arg == "-link" then
-        ignext = true
+        ignext = 1
+      elseif arg == "-osid" then
+        ignext = 2
       elseif arg == "-help" then
         io.stderr:write(usage)
         os.exit(0)
@@ -78,14 +105,13 @@ if not (infile and outfile) then
   os.exit(1)
 end
 
-local header = string.pack("<I4I1I1", magic, flags, #link)
+local header = string.pack("<I4I1I1I1I1", magic, 0, flags, osid, #link)
 for i=1, #link, 1 do
   io.stderr:write("mkcyx: linking to ", link[i], "\n")
-  header = header .. string.pack("<I1", #link[i])
-            .. string.pack("<c"..#link[i], link[i])
+  header = header .. string.pack("<s1", link[i])
 end
 
 local data = assert(io.open(infile, "r")):read("a")
-header = header .. string.pack("<I2", #data)
+--header = header .. string.pack("<I2", #data)
 
 assert(io.open(outfile, "w")):write(header, data):close()
