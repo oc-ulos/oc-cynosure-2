@@ -237,12 +237,33 @@ do
 
   -- CSI g not implemented
 
+  local function hl(set, args)
+    for i=1, #args, 1 do
+      local n = args[i]
+      -- 1 - cursor keys send ESC O prefix rather than ESC [
+      if n == 1 then
+      -- 3 - display control characters
+      elseif n == 3 then
+      -- 9 - X10 mouse reporting
+      elseif n == 9 then
+      -- 20 - automatically add CR after LF, VT or FF
+      elseif n == 20 then
+      -- 25 - make cursor visible
+      elseif n == 25 then
+      -- 1000 - X11 mouse reporting
+      elseif n == 1000 then
+      end
+    end
+  end
+  
   -- SM - set mode
-  function commands:h()
+  function commands:h(args)
+    hl(true, args)
   end
   
   -- RM - reset mode
   function commands:l()
+    hl(false, args)
   end
 
   -- SGR - set attributes
@@ -255,10 +276,29 @@ do
       -- underscore (4) not implemented
       -- blink (5) not implemented
       -- reverse video
-      if n == 7 then
+      if n == 7 or n == 27 then
         self.fg, self.bg = self.bg, self.fg
         self.scr.setForeground(self.fg)
         self.scr.setBackground(self.bg)
+      -- 10, 11, 12, 21, 22, 25 not implemented
+      elseif n > 29 and n < 38 then
+        self.fg = colors[n - 29]
+        self.scr.setForeground(self.fg)
+      elseif n > 89 and n < 98 then
+        self.fg = colors[n - 81]
+        self.scr.setForeground(self.fg)
+      elseif n > 39 and n < 48 then
+        self.bg = colors[n - 39]
+        self.scr.setForeground(self.bg)
+      elseif n > 99 and n < 108 then
+        self.bg = colors[n - 91]
+        self.scr.setForeground(self.bg)
+      elseif n == 39 then
+        self.fg = colors[8]
+        self.scr.setForeground(self.fg)
+      elseif n == 49 then
+        self.bg = colors[1]
+        self.scr.setForeground(self.bg)
       end
     end
   end
@@ -266,7 +306,9 @@ do
   -- DSR - status report
   function commands:n(args)
     local n = args[1] or 0
-    if n == 6 then
+    if n == 5 then
+      self.rbuf = self.rbuf .. "\27[0n"
+    elseif n == 6 then
       self.rbuf = self.rbuf .. string.format("\27[%d;%dR", self.cy, self.cx)
     end
   end
