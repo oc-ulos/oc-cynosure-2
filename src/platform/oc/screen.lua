@@ -33,9 +33,37 @@ do
     for addr in component.list("gpu") do
       if not gpus[addr] then
         gpu = addr
+        break
       end
     end
 
+    for addr in component.list("screen") do
+      if not screens[addr] then
+        screen = addr
+        break
+      end
+    end
 
+    gpu = component.proxy(gpu)
+    gpu.bind(screen)
+
+    function gpu.scroll(n, top, bot)
+      if n == 0 then return end
+      local w, h = gpu.getResolution()
+      gpu.copy(1, top, w, bot - top + 1, 0, -n)
+      if n > 0 then
+        gpu.fill(1, bot - n, w, n, " ")
+      elseif n < 0 then
+        gpu.fill(1, top, w, n, " ")
+      end
+    end
+    
+    function gpu.setPalette(colors)
+      for i=1, math.min(16, #colors), 1 do
+        gpu.setPaletteColor(i-1, colors[i])
+      end
+    end
+
+    return gpu
   end
 end

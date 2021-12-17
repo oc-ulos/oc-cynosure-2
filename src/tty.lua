@@ -430,7 +430,7 @@ do
     if dc then togglecursor(self) end
   end
 
-  -- screen is a platform-non-specific screen object
+  -- `screen' is a screen object as described in `docs/screen.txt'
   function k.opentty(screen)
     local w, h = screen.getResolution()
     screen.setPalette(colors)
@@ -438,7 +438,10 @@ do
       scr = screen,
       w = w, h = h, cx = 1, cy = 1,
       scrolltop = 1, scrollbot = h,
-      rbuf = "", wbuf = ""
+      rbuf = "", wbuf = "",
+      fg = colors[1], bg = colors[8]
     }
+    setmetatable(new, {__index = _tty})
+    return new
   end
 end
