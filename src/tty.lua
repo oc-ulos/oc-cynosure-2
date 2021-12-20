@@ -242,16 +242,22 @@ do
       local n = args[i]
       -- 1 - cursor keys send ESC O prefix rather than ESC [
       if n == 1 then
+        self.altcursor = set
       -- 3 - display control characters
       elseif n == 3 then
+        self.showctrl = set
       -- 9 - X10 mouse reporting
       elseif n == 9 then
+        self.mousereport = set and 1 or 0
       -- 20 - automatically add CR after LF, VT or FF
       elseif n == 20 then
+        self.autocr = set
       -- 25 - make cursor visible
       elseif n == 25 then
+        self.cursor = set
       -- 1000 - X11 mouse reporting
       elseif n == 1000 then
+        self.mousereport = set and 2 or 0
       end
     end
   end
@@ -440,6 +446,7 @@ do
   end
 
   local function togglecursor(self)
+    if not self.cursor then return end
     local cc, cf, cb = self.scr.get(self.cx, self.cy)
     self.scr.setForeground(cb)
     self.scr.setBackground(cf)
@@ -481,8 +488,27 @@ do
       w = w, h = h, cx = 1, cy = 1,
       scrolltop = 1, scrollbot = h,
       rbuf = "", wbuf = "",
-      fg = colors[1], bg = colors[8]
+      fg = colors[1], bg = colors[8],
+      -- attributes
+      altcursor = false, showctrl = false,
+      mousereport = 0, autocr = false,
+      cursor = true,
     }
+    -- handlers
+    new.khid = k.handle(k.screen.keydown, k.screen.keyhandler(new, screen))
+    if k.screen.keydown ~= k.screen.char then
+      new.chid = k.handle(k.screen.char, k.screen.charhandler(new, screen))
+    end
+
+    --[[
+    function(...)
+      local char, code = k.screen.process(...)
+      if char == k.screen.backspace
+      if char > 30 and char < 127 then
+        new.rbuf = new.rbuf .. string.char(char)
+      end
+    end)
+    --]]
     setmetatable(new, {__index = _tty})
     return new
   end

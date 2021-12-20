@@ -20,6 +20,7 @@ k.log(k.L_INFO, "evstream")
 
 do
   local evstreams = {}
+  local handlers = {}
   local _evs = {}
 
   function _evs.new(wants)
@@ -45,6 +46,12 @@ do
     checkArg(1, tout, "number", "nil")
     local sig = table.pack(ps(tout))
     if sig.n > 0 then
+      -- kernel-level handlers take priority
+      for i, hand in ipairs(handlers) do
+        if hand.sig == sig[1] then
+          hand.call(table.unpack(sig))
+        end
+      end
       for i, evs in pairs(evstreams) do
         if evs.wants[sig[1]] and #evs.queue < 128 then
           table.insert(evs.queue, table.pack(table.unpack(sig)))
@@ -55,4 +62,14 @@ do
   end
 
   k.openevstream = evs.new
+
+  function k.handle(evt, func)
+    local n = #handlers+1
+    handlers[n] = {sig = evt, call = func}
+    return n
+  end
+
+  function k.drop(hid)
+    handlers[hid] = nil
+  end
 end
