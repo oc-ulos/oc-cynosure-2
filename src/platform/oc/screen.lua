@@ -45,6 +45,7 @@ do
     local keyboards = screen.keyboards
     return function(_, addr, char, key)
       if not keyboards[addr] then return end
+      
     end
   end
 

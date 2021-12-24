@@ -41,11 +41,14 @@ do
     return table.remove(self.queue, 1)
   end
 
+  --#include "src/platform/@[{os.getenv('KPLATFORM')or'oc'}]/sigtransform.lua"
+
   local ps = k.pullSignal
   function k.pullSignal(tout)
     checkArg(1, tout, "number", "nil")
     local sig = table.pack(ps(tout))
     if sig.n > 0 then
+      sig = evs_process(sig)
       -- kernel-level handlers take priority
       for i, hand in ipairs(handlers) do
         if hand.sig == sig[1] then
@@ -61,7 +64,7 @@ do
     return sig.n > 0
   end
 
-  k.openevstream = evs.new
+  k.openevstream = _evs.new
 
   function k.handle(evt, func)
     local n = #handlers+1

@@ -434,7 +434,7 @@ do
           elseif css == "]" or css == "?" then
             local func = controllers[csc]
             if func then func(self, args) end
-          elseif css = "#" then -- it is hilarious to me that this exists
+          elseif css == "#" then -- it is hilarious to me that this exists
             self.scr.fill(1, 1, self.w, self.h, "E")
           else
             local func = nocsi[css]

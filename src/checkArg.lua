@@ -26,7 +26,7 @@ do
       if not want then
         return false
       else
-        return have == want or defs[want] == have or check(...)
+        return have == want or check(...)
       end
     end
 

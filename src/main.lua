@@ -33,6 +33,8 @@ _G.k = { state = {}, common = {} }
 --@[{os.getenv('KINCLUDE_PROCFS') == 'y' and '#include "src/procfs/main.lua"' or ''}]
 --@[{os.getenv('KINCLUDE_DEVFS') == 'y' and '#include "src/devfs/main.lua"' or ''}]
 --#include "src/exec/main.lua"
+--#include "src/keymap.lua"
+--#include "src/evstream.lua"
 --#include "src/tty.lua"
 k.log(k.L_INFO, "entering idle loop")
 while true do k.pullSignal() end

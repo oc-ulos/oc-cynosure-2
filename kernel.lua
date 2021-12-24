@@ -8,7 +8,7 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "85d6466"
+build_rev = "6fd399f"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
@@ -114,7 +114,7 @@ local function check(want, ...)
 if not want then
 return false
 else
-return have == want or defs[want] == have or check(...)
+return have == want or check(...)
 end
 end
 if type(n) == "number" then n = string.format("#%d", n)
@@ -1198,7 +1198,7 @@ local level = (info.uid == uid and 1) or (info.gid == gid and 2) or 3
 return info.mode & checks[perm][level] ~= 0
 end
 end
-k.log(k.L_INFO, "src/ramfs")
+k.log(k.L_INFO, "ramfs")
 do
 local _ramfs = {}
 function _ramfs:_resolve(path, parent)
@@ -1657,22 +1657,470 @@ end
 end
 end
 end
+k.log(k.L_INFO, "keymap")
+do
+local keymap = {
+nil,
+"one", "two", "three", "four", "five", "six", "seven", "eight", "nine",
+"zero", "minus", "equals", "backspace", "tab", "q", "w", "e", "r", "t", "y",
+"u", "i", "o", "p", "leftBracket", "rightBracket", "enter", "leftControl",
+"a", "s", "d", "f", "g", "h", "j", "k", "l", "semicolon", "apostrophe",
+"grave", "leftShift", "backslash", "z", "x", "c", "v", "b", "n", "m",
+"comma", "period", "slash", "rightShift", "multiply", "leftAlt", "space",
+"capsLock", "f1", "f2", "f3", "f4", "f5", "f6", "f7", "f8", "f9", "f10",
+"numLock", "scrollLock", "numpad7", "numpad8", "numpad9", "numpadSubtract",
+"numpad4", "numpad5", "numpad6", "numpadAdd", "numpad1", "numpad2", "numpad3",
+"numpad0", "numpadDot", nil, nil, nil, "f11", "f12", nil, nil, nil, nil, nil,
+nil, nil, nil, nil, nil, nil, "f13", "f14", "f15", nil, nil, nil, nil, nil,
+nil, nil, nil, nil, "kana", nil, nil, nil, nil, nil, nil, nil, nil, "convert",
+nil, "noconvert", nil, "yen", nil, nil, nil, nil, nil, nil, nil, nil, nil,
+nil, nil, nil, nil, nil, nil, "numpadEquals", nil, nil, "circumflex", "at",
+"colon", "underscore", "kanji", "stop", "ax", nil, nil, nil, nil, nil,
+"numpadEnter", "rightControl", nil, nil, nil, nil, nil, nil, nil, nil, nil,
+nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, nil, "numpadComma",
+nil, "numpadDivide", nil, nil, "rightAlt", nil, nil, nil, nil, nil, nil,
+nil, nil, nil, nil, nil, nil, "pause", nil, "home", "up", "pageUp", nil,
+"left", nil, "right", nil, "end", "down", "pageDown", "insert", "delete"
+}
+k.keys = {}
+for key, v in pairs(keymap) do
+k.keys[key] = v
+k.keys[v] = key
+end
+end
+k.log(k.L_INFO, "evstream")
+do
+local evstreams = {}
+local handlers = {}
+local _evs = {}
+function _evs.new(wants)
+checkArg(1, wants, "table")
+return setmetatable({wants = wants, queue = queue}, {__index = _evs})
+end
+function _evs:poll()
+if #queue > 0 then
+return table.remove(self.queue, 1)
+end
+end
+function _evs:wait()
+while #queue > 0 do
+coroutine.yield()
+end
+return table.remove(self.queue, 1)
+end
+k.log(k.L_INFO, "platform/oc/sigtransform")
+local converters = {}
+function converters.key_down()
+end
+function converters.key_up()
+end
+function converters.touch()
+end
+function converters.drag()
+end
+function converters.drop()
+end
+local function evs_process(sig)
+if converters[sig[1]] then
+return converters[sig[1]](sig)
+end
+return sig
+end
+local ps = k.pullSignal
+function k.pullSignal(tout)
+checkArg(1, tout, "number", "nil")
+local sig = table.pack(ps(tout))
+if sig.n > 0 then
+sig = evs_process(sig)
+for i, hand in ipairs(handlers) do
+if hand.sig == sig[1] then
+hand.call(table.unpack(sig))
+end
+end
+for i, evs in pairs(evstreams) do
+if evs.wants[sig[1]] and #evs.queue < 128 then
+table.insert(evs.queue, table.pack(table.unpack(sig)))
+end
+end
+end
+return sig.n > 0
+end
+k.openevstream = _evs.new
+function k.handle(evt, func)
+local n = #handlers+1
+handlers[n] = {sig = evt, call = func}
+return n
+end
+function k.drop(hid)
+handlers[hid] = nil
+end
+end
 k.log(k.L_INFO, "tty")
 do
 local _tty = {}
+local colors = {
+0x000000,
+0xaa0000,
+0x00aa00,
+0xaaaa00,
+0x0000aa,
+0xaa00aa,
+0x00aaaa,
+0xaaaaaa,
+0x555555,
+0xff5555,
+0x55ff55,
+0xffff55,
+0x5555ff,
+0xff55ff,
+0x55ffff,
+0xffffff
+}
+local nocsi = {}
+local commands = {}
+local oscommand = {}
+local controllers = {}
+
+  local function scroll(self, n)
+self.scr.scroll(n, self.scrolltop, self.scrollbot)
+end
+function nocsi:c()
+self.fg = colors[8]
+self.bg = colors[1]
+self.scr.setForeground(colors[8])
+self.scr.setBackground(colors[1])
+self.scr.fill(1, 1, self.w, self.h, " ")
+end
+function nocsi:D()
+self.cy = self.cy + 1
+end
+function nocsi:E()
+self.cx, self.cy = 1, self.cy + 1
+end
+function nocsi:M()
+self.cy = self.cy - 1
+end
+function nocsi:Z()
+self.rbuf = self.rbuf .. "\27[?6c"
+end
+local save = {"fg", "bg", "echo", "line", "raw", "cx", "cy"}
+nocsi["7"] = function(self)
+self.saved = {}
+for i=1, #save, 1 do
+self.saved[save[i]] = self[save[i]]
+end
+end
+nocsi["8"] = function(self)
+if self.saved then
+for i=1, #save, 1 do
+self[save[i]] = self.saved[save[i]]
+self.scr.setForeground(self.fg)
+self.scr.setBackground(self.bg)
+end
+end
+end
+
+  function commands:A(args)
+local n = args[1] or 1
+self.cy = self.cy - n
+end
+function commands:B(args)
+local n = args[1] or 1
+self.cy = self.cy + n
+end
+
+  function commands:C(args)
+local n = args[1] or 1
+self.cx = self.cx + n
+end
+function commands:D(args)
+local n = args[1] or 1
+self.cx = self.cx - n
+end
+function commands:E(args)
+local n = args[1] or 1
+self.cx, self.cy = 1, self.cy + n
+end
+function commands:F(args)
+local n = args[1] or 1
+self.cx, self.cy = 1, self.cy - n
+end
+function commands:G(args)
+local n = args[1] or 1
+self.cx = math.max(1, math.min(self.w, n))
+end
+function commands:H(args)
+local row, col = args[1] or 1, args[2] or 1
+self.cx = math.max(1, math.min(self.w, col))
+self.cy = math.max(1, math.min(self.h, row))
+end
+function commands:J(args)
+local n = args[1] or 0
+if n == 0 then
+self.scr.fill(1, self.cy, self.w, self.h - self.cy, " ")
+elseif n == 1 then
+self.scr.fill(1, self.cx, self.w, self.cy, " ")
+elseif n == 2 then
+self.scr.fill(1, 1, self.w, self.h, " ")
+end
+end
+function commands:K(args)
+local n = args[1] or 0
+if n == 0 then
+self.scr.fill(self.cx, self.cy, self.w - self.cx, 1, " ")
+elseif n == 1 then
+self.scr.fill(1, self.cy, self.cx, 1, " ")
+elseif n == 2 then
+self.scr.fill(1, self.cy, self.w, 1, " ")
+end
+end
+function commands:L(args)
+local n = args[1] or 1
+self.scr.scroll(n, self.cy)  end
+function commands:M(args)
+local n = args[1] or 1
+self.scr.scroll(-1, self.cy)  end
+function commands:P(args)
+local n = args[1] or 1
+self.scr.copy(self.cx + n, self.cy, self.w - self.cx, 1, -n, 0)
+self.scr.fill(self.w - n, self.cy, n, 1, " ")
+end
+function commands:X(args)
+local n = args[1] or 1
+self.scr.fill(self.cx, self.cy, n, 1, " ")
+end
+function commands:a(args)
+local n = args[1] or 1
+self.cx = self.cx + n
+end
+function commands:c()
+self.rbuf = self.rbuf .. "\27[?6c"
+end
+function commands:d(args)
+local n = args[1] or 1
+self.cy = math.max(1, math.min(self.h, n))
+end
+function commands:e(args)
+local n = args[1] or 1
+self.cy = self.cy + n
+end
+commands.f = commands.H
+local function hl(set, args)
+for i=1, #args, 1 do
+local n = args[i]
+if n == 1 then
+self.altcursor = set
+elseif n == 3 then
+self.showctrl = set
+elseif n == 9 then
+self.mousereport = set and 1 or 0
+elseif n == 20 then
+self.autocr = set
+elseif n == 25 then
+self.cursor = set
+elseif n == 1000 then
+self.mousereport = set and 2 or 0
+end
+end
+end
+
+  function commands:h(args)
+hl(true, args)
+end
+
+  function commands:l()
+hl(false, args)
+end
+function commands:m(args)
+args[1] = args[1] or 0
+for i=1, #args, 1 do
+local n = args[1]
+if n == 7 or n == 27 then
+self.fg, self.bg = self.bg, self.fg
+self.scr.setForeground(self.fg)
+self.scr.setBackground(self.bg)
+elseif n > 29 and n < 38 then
+self.fg = colors[n - 29]
+self.scr.setForeground(self.fg)
+elseif n > 89 and n < 98 then
+self.fg = colors[n - 81]
+self.scr.setForeground(self.fg)
+elseif n > 39 and n < 48 then
+self.bg = colors[n - 39]
+self.scr.setForeground(self.bg)
+elseif n > 99 and n < 108 then
+self.bg = colors[n - 91]
+self.scr.setForeground(self.bg)
+elseif n == 39 then
+self.fg = colors[8]
+self.scr.setForeground(self.fg)
+elseif n == 49 then
+self.bg = colors[1]
+self.scr.setForeground(self.bg)
+end
+end
+end
+function commands:n(args)
+local n = args[1] or 0
+if n == 5 then
+self.rbuf = self.rbuf .. "\27[0n"
+elseif n == 6 then
+self.rbuf = self.rbuf .. string.format("\27[%d;%dR", self.cy, self.cx)
+end
+end
+function commands:r(args)
+local top, bot = args[1] or 1, args[2] or self.h
+self.scrolltop = math.max(1, math.min(top, self.h))
+self.scrollbot = math.min(self.h, math.max(1, bot))
+end
+function commands:s()
+self.saved = self.saved or {}
+self.saved.cx = self.cx
+self.saved.cy = self.cy
+end
+function commands:u()
+self.saved = self.saved or {}
+self.cx = self.saved.cx
+self.cy = self.saved.cy
+end
+commands["`"] = function(args)
+local n = args[1] or 1
+self.cx = math.max(1, math.min(self.w, n))
+end
+local function corral(self)
+while self.cx < 1 do
+self.cx = self.cx + self.w
+self.cy = self.cy - 1
+end
+while self.cx > self.w do
+self.cx = self.cx - self.w
+self.cy = self.cy + 1
+end
+while self.cy < self.scrolltop do
+scroll(self, -1)
+self.cy = self.cy + 1
+end
+while self.cy > self.scrollbot do
+scroll(self, 1)
+self.cy = self.cy + 1
+end
+end
+local function textwrite(self, text)
+while #text > 0 do
+local nl = text:find("\n") or #text
+local line = text:sub(1, nl)
+text = text:sub(#line + 1)
+local nnl = line:sub(-1) == "\n"
+while #line > 0 do
+local chunk = line:sub(1, self.w - self.cx + 1)
+line = line:sub(#chunk + 1)
+self.scr.set(self.cx, self.cy, chunk)
+self.cx = self.cx + #chunk
+corral(self)
+end
+if nnl then
+self.cx = 1
+self.cy = self.cy + 1
+end
+corral(self)
+end
+end
+local function internalwrite(self, line)
+line = line:gsub("\x9b", "\27[")
+while #line > 0 do
+local nesc = line:find("\27", nil, true)
+local e = (nesc and nesc - 1) or #str
+local chunk = line:sub(1, e)
+line = line:sub(#chunk + 1)
+textwrite(self, chunk)
+
+      if nesc then
+local css, params, csc, len
+= line:match("^\27(.)([%d;]*)([%a%d`])()")
+
+        if css and params and csc and len then
+line = line:sub(len)
+
+          local args = {}
+local num = ""
+local plen = #params
+for c, pos in params:gmatch(".()") do
+if c == ";" then
+args[#args+1] = tonumber(num) or 0
+num = ""
+else
+num = num .. c
+if pos == plen then
+args[#args+1] = tonumber(num) or 0
+end
+end
+end
+
+          if css == "[" then
+local func = commands[csc]
+if func then func(self, args) end
+elseif css == "]" or css == "?" then
+local func = controllers[csc]
+if func then func(self, args) end
+elseif css == "#" then            self.scr.fill(1, 1, self.w, self.h, "E")
+else
+local func = nocsi[css]
+if func then func(self, args) end
+end
+end
+end
+end
+end
+local function togglecursor(self)
+if not self.cursor then return end
+local cc, cf, cb = self.scr.get(self.cx, self.cy)
+self.scr.setForeground(cb)
+self.scr.setBackground(cf)
+self.scr.set(self.cx, self.cy, cc)
+end
 function _tty:write(str)
 checkArg(1, str, "string")
 self.wbuf = self.wbuf .. str
-repeat
+local dc = (not not self.wbuf:find("\n", nil, true)) or #self.wbuf > 512
+if dc then togglecursor(self) end
+
+    repeat
 local idx = self.wbuf:find("\n")
+if not idx then if #self.wbuf > 512 then idx = #self.wbuf end end
 if idx then
 local chunk = self.wbuf:sub(1, idx)
 self.wbuf = self.wbuf:sub(#chunk + 1)
-self:internalwrite(chunk)
+internalwrite(self, chunk)
 end
 until not idx
+
+    if dc then togglecursor(self) end
 end
-function k.opentty(gpu, screen)
+function _tty:flush()
+local dc = #self.wbuf > 0
+if dc then togglecursor(self) end
+internalwrite(self, chunk)
+if dc then togglecursor(self) end
+end
+function k.opentty(screen)
+local w, h = screen.getResolution()
+screen.setPalette(colors)
+local new = {
+scr = screen,
+w = w, h = h, cx = 1, cy = 1,
+scrolltop = 1, scrollbot = h,
+rbuf = "", wbuf = "",
+fg = colors[1], bg = colors[8],
+altcursor = false, showctrl = false,
+mousereport = 0, autocr = false,
+cursor = true,
+}
+new.khid = k.handle(k.screen.keydown, k.screen.keyhandler(new, screen))
+if k.screen.keydown ~= k.screen.char then
+new.chid = k.handle(k.screen.char, k.screen.charhandler(new, screen))
+end
+setmetatable(new, {__index = _tty})
+return new
 end
 end
 k.log(k.L_INFO, "entering idle loop")
