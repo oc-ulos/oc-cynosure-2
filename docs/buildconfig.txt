@@ -1,0 +1,53 @@
+Cynosure 2 Build Configuration
+------------------------------
+
+This file describes the options available for Cynosure 2's build configuration file (.buildconfig in the main source tree).
+
+KNAME=NAME
+  where NAME is to be appended to the kernel version string.  (default "default")
+
+KPLATFORM=PLAT
+  where PLAT is any supported platform.  Currently:
+    - 'oc' for OpenComputers (default)
+    - 'cc' for ComputerCraft
+
+KEYMAP=MAP
+  where MAP is the name of one of the keymaps in src/keymaps.  Currently:
+    - lwjgl2 (default, for running in Minecraft 1.12.2 (including OpenComputers) or CraftOS-PC)
+    - lwjgl3 (for ComputerCraft running on Minecraft 1.13+)
+
+PREEMPT=MODE
+  where MODE is the preemption mode to use.  Currently:
+    - few (default, less responsive when programs are consuming lots of CPU time)
+    - many (more forced yields, possibly slower system)
+
+  append 'hook' to the chosen option to use debug.sethook for rather than yield injection (ComputerCraft only)
+
+KINCLUDE_TMPFS=[yn]
+  to specify if the tmpfs (usually mounted at /tmp) should be supported.  (default y)
+
+KUSE_SOFTWARE_TMPFS=[yn]
+  to use a software tmpfs rather than the hardware one (only set to 'n' under OpenComputers) (default y)
+
+KINCLUDE_DEVFS=[yn]
+  to specify if the devfs (usually mounted at /dev) should be included.  (default y)
+
+KINCLUDE_SYSFS=[yn]
+  to specify if the sysfs (usually mounted at /sys) should be included in the kernel.  (default y)
+
+BUILTIN_TTY=[yn]
+  to specify whether to include the built-in vt100 emulator (say 'n' if you're running an embedded or graphical-only system) (default y)
+
+BUILTIN_EXECS=LIST
+  where LIST is a comma-delimited list of the executable formats to build in.  Currently:
+    - cyx (the CYnosure eXecutable format, highly recommended) (default)
+
+BUILTIN_FILESYSTEMS=LIST
+  where LIST is a comma-delimited list of the filesytem drivers to include.  Currently:
+    - managed (managed filesystems with special extensions) (default)
+
+IO_BUFSIZE=SIZE
+  where SIZE is the size to use for the kernel's internal file stream buffering.  (default 512)
+
+MANAGED_BLOCKSIZE=SIZE
+  where SIZE is the maximum chunk size for reading from a managed file handle.  Overridden by the kernel argument fs.managed.blocksize=SIZE.  For optimal performance under OpenComputers this value should match the value in your Minecraft server's configuration.  Only affects OpenComputers.  (default 2048)

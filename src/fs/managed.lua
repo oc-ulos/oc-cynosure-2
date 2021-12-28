@@ -22,7 +22,7 @@ do
   -- use this command line argument if your server has the
   -- filesystem IO blocksize configured differently
   k.cmdline["fs.managed.blocksize"] =
-    k.cmdline["fs.managed.blocksize"] or
+    tonumber(k.cmdline["fs.managed.blocksize"]) or
     @[{os.getenv("MANAGED_BLOCKSIZE") or 2048}]
   local node = {}
   local blocksize = k.state.cmdline["fs.managed.blocksize"]

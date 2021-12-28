@@ -42,6 +42,12 @@ do
   end
 
   --#include "src/platform/@[{os.getenv('KPLATFORM')or'oc'}]/sigtransform.lua"
+  local function evs_process(sig)
+    if converters[sig[1]] then
+      return converters[sig[1]](sig)
+    end
+    return sig
+  end
 
   local ps = k.pullSignal
   function k.pullSignal(tout)

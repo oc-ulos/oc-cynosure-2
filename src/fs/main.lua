@@ -19,4 +19,4 @@
 k.log(k.L_INFO, "fs/main")
 
 -- hooray for cursed single-line expressions!
---@[{(function() for filesystem in os.getenv("BUILTIN_FILESYSTEMS"):gmatch("[^,]+") do print(filesystem); proc("src/fs/"..filesystem..".lua") end end)()}]
+--@[{(function() for filesystem in os.getenv("BUILTIN_FILESYSTEMS"):gmatch("[^,]+") do print("-> FS " .. filesystem); proc("src/fs/"..filesystem..".lua") end end)()}]

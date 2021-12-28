@@ -8,11 +8,13 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "6fd399f"
+build_rev = "76200b4"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
 k._VERSION.build_rev, k._VERSION.build_name)
+end
+do
 k.cmdline = {}
 local _args = table.pack(...)
 k.state.cmdline = table.concat(_args, " ", 1, _args.n)
@@ -35,6 +37,8 @@ cur = k.cmdline[ksegs[i]]
 end
 cur[ksegs[#ksegs]] = val
 end
+end
+do
 local gpu, screen = component.list("gpu", true)(),
 component.list("screen", true)()
 k.logio = {y = 1}
@@ -57,6 +61,8 @@ end
 else
 function k.logio.write() end
 end
+end
+do
 k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
 
   function k.log(l, ...)
@@ -512,6 +518,46 @@ end
 k.shutdown()
 end
 end
+k.log(k.L_INFO, "devices")
+do
+k.state.devsearchers = {}
+function k.lookup_device(node)
+for k, v in pairs(k.state.devsearchers) do
+if v.matches(node) then
+return v.setup(node)
+end
+end
+return nil, k.errno.ENXIO
+end
+end
+k.log(k.L_INFO, "platform/oc/devices")
+do
+k.state.devsearchers.filesystem = {
+matches = function(n)
+if type(n) == "table" and n.type == "filesystem" then return true end
+if type(n) ~= "string" then return nil end
+if component.type(n) == "filesystem" then return true end
+end,
+setup = function(n)
+if type(n) == "table" then
+return n
+else
+return component.proxy(n)
+end
+end
+}
+k.state.devsearchers.drive = {
+matches = function(n)
+if type(n) == "table" and n.type == "drive" then return true end
+if type(n) ~= "string" then return nil end
+if component.type(n) == "drive" then return true end
+end,
+setup = function(n)
+if type(n) == "table" then return n end
+return component.proxy(n)
+end
+}
+end
 k.log(k.L_INFO, "vfs/main")
 k.log(k.L_INFO, "buffer")
 do
@@ -692,6 +738,8 @@ wbuf = "",
 bufmode = "full"
 }, {__index = buffer})
 end
+end
+do
 k.common.fsmodes = {
 f_socket = 0xC000,
 f_symlink = 0xA000,
@@ -1710,15 +1758,46 @@ return table.remove(self.queue, 1)
 end
 k.log(k.L_INFO, "platform/oc/sigtransform")
 local converters = {}
-function converters.key_down()
+function converters.key_down(sig)
+return {
+"key_down",
+sig[2],
+sig[4]
+}
 end
-function converters.key_up()
+function converters.key_up(sig)
+return {
+"key_up",
+sig[2],
+sig[4]
+}
 end
-function converters.touch()
+function converters.touch(sig)
+return {
+"mouse_down",
+sig[2],
+sig[3],
+sig[4],
+sig[5]
+}
 end
-function converters.drag()
+function converters.drag(sig)
+return {
+"mouse_drag",
+sig[2],
+sig[3],
+sig[4],
+sig[5]
+}
 end
-function converters.drop()
+function converters.drop(sig)
+return {
+"mouse_up",
+sig[2],
+sig[3],
+sig[4],
+sig[5]
+}
 end
 local function evs_process(sig)
 if converters[sig[1]] then

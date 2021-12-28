@@ -26,6 +26,7 @@ _G.k = { state = {}, common = {} }
 --#include "src/signals.lua"
 --#include "src/syscalls.lua"
 --#include "src/scheduler/main.lua"
+--#include "src/devices.lua"
 --#include "src/vfs/main.lua"
 --#include "src/permissions.lua"
 --@[{os.getenv('KUSE_SOFTWARE_TMPFS') == 'y' and '#include "src/tmpfs/soft.lua"' or 'src/tmpfs/hard.lua'}]
