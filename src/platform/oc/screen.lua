@@ -22,34 +22,11 @@ do
   k.log(k.L_INFO, "[screen] getting device info")
   k.screen = {}
 
-  -- used for registering platform-agnostic signal handlers in the TTY driver
-  k.screen.char = "key_down"
-  k.screen.keydown = "key_down"
-  k.screen.mouseup = "touch"
-  k.screen.mousedown = "drop"
-  -- arrow keys - needed for arrow keys to function in the TTY
-  k.screen.up = 200
-  k.screen.right = 203
-  k.screen.left = 205
-  k.screen.down = 208
-  -- backspace
-  k.screen.backspace = 8
-
   local dinfo = {}
   local gpus, screens = {}, {}
   function k.screen.refresh()
     dinfo = computer.getDeviceInfo()
   end
-
-  function k.screen.keyhandler(vt, screen)
-    local keyboards = screen.keyboards
-    return function(_, addr, char, key)
-      if not keyboards[addr] then return end
-      
-    end
-  end
-
-  function k.screen.charhandler() end
 
   function k.screen.next()
     local gpu, screen

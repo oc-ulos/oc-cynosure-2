@@ -8,7 +8,7 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "76200b4"
+build_rev = "fd2dd58"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
@@ -562,7 +562,8 @@ k.log(k.L_INFO, "vfs/main")
 k.log(k.L_INFO, "buffer")
 do
 local buffer = {}
-local bufsize = k.cmdline["io.bufsize"] or 512
+local bufsize = tonumber(k.cmdline["io.bufsize"])
+or 512
 function buffer:readline()
 if self.bufmode == "none" then
 if self.stream.readline then
@@ -1077,7 +1078,7 @@ k.log(k.L_INFO, "fs/main")
 k.log(k.L_INFO, "fs/managed")
 do
 k.cmdline["fs.managed.blocksize"] =
-k.cmdline["fs.managed.blocksize"] or
+tonumber(k.cmdline["fs.managed.blocksize"]) or
 2048
 local node = {}
 local blocksize = k.state.cmdline["fs.managed.blocksize"]
