@@ -51,4 +51,62 @@ do
       return component.proxy(n)
     end
   }
+
+  -- device: keyboard
+  -- mapping of keyboards to screens
+  local kbds = {}
+  local kblcache = {}
+
+  k.state.devsearchers.keyboard = {
+    matches = function(n)
+      -- returns true if 'n' is a keyboard proxy
+      if type(n) == "table" and n.type == "keyboard" then return true end
+      if type(n) ~= "string" then return nil end
+      -- returns 'true' if 'n' is a keyboard address
+      if component.type(n) == "keyboard" then return true end
+    end,
+    -- the keyboard proxy provides no useful functionality whatsoever
+    setup = function(n)
+    end
+  }
+
+  k.handle("component_added", function(_, addr, ctype)
+    if ctype == "screen" then
+      local kbs = component.invoke(addr, "getKeyboards")
+      kblcache[addr] = kbs
+      for _, kb in ipairs(kbs) do
+        kbds[kb] = addr
+      end
+    elseif ctype == "keyboard" then
+      for saddr in component.list("screen") do
+        local kbs = component.invoke(addr, "getKeyboards")
+        kblcache[addr] = kbs
+        for _, kb in ipairs(kbs) do
+          if addr == kb then
+            kbds[addr] = saddr
+            break
+          end
+        end
+      end
+    end
+  end)
+
+  k.handle("component_removed", function(_, addr, ctype)
+    if ctype == "screen" then
+      local kbs = kblcache[addr]
+      for _, kb in ipairs(kbs) do
+        kbds[kb] = nil
+      end
+    elseif ctype == "keyboard" then
+      for saddr in component.list("screen") do
+        local kbs = kblcache[addr]
+        for _, kb in ipairs(kbs) do
+          if addr == kb then
+            kbds[addr] = nil
+            break
+          end
+        end
+      end
+    end
+  end)
 end

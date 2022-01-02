@@ -8,7 +8,7 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "fd2dd58"
+build_rev = "ee0b6ad"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
@@ -518,6 +518,104 @@ end
 k.shutdown()
 end
 end
+k.log(k.L_INFO, "evstream")
+do
+local evstreams = {}
+local handlers = {}
+local _evs = {}
+function _evs.new(wants)
+checkArg(1, wants, "table")
+return setmetatable({wants = wants, queue = queue}, {__index = _evs})
+end
+function _evs:poll()
+if #queue > 0 then
+return table.remove(self.queue, 1)
+end
+end
+function _evs:wait()
+while #queue > 0 do
+coroutine.yield()
+end
+return table.remove(self.queue, 1)
+end
+k.log(k.L_INFO, "platform/oc/sigtransform")
+local converters = {}
+function converters.key_down(sig)
+return {
+"key_down",
+sig[2],
+sig[4]
+}
+end
+function converters.key_up(sig)
+return {
+"key_up",
+sig[2],
+sig[4]
+}
+end
+function converters.touch(sig)
+return {
+"mouse_down",
+sig[2],
+sig[3],
+sig[4],
+sig[5]
+}
+end
+function converters.drag(sig)
+return {
+"mouse_drag",
+sig[2],
+sig[3],
+sig[4],
+sig[5]
+}
+end
+function converters.drop(sig)
+return {
+"mouse_up",
+sig[2],
+sig[3],
+sig[4],
+sig[5]
+}
+end
+local function evs_process(sig)
+if converters[sig[1]] then
+return converters[sig[1]](sig)
+end
+return sig
+end
+local ps = k.pullSignal
+function k.pullSignal(tout)
+checkArg(1, tout, "number", "nil")
+local sig = table.pack(ps(tout))
+if sig.n > 0 then
+sig = evs_process(sig)
+for i, hand in ipairs(handlers) do
+if hand.sig == sig[1] then
+hand.call(table.unpack(sig))
+end
+end
+for i, evs in pairs(evstreams) do
+if evs.wants[sig[1]] and #evs.queue < 128 then
+table.insert(evs.queue, table.pack(table.unpack(sig)))
+end
+end
+end
+return sig.n > 0
+end
+k.openevstream = _evs.new
+function k.handle(evt, func)
+local n = #handlers+1
+handlers[n] = {sig = evt, call = func}
+return n
+end
+function k.drop(hid)
+handlers[hid] = nil
+end
+end
 k.log(k.L_INFO, "devices")
 do
 k.state.devsearchers = {}
@@ -557,6 +655,8 @@ if type(n) == "table" then return n end
 return component.proxy(n)
 end
 }
+local kbds = {}
+
 end
 k.log(k.L_INFO, "vfs/main")
 k.log(k.L_INFO, "buffer")
@@ -1737,104 +1837,6 @@ k.keys[key] = v
 k.keys[v] = key
 end
 end
-k.log(k.L_INFO, "evstream")
-do
-local evstreams = {}
-local handlers = {}
-local _evs = {}
-function _evs.new(wants)
-checkArg(1, wants, "table")
-return setmetatable({wants = wants, queue = queue}, {__index = _evs})
-end
-function _evs:poll()
-if #queue > 0 then
-return table.remove(self.queue, 1)
-end
-end
-function _evs:wait()
-while #queue > 0 do
-coroutine.yield()
-end
-return table.remove(self.queue, 1)
-end
-k.log(k.L_INFO, "platform/oc/sigtransform")
-local converters = {}
-function converters.key_down(sig)
-return {
-"key_down",
-sig[2],
-sig[4]
-}
-end
-function converters.key_up(sig)
-return {
-"key_up",
-sig[2],
-sig[4]
-}
-end
-function converters.touch(sig)
-return {
-"mouse_down",
-sig[2],
-sig[3],
-sig[4],
-sig[5]
-}
-end
-function converters.drag(sig)
-return {
-"mouse_drag",
-sig[2],
-sig[3],
-sig[4],
-sig[5]
-}
-end
-function converters.drop(sig)
-return {
-"mouse_up",
-sig[2],
-sig[3],
-sig[4],
-sig[5]
-}
-end
-local function evs_process(sig)
-if converters[sig[1]] then
-return converters[sig[1]](sig)
-end
-return sig
-end
-local ps = k.pullSignal
-function k.pullSignal(tout)
-checkArg(1, tout, "number", "nil")
-local sig = table.pack(ps(tout))
-if sig.n > 0 then
-sig = evs_process(sig)
-for i, hand in ipairs(handlers) do
-if hand.sig == sig[1] then
-hand.call(table.unpack(sig))
-end
-end
-for i, evs in pairs(evstreams) do
-if evs.wants[sig[1]] and #evs.queue < 128 then
-table.insert(evs.queue, table.pack(table.unpack(sig)))
-end
-end
-end
-return sig.n > 0
-end
-k.openevstream = _evs.new
-function k.handle(evt, func)
-local n = #handlers+1
-handlers[n] = {sig = evt, call = func}
-return n
-end
-function k.drop(hid)
-handlers[hid] = nil
-end
-end
 k.log(k.L_INFO, "tty")
 do
 local _tty = {}
@@ -2186,7 +2188,7 @@ function k.opentty(screen)
 local w, h = screen.getResolution()
 screen.setPalette(colors)
 local new = {
-scr = screen,
+scr = screen.id,
 w = w, h = h, cx = 1, cy = 1,
 scrolltop = 1, scrollbot = h,
 rbuf = "", wbuf = "",
@@ -2195,10 +2197,8 @@ altcursor = false, showctrl = false,
 mousereport = 0, autocr = false,
 cursor = true,
 }
-new.khid = k.handle(k.screen.keydown, k.screen.keyhandler(new, screen))
-if k.screen.keydown ~= k.screen.char then
-new.chid = k.handle(k.screen.char, k.screen.charhandler(new, screen))
-end
+new.khid = k.handle("key_down", function(_, id, code)
+end)
 setmetatable(new, {__index = _tty})
 return new
 end

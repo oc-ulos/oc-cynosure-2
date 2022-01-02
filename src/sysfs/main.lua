@@ -21,4 +21,19 @@ k.log(k.L_INFO, "sysfs/main")
 do
   k.state.sysfs = k.common.ramfs.new("sysfs")
   k.state.mount_sources.sysfs = k.state.sysfs
+  
+  --[[
+  
+    Cynosure's sysfs is laid out like this:
+
+    /sys/ - the root of the tree
+      |- devices/ - platform-specific device nodes
+      \- kernel/ - some kernel-specific things
+            |- platform - the name of the platform this kernel was compiled for
+            |- preempt_mode - the compiled-in preemption mode
+            |- io_bufsize - the IO buffer size
+            |- power - power control (write 2 to reboot, 1 to shutdown)
+            |- keymap - the keymap the kernel is using
+            \- name - the kernel name
+  ]]
 end

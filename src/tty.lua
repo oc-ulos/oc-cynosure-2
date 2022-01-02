@@ -479,12 +479,37 @@ do
     if dc then togglecursor(self) end
   end
 
+  -- shifted[c] = shifted version of c
+  local shifted = {
+    ['1']   = "!",
+    ['2']   = "@",
+    ['3']   = "#",
+    ['4']   = "$",
+    ['5']   = "%",
+    ['6']   = "^",
+    ['7']   = "&",
+    ['8']   = "*",
+    ['9']   = "(",
+    ['0']   = ")",
+    ['-']   = "_",
+    ['=']   = "+",
+    ['[']   = "{",
+    [']']   = "}",
+    ['\\']  = "|",
+    [';']   = ":",
+    ["'"]   = '"',
+    [',']   = "<",
+    ['.']   = ">",
+    ['/']   = "?",
+    ['`']   = "~"
+  }
+
   -- `screen' is a screen object as described in `docs/screen.txt'
   function k.opentty(screen)
     local w, h = screen.getResolution()
     screen.setPalette(colors)
     local new = {
-      scr = screen,
+      scr = screen.id,
       w = w, h = h, cx = 1, cy = 1,
       scrolltop = 1, scrollbot = h,
       rbuf = "", wbuf = "",
@@ -494,21 +519,12 @@ do
       mousereport = 0, autocr = false,
       cursor = true,
     }
-    -- handlers
-    new.khid = k.handle(k.screen.keydown, k.screen.keyhandler(new, screen))
-    if k.screen.keydown ~= k.screen.char then
-      new.chid = k.handle(k.screen.char, k.screen.charhandler(new, screen))
-    end
 
-    --[[
-    function(...)
-      local char, code = k.screen.process(...)
-      if char == k.screen.backspace
-      if char > 30 and char < 127 then
-        new.rbuf = new.rbuf .. string.char(char)
-      end
+    -- handlers
+    new.khid = k.handle("key_down", function(_, id, code)
+      local kname = 
     end)
-    --]]
+
     setmetatable(new, {__index = _tty})
     return new
   end

@@ -26,6 +26,7 @@ _G.k = { state = {}, common = {} }
 --#include "src/signals.lua"
 --#include "src/syscalls.lua"
 --#include "src/scheduler/main.lua"
+--#include "src/evstream.lua"
 --#include "src/devices.lua"
 --#include "src/vfs/main.lua"
 --#include "src/permissions.lua"
@@ -35,7 +36,6 @@ _G.k = { state = {}, common = {} }
 --@[{os.getenv('KINCLUDE_DEVFS') == 'y' and '#include "src/devfs/main.lua"' or ''}]
 --#include "src/exec/main.lua"
 --#include "src/keymap.lua"
---#include "src/evstream.lua"
 --#include "src/tty.lua"
 k.log(k.L_INFO, "entering idle loop")
 while true do k.pullSignal() end

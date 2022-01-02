@@ -46,9 +46,10 @@ do
 
     gpu = component.proxy(gpu)
     gpu.bind(screen)
-    local keyboards = component.invoke(screen, "getKeyboards")
-    for k, v in pairs(keyboards) do keyboards[v] = k end
-    gpu.keyboards = keyboards
+    gpu.id = screen
+
+    gpus[gpu.address] = true
+    screens[screen] = true
 
     function gpu.scroll(n, top, bot)
       if n == 0 then return end
