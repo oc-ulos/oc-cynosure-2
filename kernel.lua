@@ -8,7 +8,7 @@ patch = "0",
 build_host = "pangolin",
 build_user = "ocawesome101",
 build_name = "default",
-build_rev = "ee0b6ad"
+build_rev = "28ff3b1"
 }
   _G._OSVERSION = string.format("Cynosure %s.%s.%s-%s-%s",
 k._VERSION.major, k._VERSION.minor, k._VERSION.patch,
@@ -656,7 +656,54 @@ return component.proxy(n)
 end
 }
 local kbds = {}
-
+local kblcache = {}
+k.state.devsearchers.keyboard = {
+matches = function(n)
+if type(n) == "table" and n.type == "keyboard" then return true end
+if type(n) ~= "string" then return nil end
+if component.type(n) == "keyboard" then return true end
+end,
+setup = function(n)
+end
+}
+k.handle("component_added", function(_, addr, ctype)
+if ctype == "screen" then
+local kbs = component.invoke(addr, "getKeyboards")
+kblcache[addr] = kbs
+for _, kb in ipairs(kbs) do
+kbds[kb] = addr
+end
+elseif ctype == "keyboard" then
+for saddr in component.list("screen") do
+local kbs = component.invoke(addr, "getKeyboards")
+kblcache[addr] = kbs
+for _, kb in ipairs(kbs) do
+if addr == kb then
+kbds[addr] = saddr
+break
+end
+end
+end
+end
+end)
+k.handle("component_removed", function(_, addr, ctype)
+if ctype == "screen" then
+local kbs = kblcache[addr]
+for _, kb in ipairs(kbs) do
+kbds[kb] = nil
+end
+elseif ctype == "keyboard" then
+for saddr in component.list("screen") do
+local kbs = kblcache[addr]
+for _, kb in ipairs(kbs) do
+if addr == kb then
+kbds[addr] = nil
+break
+end
+end
+end
+end
+end)
 end
 k.log(k.L_INFO, "vfs/main")
 k.log(k.L_INFO, "buffer")
@@ -1613,6 +1660,7 @@ k.log(k.L_INFO, "sysfs/main")
 do
 k.state.sysfs = k.common.ramfs.new("sysfs")
 k.state.mount_sources.sysfs = k.state.sysfs
+
 end
 k.log(k.L_INFO, "procfs/main")
 do
@@ -2184,6 +2232,29 @@ if dc then togglecursor(self) end
 internalwrite(self, chunk)
 if dc then togglecursor(self) end
 end
+local shifted = {
+['1']   = "!",
+['2']   = "@",
+['3']   = "#",
+['4']   = "$",
+['5']   = "%",
+['6']   = "^",
+['7']   = "&",
+['8']   = "*",
+['9']   = "(",
+['0']   = ")",
+['-']   = "_",
+['=']   = "+",
+['[']   = "{",
+[']']   = "}",
+['\\']  = "|",
+[';']   = ":",
+["'"]   = '"',
+[',']   = "<",
+['.']   = ">",
+['/']   = "?",
+['`']   = "~"
+}
 function k.opentty(screen)
 local w, h = screen.getResolution()
 screen.setPalette(colors)
@@ -2198,6 +2269,7 @@ mousereport = 0, autocr = false,
 cursor = true,
 }
 new.khid = k.handle("key_down", function(_, id, code)
+local kname = 
 end)
 setmetatable(new, {__index = _tty})
 return new

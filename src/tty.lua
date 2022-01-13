@@ -521,8 +521,26 @@ do
     }
 
     -- handlers
-    new.khid = k.handle("key_down", function(_, id, code)
-      local kname = 
+    new.kdid = k.handle("key_down", function(_, screenid, code)
+      if screenid ~= new.scr then return end
+
+      local kname = k.keys[code]
+      if kname == "leftShift" or kname == "rightShift" then
+        new.shift = true
+      elseif kname == "leftCtrl" or "rightCtrl" then
+        new.ctrl = true
+      end
+    end)
+
+    new.kuid = k.handle("key_down", function(_, screenid, code)
+      if screenid ~= new.scr then return end
+
+      local kname = k.keys[code]
+      if kname == "leftShift" or kname == "rightShift" then
+        new.shift = false
+      elseif kname == "leftCtrl" or "rightCtrl" then
+        new.ctrl = false
+      end
     end)
 
     setmetatable(new, {__index = _tty})

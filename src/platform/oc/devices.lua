@@ -66,8 +66,7 @@ do
       if component.type(n) == "keyboard" then return true end
     end,
     -- the keyboard proxy provides no useful functionality whatsoever
-    setup = function(n)
-    end
+    setup = function(n) end
   }
 
   k.handle("component_added", function(_, addr, ctype)
