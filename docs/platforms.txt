@@ -1,6 +1,0 @@
-Kernel Platform Support
------------------------
-
-One of the most notable features of Cynosure 2 is its multiplatform architecture.  This allows the kernel, and programs written for it, to run on OpenComputers, ComputerCraft, and any other supported platforms).
-
-Each platform requires an implementation of a boot logger (see logger.txt), device searcher (devices.txt), a screen abstraction (screen.txt), signal implementation (signals.txt), and signal transformers to transform signals into standard Cynosure signals (signals.txt).

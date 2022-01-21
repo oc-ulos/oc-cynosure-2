@@ -1,4 +1,0 @@
-Cynosure 2.0's Scheduler
-========================
-
-The scheduler for Cynosure 2.0 has been greatly improved to support sessions, process groups, job control, and several other Unix-like features.
