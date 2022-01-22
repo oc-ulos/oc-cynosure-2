@@ -25,6 +25,8 @@ do
   local process = {}
   local default = {n = 0}
   function process:resume(sig, ...)
+    if self.stopped then return end
+
     local resumed = false
     if sig and #self.queue < 256 then
       self.queue[#self.queue + 1] = sig
@@ -53,6 +55,19 @@ do
     self.thread_count = self.thread_count + 1
   end
 
+  function process:deadline()
+    local deadline = math.huge
+    for i, thread in pairs(self.threads) do
+      if thread.deadline < deadline then
+        deadline = thread.deadline
+      end
+      if thread.status == "S" or thread.status == "y" then
+        return -1
+      end
+    end
+    return deadline
+  end
+
   local process_mt = { __index = process }
 
   local default = {handles = {}, _G = {}, pid = 0}
@@ -64,6 +79,8 @@ do
       queue = {},
       -- whether this process is stopped
       stopped = false,
+      -- all the threads
+      threads = {},
       
       -- process ID
       pid = pid,
