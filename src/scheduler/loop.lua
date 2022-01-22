@@ -52,9 +52,11 @@ do
       local signal = default
       if deadline == -1 then
         if computer.uptime() - last_yield > 4 then
+          last_yield = computer.uptime()
           signal = table.pack(computer.pullSignal(0))
         end
       else
+        last_yield = computer.uptime()
         signal = table.pack(computer.pullSignal(deadline - computer.uptime()))
       end
 
