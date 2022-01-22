@@ -73,11 +73,12 @@ do
   k.L_INFO    = 6
   k.L_DEBUG   = 7
   k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
-  function k.printk(level, fmt, ...)
+  -- XXX this is global XXX
+  function printk(level, fmt, ...)
     local message = string.format(fmt, ...)
     if level <= k.cmdline.loglevel then
       k.log_to_screen(message)
     end
-    k.log_to_buffer(message)
+    log_to_buffer(message)
   end
 end
