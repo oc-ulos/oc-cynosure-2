@@ -20,7 +20,7 @@ do
   k.cmdline = {}
 
   local _args = table.pack(...)
-  k.state.cmdline = table.concat(_args, " ", 1, _args.n)
+  k.original_cmdline = table.concat(_args, " ", 1, _args.n)
   for i, arg in ipairs(_args) do
     local key, val = arg, true
     if arg:find("=") then

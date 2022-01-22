@@ -225,7 +225,7 @@ do
     if self.stream.seek then
       return self.stream:seek(whence or "cur", offset)
     end
-    return nil, EBADF
+    return nil, k.errno.EBADF
   end
 
   function buffer:flush()
