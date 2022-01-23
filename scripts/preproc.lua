@@ -55,7 +55,7 @@ dirs = {
 }
 
 _G.proc = function(f)
-  io.write("\27[36m *\27[39m processing " .. f .. "\n")
+  io.write("\27[36m-=>\27[39m processing " .. f .. "\n")
   for line in io.lines(f) do
     for k, v in ipairs(dirs) do
       line = line:gsub(v[1], v[2])
@@ -87,7 +87,7 @@ proc(args[1])
 handle:close()
 
 if args[3] == "-strip-comments" then
-  io.write("\27[93m * \27[39mStripping comments\n")
+  io.write("\27[93m-=> \27[39mStripping comments\n")
   local rhand = assert(io.open(args[2], "r"))
   local data = rhand:read("a")
     :gsub(" *%-%-%[(=*)%[.-%]%1%]", "")
@@ -100,7 +100,7 @@ if args[3] == "-strip-comments" then
   whand:close()
 end
 
-io.write("\27[95m * \27[39mSuccess!\n")
+io.write("\27[95m-=> \27[39mSuccess!\n")
 
 _G.env = nil
 _G.proc = nil
