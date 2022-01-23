@@ -283,14 +283,16 @@ local oscommand = {}
 local controllers = {}
 
   local function scroll(self, n)
-self.scr.scroll(n, self.scrolltop, self.scrollbot)
+self.gpu.copy(1, 1, self.w, self.h, 0, -n)
+if n < 0 then n = self.h + n end
+self.gpu.fill(1, n, self.w, 1, " ")
 end
 function nocsi:c()
 self.fg = colors[8]
 self.bg = colors[1]
-self.scr.setForeground(colors[8])
-self.scr.setBackground(colors[1])
-self.scr.fill(1, 1, self.w, self.h, " ")
+self.gpu.setForeground(colors[8])
+self.gpu.setBackground(colors[1])
+self.gpu.fill(1, 1, self.w, self.h, " ")
 end
 function nocsi:D()
 self.cy = self.cy + 1
@@ -315,8 +317,8 @@ nocsi["8"] = function(self)
 if self.saved then
 for i=1, #save, 1 do
 self[save[i]] = self.saved[save[i]]
-self.scr.setForeground(self.fg)
-self.scr.setBackground(self.bg)
+self.gpu.setForeground(self.fg)
+self.gpu.setBackground(self.bg)
 end
 end
 end
@@ -358,37 +360,41 @@ end
 function commands:J(args)
 local n = args[1] or 0
 if n == 0 then
-self.scr.fill(1, self.cy, self.w, self.h - self.cy, " ")
+self.gpu.fill(1, self.cy, self.w, self.h - self.cy, " ")
 elseif n == 1 then
-self.scr.fill(1, self.cx, self.w, self.cy, " ")
+self.gpu.fill(1, self.cx, self.w, self.cy, " ")
 elseif n == 2 then
-self.scr.fill(1, 1, self.w, self.h, " ")
+self.gpu.fill(1, 1, self.w, self.h, " ")
 end
 end
 function commands:K(args)
 local n = args[1] or 0
 if n == 0 then
-self.scr.fill(self.cx, self.cy, self.w - self.cx, 1, " ")
+self.gpu.fill(self.cx, self.cy, self.w - self.cx, 1, " ")
 elseif n == 1 then
-self.scr.fill(1, self.cy, self.cx, 1, " ")
+self.gpu.fill(1, self.cy, self.cx, 1, " ")
 elseif n == 2 then
-self.scr.fill(1, self.cy, self.w, 1, " ")
+self.gpu.fill(1, self.cy, self.w, 1, " ")
 end
 end
 function commands:L(args)
 local n = args[1] or 1
-self.scr.scroll(n, self.cy)  end
+self.gpu.copy(1, self.cy, self.w, self.h - self.cy, 0, n)
+self.gpu.fill(1, self.cy, self.w, n, " ")
+end
 function commands:M(args)
 local n = args[1] or 1
-self.scr.scroll(-1, self.cy)  end
+self.gpu.copy(1, self.cy, self.w, self.h - self.cy, 0, -n)
+self.gpu.fill(1, self.h-n, self.w, n, " ")
+end
 function commands:P(args)
 local n = args[1] or 1
-self.scr.copy(self.cx + n, self.cy, self.w - self.cx, 1, -n, 0)
-self.scr.fill(self.w - n, self.cy, n, 1, " ")
+self.gpu.copy(self.cx + n, self.cy, self.w - self.cx, 1, -n, 0)
+self.gpu.fill(self.w - n, self.cy, n, 1, " ")
 end
 function commands:X(args)
 local n = args[1] or 1
-self.scr.fill(self.cx, self.cy, n, 1, " ")
+self.gpu.fill(self.cx, self.cy, n, 1, " ")
 end
 function commands:a(args)
 local n = args[1] or 1
@@ -438,26 +444,26 @@ for i=1, #args, 1 do
 local n = args[1]
 if n == 7 or n == 27 then
 self.fg, self.bg = self.bg, self.fg
-self.scr.setForeground(self.fg)
-self.scr.setBackground(self.bg)
+self.gpu.setForeground(self.fg)
+self.gpu.setBackground(self.bg)
 elseif n > 29 and n < 38 then
 self.fg = colors[n - 29]
-self.scr.setForeground(self.fg)
+self.gpu.setForeground(self.fg)
 elseif n > 89 and n < 98 then
 self.fg = colors[n - 81]
-self.scr.setForeground(self.fg)
+self.gpu.setForeground(self.fg)
 elseif n > 39 and n < 48 then
 self.bg = colors[n - 39]
-self.scr.setForeground(self.bg)
+self.gpu.setForeground(self.bg)
 elseif n > 99 and n < 108 then
 self.bg = colors[n - 91]
-self.scr.setForeground(self.bg)
+self.gpu.setForeground(self.bg)
 elseif n == 39 then
 self.fg = colors[8]
-self.scr.setForeground(self.fg)
+self.gpu.setForeground(self.fg)
 elseif n == 49 then
 self.bg = colors[1]
-self.scr.setForeground(self.bg)
+self.gpu.setForeground(self.bg)
 end
 end
 end
@@ -515,7 +521,7 @@ local nnl = line:sub(-1) == "\n"
 while #line > 0 do
 local chunk = line:sub(1, self.w - self.cx + 1)
 line = line:sub(#chunk + 1)
-self.scr.set(self.cx, self.cy, chunk)
+self.gpu.set(self.cx, self.cy, chunk)
 self.cx = self.cx + #chunk
 corral(self)
 end
@@ -563,7 +569,7 @@ if func then func(self, args) end
 elseif css == "]" or css == "?" then
 local func = controllers[csc]
 if func then func(self, args) end
-elseif css == "#" then            self.scr.fill(1, 1, self.w, self.h, "E")
+elseif css == "#" then            self.gpu.fill(1, 1, self.w, self.h, "E")
 else
 local func = nocsi[css]
 if func then func(self, args) end
@@ -574,10 +580,10 @@ end
 end
 local function togglecursor(self)
 if not self.cursor then return end
-local cc, cf, cb = self.scr.get(self.cx, self.cy)
-self.scr.setForeground(cb)
-self.scr.setBackground(cf)
-self.scr.set(self.cx, self.cy, cc)
+local cc, cf, cb = self.gpu.get(self.cx, self.cy)
+self.gpu.setForeground(cb)
+self.gpu.setBackground(cf)
+self.gpu.set(self.cx, self.cy, cc)
 end
 function _tty:write(str)
 checkArg(1, str, "string")
