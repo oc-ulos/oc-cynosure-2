@@ -21,7 +21,7 @@ local k = {}
 --#include "src/printk.lua"
 --#include "src/checkArg.lua"
 --#include "src/errno.lua"
---@[{os.getenv('BIT32')=='y' and '#include "src/bit32.lua"' or ''}]
+--@[{bconf.BIT32 == 'y' and '#include "src/bit32.lua"' or ''}]
 --#include "src/tty.lua"
 --#include "src/buffer.lua"
 --#include "src/scheduler/main.lua"

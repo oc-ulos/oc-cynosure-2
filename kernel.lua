@@ -651,7 +651,7 @@ printk(k.L_INFO, "buffer")
 do
 local buffer = {}
 local bufsize = tonumber(k.cmdline["io.bufsize"])
-or 512
+or 1024
 function buffer:readline()
 if self.bufmode == "none" then
 if self.stream.readline then

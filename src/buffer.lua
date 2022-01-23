@@ -21,7 +21,7 @@ printk(k.L_INFO, "buffer")
 do
   local buffer = {}
   local bufsize = tonumber(k.cmdline["io.bufsize"])
-    or @[{os.getenv("IO_BUFSIZE") or 512}]
+    or @[{bconf.BUFFER_SIZE or 512}]
 
   -- read a line from the buffer
   function buffer:readline()
