@@ -16,6 +16,7 @@ local log = {
 }
 
 -- prefixes
+log.indent = log.green .. "==> " .. log.white
 log.info = log.green .. "> " .. log.white
 log.warn = log.yellow .. "> " .. log.white
 log.fail = log.red .. "> " .. log.white
