@@ -36,18 +36,21 @@ do
     if type(gpu) == "string" then gpu = component.proxy(gpu) end
     gpu.bind(screen)
     local w, h = gpu.getResolution()
+    gpu.fill(1, 1, w, h, " ")
     local current_line = 0
 
-    function k.log_to_screen(message)
-      while #message > 0 do
-        local line = message:sub(1, w)
-        message = message:sub(#line + 1)
-        current_line = current_line + 1
-        if current_line > h then
-          gpu.copy(1, 1, w, h, 0, -1)
-          gpu.fill(1, h, w, 1, " ")
+    function k.log_to_screen(lines)
+      for message in lines:gmatch("[^\n]+") do
+        while #message > 0 do
+          local line = message:sub(1, w)
+          message = message:sub(#line + 1)
+          current_line = current_line + 1
+          if current_line > h then
+            gpu.copy(1, 1, w, h, 0, -1)
+            gpu.fill(1, h, w, 1, " ")
+          end
+          gpu.set(1, current_line, line)
         end
-        gpu.set(1, current_line, line)
       end
     end
   else
@@ -73,12 +76,19 @@ do
   k.L_INFO    = 6
   k.L_DEBUG   = 7
   k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
-  -- XXX this is global XXX
+  -- XXX globals XXX
   function printk(level, fmt, ...)
-    local message = string.format(fmt, ...)
+    local message = string.format("[%08.02f] ", computer.uptime()) ..
+      string.format(fmt, ...)
     if level <= k.cmdline.loglevel then
       k.log_to_screen(message)
     end
     log_to_buffer(message)
+  end
+
+  local pullSignal = computer.pullSignal
+  function panic(reason)
+    printk(k.L_EMERG, reason)
+    while true do pullSignal() end
   end
 end

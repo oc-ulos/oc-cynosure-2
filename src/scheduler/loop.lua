@@ -39,7 +39,7 @@ do
   function k.scheduler_loop()
     local last_yield = 0
 
-    while true do
+    while processes[1] do
       local deadline = 0
       for cpid, process in pairs(processes) do
         local proc_deadline = process:deadline()

@@ -25,3 +25,5 @@ local k = {}
 --#include "src/tty.lua"
 --#include "src/buffer.lua"
 --#include "src/scheduler/main.lua"
+k.scheduler_loop()
+panic("init exited")
