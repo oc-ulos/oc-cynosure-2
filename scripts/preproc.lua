@@ -56,6 +56,12 @@ dirs = {
 
 _G.proc = function(f)
   io.write("\27[36m-=>\27[39m processing " .. f .. "\n")
+  local handle, err = io.open(f, "r")
+  if not handle then
+    io.write("\27[101;97m ERROR \27[39;49m Cannot open file \27[93m"..f
+      .."\27[39m\n")
+    os.exit(1)
+  end
   for line in io.lines(f) do
     for k, v in ipairs(dirs) do
       line = line:gsub(v[1], v[2])
