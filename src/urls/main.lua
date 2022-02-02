@@ -1,5 +1,5 @@
 --[[
-    Main kernel source file
+    URL infrastructure
     Copyright (C) 2022 Ocawesome101
 
     This program is free software: you can redistribute it and/or modify
@@ -16,18 +16,22 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 
-local k = {}
---#include "src/cmdline.lua"
---#include "src/printk.lua"
---#include "src/checkArg.lua"
---#include "src/errno.lua"
---@[{bconf.BIT32 == 'y' and '#include "src/bit32.lua"' or ''}]
---#include "src/urls/main.lua"
---#include "src/tty.lua"
---#include "src/ttyprintk.lua"
---#include "src/buffer.lua"
---#include "src/fs/main.lua"
---#include "src/scheduler/main.lua"
---#include "src/exec/main.lua"
-k.scheduler_loop()
-panic("init exited")
+printk(k.L_INFO, "urls/main")
+
+do
+  k.schemes = {}
+
+  function k.register_scheme(name, registrar)
+    if k.schemes[name] then
+      panic("attempted to double-register scheme " .. name)
+    end
+    if not registrar.open then
+    end
+  end
+end
+
+--@[{bconf.SCHEME_MISC == 'y' and '#include "src/urls/scheme_misc.lua"' or ''}]
+--@[{bconf.SCHEME_EXEC == 'y' and '#include "src/urls/scheme_exec.lua"' or ''}]
+--@[{bconf.SCHEME_HTTP == 'y' and '#include "src/urls/scheme_http.lua"' or ''}]
+--@[{bconf.SCHEME_TCP == 'y' and '#include "src/urls/scheme_tcp.lua"' or ''}]
+--@[{bconf.SCHEME_COMPONENT == 'y' and '#include "src/urls/scheme_component.lua"' or ''}]
