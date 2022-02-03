@@ -29,6 +29,15 @@ do
     end
     schemes[name] = registrar
   end
+
+  -- takes a URL and returns its registrar plus its resource
+  function k.lookup_url(url)
+    local scheme, resource = url:match("(.*):/?/?(.*)")
+    if not k.schemes[scheme] then
+      return nil, k.errno.EUNATCH
+    end
+    return k.schemes[scheme], resource
+  end
 end
 
 --@[{bconf.SCHEME_MISC == 'y' and '#include "src/urls/scheme_misc.lua"' or ''}]
