@@ -22,11 +22,12 @@ do
   k.schemes = {}
 
   function k.register_scheme(name, registrar)
+    checkArg(1, name, "string")
+    checkArg(2, registrar, "table")
     if k.schemes[name] then
       panic("attempted to double-register scheme " .. name)
     end
-    if not registrar.open then
-    end
+    schemes[name] = registrar
   end
 end
 
