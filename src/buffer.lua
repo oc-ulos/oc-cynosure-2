@@ -243,13 +243,19 @@ do
     end
   end
 
+  local function split_chars(s)
+    local cs = {}
+    for c in s:gmatch(".") do cs[c] = true end
+    return cs
+  end
+
   function k.buffer_from_stream(stream, mode)
     checkArg(1, stream, "table")
     checkArg(2, mode, "string")
     return setmetatable({
       stream = stream,
       call = ":",
-      mode = k.common.charize(mode),
+      mode = split_chars(mode),
       rbuf = "",
       wbuf = "",
       bufmode = "full"

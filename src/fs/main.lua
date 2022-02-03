@@ -18,9 +18,19 @@
 
 printk(k.L_INFO, "fs/main")
 
+do
+  k.fstypes = {}
+
+  function k.register_fstype()
+  end
+
+  local provider = {}
+
+  function provider.open()
+  end
+
+  k.register_scheme("file", provider)
+end
+
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
-
-do
-  
-end

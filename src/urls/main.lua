@@ -21,22 +21,41 @@ printk(k.L_INFO, "urls/main")
 do
   k.schemes = {}
 
-  function k.register_scheme(name, registrar)
+  function k.register_scheme(name, provider)
     checkArg(1, name, "string")
-    checkArg(2, registrar, "table")
+    checkArg(2, provider, "table")
     if k.schemes[name] then
       panic("attempted to double-register scheme " .. name)
     end
-    schemes[name] = registrar
+    k.schemes[name] = provider
+    return true
   end
 
-  -- takes a URL and returns its registrar plus its resource
+  -- takes a URL and returns its provider plus its resource
   function k.lookup_url(url)
     local scheme, resource = url:match("(.*):/?/?(.*)")
+    if not scheme then
+      scheme, resource = "file", resource
+    end
     if not k.schemes[scheme] then
       return nil, k.errno.EUNATCH
     end
     return k.schemes[scheme], resource
+  end
+
+  -- URL calls
+  local function call(url, method, ...)
+    local provider, resource = k.lookup_url(url)
+    if not provider then
+      return nil, resource
+    end
+    if not provider[method] then
+      return nil, k.errno.EOPNOTSUPP
+    end
+    return provider[method](...)
+  end
+
+  function k.open()
   end
 end
 

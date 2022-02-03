@@ -40,6 +40,7 @@ do
     local current_line = 0
 
     function k.log_to_screen(lines)
+      lines = lines:gsub("\t", "  ")
       for message in lines:gmatch("[^\n]+") do
         while #message > 0 do
           local line = message:sub(1, w)
@@ -88,7 +89,11 @@ do
 
   local pullSignal = computer.pullSignal
   function panic(reason)
-    printk(k.L_EMERG, reason)
+    printk(k.L_EMERG, "#### stack traceback ####")
+    for line in debug.traceback(reason):gmatch("[^\n]+") do
+      printk(k.L_EMERG, line)
+    end
+    printk(k.L_EMERG, "#### end traceback ####")
     while true do pullSignal() end
   end
 end

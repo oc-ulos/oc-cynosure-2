@@ -253,7 +253,8 @@ do
       -- 9 - X10 mouse reporting
       elseif n == 9 then
         self.mousereport = set and 1 or 0
-      -- 20 - automatically add CR after LF, VT or FF
+      -- 20 - automatically add carriage return after line feed, vertical tab,
+      --      or form feed
       elseif n == 20 then
         self.autocr = set
       -- 25 - make cursor visible
@@ -523,6 +524,10 @@ do
 
       local to_screen, to_buffer
       if scancode_lookups[code] then
+        local c = scancode_lookups[code]
+        to_screen = "^[" .. c
+        to_buffer = "\27[" .. c
+      elseif char ~= 0 then
         
       end
     end)

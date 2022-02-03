@@ -19,7 +19,7 @@
 
 _G.env = setmetatable({}, {__index = function(t, k) return os.getenv(k) end})
 
-local handle
+local outhandle
 
 local included = {}
 local dirs
@@ -62,14 +62,15 @@ _G.proc = function(f)
       .."\27[39m\n")
     os.exit(1)
   end
-  for line in io.lines(f) do
+  for line in handle:lines("l") do
     for k, v in ipairs(dirs) do
       line = line:gsub(v[1], v[2])
     end
     if not line:match("#include") then
-      handle:write(line .. "\n")
+      outhandle:write(line .. "\n")
     end
   end
+  handle:close()
 end
 
 local args = {...}
@@ -86,11 +87,11 @@ Copyright (C) 2021 Ocawesome101 under the GPLv3.
   os.exit(1)
 end
 
-handle = assert(io.open(args[2], "w"))
+outhandle = assert(io.open(args[2], "w"))
 
 proc(args[1])
 
-handle:close()
+outhandle:close()
 
 if args[3] == "-strip-comments" then
   io.write("\27[93m-=> \27[39mStripping comments\n")
