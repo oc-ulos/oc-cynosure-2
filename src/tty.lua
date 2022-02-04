@@ -379,23 +379,12 @@ do
   end
 
   -- write some text
-  local function textwrite(self, text)
-    while #text > 0 do
-      local nl = text:find("\n") or #text
-      local line = text:sub(1, nl)
-      text = text:sub(#line + 1)
-      local nnl = line:sub(-1) == "\n"
-      while #line > 0 do
-        local chunk = line:sub(1, self.w - self.cx + 1)
-        line = line:sub(#chunk + 1)
-        self.gpu.set(self.cx, self.cy, chunk)
-        self.cx = self.cx + #chunk
-        corral(self)
-      end
-      if nnl then
-        self.cx = 1
-        self.cy = self.cy + 1
-      end
+  local function textwrite(self, line)
+    while #line > 0 do
+      local chunk = line:sub(1, self.w - self.cx + 1)
+      line = line:sub(#chunk + 1)
+      self.gpu.set(self.cx, self.cy, chunk)
+      self.cx = self.cx + #chunk
       corral(self)
     end
   end
@@ -406,6 +395,12 @@ do
   -- things this way should in theory be faster (or at least no slower).
   local function internalwrite(self, line)
     line = line:gsub("\x9b", "\27[")
+    if self.autocr then
+      line = line:gsub("[\n\v\f]", "%1\r")
+    end
+    -- i can't believe i haven't just done this in the past
+    line = line:gsub("[\n\v\f]", "\27[B")
+      :gsub("\r", "\27[G")
     while #line > 0 do
       local nesc = line:find("\27", nil, true)
       local e = (nesc and nesc - 1) or #line
