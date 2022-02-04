@@ -110,7 +110,7 @@ do
     --  * nothing, to wait indefinitely for a signal
     -- The if/else chain here isn't ordered quite like that for speed reasons.
     if result[1] == sysyield_string then
-      self.status == "y"
+      self.status = "y"
     elseif result[1] == "syscall" then
       self.syscall_data = table.pack(table.unpack(result, 2, result.n))
       self.status = "S"
