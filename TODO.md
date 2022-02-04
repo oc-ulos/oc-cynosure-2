@@ -5,7 +5,7 @@
   - [ ] CLE support
   - [ ] Shebang support
 - [ ] TTY
-  - [ ] Rewrite output function
+  - [x] Rewrite output function
   - [ ] Keyboard input
   - [ ] Mouse input when enabled
   - [ ] Extra GPU functions
