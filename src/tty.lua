@@ -98,9 +98,9 @@ do
     if self.saved then
       for i=1, #save, 1 do
         self[save[i]] = self.saved[save[i]]
-        self.gpu.setForeground(self.fg)
-        self.gpu.setBackground(self.bg)
       end
+      self.gpu.setForeground(self.fg)
+      self.gpu.setBackground(self.bg)
     end
   end
 
@@ -471,6 +471,8 @@ do
     until not idx
     
     if dc then togglecursor(self) end
+
+    return self
   end
 
   function _tty:flush()
@@ -487,6 +489,17 @@ do
     [205] = "C",
     [203] = "D"
   }
+
+  local sub32_lookups = {
+    [0] = " ",
+    [27] = "[",
+    [28] = "\\",
+    [29] = "]",
+    [30] = "~",
+    [31] = "?"
+  }
+
+  for i=1, 26, 1 do sub32_lookups[i] = string.char(96 + i) end
 
   function k.open_tty(gpu, screen)
     checkArg(1, gpu, "string", "table")
@@ -505,7 +518,8 @@ do
       -- attributes
       altcursor = false, showctrl = false,
       mousereport = 0, autocr = false,
-      cursor = true,
+      cursor = true, echo = true, line = true,
+      raw = false
     }
 
     local keyboards = {}
@@ -520,11 +534,32 @@ do
       local to_screen, to_buffer
       if scancode_lookups[code] then
         local c = scancode_lookups[code]
-        to_screen = "^[" .. c
-        to_buffer = "\27[" .. c
-      elseif char ~= 0 then
-        
+        local interim = new.altcursor and "O" or "["
+        to_screen = "^" .. interim .. c
+        to_buffer = "\27" .. interim .. c
+      elseif char < 32 then
+        to_buffer = string.char(char)
+        to_screen = "^"..sub32_lookups[ch]:upper()
       end
+
+      if not self.attributes.raw then
+        if char == 13 then
+          to_buffer, to_screen = "\n", "\n"
+        elseif char == 8 then
+          to_buffer = ""
+          if #new.rbuf > 0 then
+            to_screen = "\27[D \27[D"
+            new.rbuf = new.rbuf:sub(1, -2)
+          else
+            to_screen = ""
+          end
+        end
+      end
+
+      if new.echo then
+        new:write(to_screen or ""):flush()
+      end
+      new.rbuf = new.rbuf .. (to_buffer or "")
     end)
 
     setmetatable(new, {__index = _tty})
