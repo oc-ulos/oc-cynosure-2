@@ -74,7 +74,7 @@ do
     checkArg(3, close, "function", "nil")
     return {
       read = read or ebadf, write = write or ebadf,
-      refs = 1, close = function(s)
+      refs = 1, close = function(self)
         self.refs = self.refs - 1
         if close and self.refs == 0 then close() end
       end
