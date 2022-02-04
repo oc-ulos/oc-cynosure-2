@@ -94,9 +94,12 @@ do
   local pullSignal = computer.pullSignal
   -- kernel panic!!!
   function panic(reason)
+    printk(k.L_EMERG, "kernel panic: %s", reason)
     printk(k.L_EMERG, "#### stack traceback ####")
-    for line in debug.traceback(reason):gmatch("[^\n]+") do
-      printk(k.L_EMERG, line)
+    for line in debug.traceback():gmatch("[^\n]+") do
+      if line ~= "stack traceback:" then
+        printk(k.L_EMERG, "%s", line)
+      end
     end
     printk(k.L_EMERG, "#### end traceback ####")
     while true do pullSignal() end
