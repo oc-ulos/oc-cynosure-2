@@ -78,7 +78,10 @@ do
   k.L_DEBUG   = 7
   k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
   -- XXX globals XXX
-  -- function(number, string[, string...]): print a message to the system logs
+
+  --- Print a message to the system logs
+  ---@param level number
+  ---@param fmt string
   function printk(level, fmt, ...)
     local message = string.format("[%08.02f] ", computer.uptime()) ..
       string.format(fmt, ...)

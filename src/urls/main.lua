@@ -21,7 +21,9 @@ printk(k.L_INFO, "urls/main")
 do
   k.schemes = {}
 
-  -- function(string, table): register a scheme
+  --- Registers a scheme
+  ---@param name string
+  ---@param provider table
   function k.register_scheme(name, provider)
     checkArg(1, name, "string")
     checkArg(2, provider, "table")
@@ -32,7 +34,8 @@ do
     return true
   end
 
-  -- function(string): takes a URL and returns its provider plus its resource
+  --- Takes a URL and returns its provider plus its resource
+  ---@param url string
   function k.lookup_url(url)
     local scheme, resource = url:match("(.*):/?/?(.*)")
     if not scheme then
