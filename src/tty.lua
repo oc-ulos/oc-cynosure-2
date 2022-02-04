@@ -241,15 +241,12 @@ do
 
   -- CSI g not implemented
 
-  local function hl(set, args)
+  local function hl(self, set, args)
     for i=1, #args, 1 do
       local n = args[i]
       -- 1 - cursor keys send ESC O prefix rather than ESC [
       if n == 1 then
         self.altcursor = set
-      -- 3 - display control characters
-      elseif n == 3 then
-        self.showctrl = set
       -- 9 - X10 mouse reporting
       elseif n == 9 then
         self.mousereport = set and 1 or 0
@@ -269,12 +266,12 @@ do
   
   -- SM - set mode
   function commands:h(args)
-    hl(true, args)
+    hl(self, true, args)
   end
   
   -- RM - reset mode
-  function commands:l()
-    hl(false, args)
+  function commands:l(args)
+    hl(self, false, args)
   end
 
   -- SGR - set attributes
@@ -398,9 +395,11 @@ do
     if self.autocr then
       line = line:gsub("[\n\v\f]", "%1\r")
     end
+
     -- i can't believe i haven't just done this in the past
     line = line:gsub("[\n\v\f]", "\27[B")
       :gsub("\r", "\27[G")
+
     while #line > 0 do
       local nesc = line:find("\27", nil, true)
       local e = (nesc and nesc - 1) or #line
@@ -422,7 +421,7 @@ do
             if c == ";" then
               args[#args+1] = tonumber(num) or 0
               num = ""
-            else
+            elseif tonumber(c) then
               num = num .. c
               if pos == plen then
                 args[#args+1] = tonumber(num) or 0
