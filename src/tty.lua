@@ -408,7 +408,7 @@ do
     line = line:gsub("\x9b", "\27[")
     while #line > 0 do
       local nesc = line:find("\27", nil, true)
-      local e = (nesc and nesc - 1) or #str
+      local e = (nesc and nesc - 1) or #line
       local chunk = line:sub(1, e)
       line = line:sub(#chunk + 1)
       textwrite(self, chunk)
@@ -482,7 +482,8 @@ do
   function _tty:flush()
     local dc = #self.wbuf > 0
     if dc then togglecursor(self) end
-    internalwrite(self, chunk)
+    internalwrite(self, self.wbuf)
+    self.wbuf = ""
     if dc then togglecursor(self) end
   end
 
