@@ -58,5 +58,3 @@
   - [ ] CFTP
   - [ ] Minitel
   - [ ] GERT
-
-There are more but this is it for now.
