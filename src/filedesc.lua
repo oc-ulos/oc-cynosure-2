@@ -31,6 +31,7 @@ do
   local function fclose(self)
     return self.proxy.close(self.fd)
   end
+  -- function(component_proxy, number/userdata, string)
   -- create a file descriptor object from a managed filesystem's file
   -- descriptor
   function k.fd_from_managed(proxy, fd, mode)
@@ -59,7 +60,9 @@ do
     return nil, k.errno.EBADF
   end
 
-  -- create a file descriptor from a reader and/or writer function
+  -- function(function, function, function)
+  -- create a file descriptor from a reader and/or writer function, with an
+  -- optional close function
   function k.fd_from_rwf(read, write, close)
     checkArg(1, read, "function", write and "nil")
     checkArg(2, write, "function", read and "nil")

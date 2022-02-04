@@ -21,6 +21,7 @@ printk(k.L_INFO, "exec/main")
 do
   local formats = {}
 
+  -- function(string, function): registers an executable format with the kernel
   function k.register_executable_format(name, recognizer)
     checkArg(1, name, "string")
     checkArg(2, recognizer, "function")

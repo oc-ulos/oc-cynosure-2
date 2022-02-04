@@ -78,6 +78,7 @@ do
   k.L_DEBUG   = 7
   k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
   -- XXX globals XXX
+  -- function(number, string[, string...]): print a message to the system logs
   function printk(level, fmt, ...)
     local message = string.format("[%08.02f] ", computer.uptime()) ..
       string.format(fmt, ...)
@@ -88,6 +89,7 @@ do
   end
 
   local pullSignal = computer.pullSignal
+  -- kernel panic!!!
   function panic(reason)
     printk(k.L_EMERG, "#### stack traceback ####")
     for line in debug.traceback(reason):gmatch("[^\n]+") do
