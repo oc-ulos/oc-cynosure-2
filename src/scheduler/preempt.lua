@@ -63,20 +63,19 @@ do
           code = code:sub(2)
           wrapped = wrapped .. gsub(chunk) .. quote .. "["
         elseif code:sub(1,1) == "=" then
-          local pch, pos = code:find("(=-%[)()")
+          local pch = code:find("(=-%[)")
           if not pch then -- syntax error
             return wrapped .. chunk .. quote .. code
           end
           prefix = prefix .. pch:sub(1, -2) .. "%]"
-          code = code:sub(pos)
-          wrapped = wrapped .. gsub(chunk) .. pch
+          code = code:sub(#pch+1)
+          wrapped = wrapped .. gsub(chunk) .. "[" .. pch
         else
           wrapped = wrapped .. gsub(chunk) .. quote
         end
 
         if #prefix > 2 then
           local strend = code:match(".-"..prefix)
-          print(prefix, code, strend)
           code = code:sub(#strend+1)
           wrapped = wrapped .. strend
         end
