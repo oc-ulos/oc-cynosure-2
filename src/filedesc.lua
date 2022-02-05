@@ -20,15 +20,19 @@ printk(k.L_INFO, "filedesc")
 
 do
   local function fread(self, n)
+    if not self.proxy.read then return nil, k.errno.EOPPNOTSUPP end
     return self.proxy.read(self.fd, n)
   end
   local function fwrite(self, d)
+    if not self.proxy.write then return nil, k.errno.EOPPNOTSUPP end
     return self.proxy.write(self.fd, d)
   end
   local function fseek(self, w, o)
+    if not self.proxy.seek then return nil, k.errno.EOPPNOTSUPP end
     return self.proxy.seek(self.fd, w, o)
   end
   local function fclose(self)
+    if not self.proxy.close then return nil, k.errno.EOPPNOTSUPP end
     return self.proxy.close(self.fd)
   end
   --- Create a file descriptor object from a managed filesystem's file
@@ -37,7 +41,7 @@ do
   ---@param fd number
   ---@param mode string
   ---@overload fun(proxy: table, fd: userdata, mode: string): table
-  function k.fd_from_managed(proxy, fd, mode)
+  function k.fd_from_node(proxy, fd, mode)
     checkArg(1, proxy, "table")
     -- ocvm returns userdata rather than a number
     checkArg(2, fd, "number", "userdata")
@@ -46,16 +50,6 @@ do
       read = fread, write = fwrite, seek = fseek, close = fclose,
       fd = fd, proxy = proxy
     }, mode)
-    -- number of references to the file descriptor
-    -- when this hits 0, it is closed
-    new.refs = 1
-    local close = new.close
-    function new:close()
-      self.refs = self.refs - 1
-      if self.refs == 0 then
-        close(self)
-      end
-    end
     return new
   end
 
@@ -74,10 +68,7 @@ do
     checkArg(3, close, "function", "nil")
     return {
       read = read or ebadf, write = write or ebadf,
-      refs = 1, close = function(self)
-        self.refs = self.refs - 1
-        if close and self.refs == 0 then close() end
-      end
+      close = close or function() end
     }
   end
 end

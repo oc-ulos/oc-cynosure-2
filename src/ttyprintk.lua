@@ -19,4 +19,11 @@
 printk(k.L_INFO, "ttyprintk")
 
 do
+  local console, err = k.open("tty:1", 0x1000)
+  if not console then
+    panic("cannot open console: " .. err)
+  end
+  function k.log_to_screen(message)
+    k.write(console, message.."\n")
+  end
 end

@@ -48,7 +48,7 @@ do
 
   function provider.open(tty)
     checkArg(1, tty, "string")
-    return ttys[tty], k.errno.ENOENT
+    return ttys[tonumber(tty) or 0], k.errno.ENOENT
   end
 
   function provider.read(tty, n)
@@ -86,8 +86,8 @@ do
       for screen in component.list("screen", true) do
         if not screens[screen] then
           screens[screen] = true
-          printk(k.L_DEBUG, "registering TTY on %s,%s", gpu:sub(1,6),
-            screen:sub(1,6))
+          printk(k.L_DEBUG, "registering TTY %d on %s,%s", #ttys+1,
+            gpu:sub(1,6), screen:sub(1,6))
           ttys[#ttys+1] = k.open_tty(gpu, screen)
         end
       end

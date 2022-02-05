@@ -517,7 +517,7 @@ do
       fg = colors[1], bg = colors[8],
       -- attributes
       altcursor = false, showctrl = false,
-      mousereport = 0, autocr = false,
+      mousereport = 0, autocr = true,
       cursor = true, echo = true, line = true,
       raw = false
     }

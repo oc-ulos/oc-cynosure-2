@@ -56,10 +56,61 @@ do
     if not provider[method] then
       return nil, k.errno.EOPNOTSUPP
     end
-    return provider[method](...)
+    return provider, provider[method](resource, ...)
   end
 
-  function k.open()
+  local function verify_fd(fd)
+    checkArg(1, fd, "table")
+    if not (fd.fd and fd.node and fd.refs) then
+      error("bad argument #1 (file descriptor expected)", 2)
+    end
+    return true
+  end
+
+  local function fd_call(func, ...)
+    if not func then
+      return nil, k.errno.EOPPNOTSUPP
+    end
+    return func(...)
+  end
+  
+  function k.open(url, mode)
+    checkArg(1, url, "string")
+    checkArg(2, mode, "number")
+    local result = table.pack(call(url, "open", mode))
+    if not result[1] then
+      return nil, result[2]
+    end
+    if not result[2] then
+      return nil, result[3]
+    end
+    return {fd = result[2], node = result[1], refs = 1}
+  end
+
+  function k.read(fd, format)
+    verify_fd(fd)
+    checkArg(2, format, "string", "number")
+    return fd.node.read(fd.fd, format)
+  end
+
+  function k.write(fd, ...)
+    verify_fd(fd)
+    return fd_call(fd.node.write, fd.fd, ...)
+  end
+
+  function k.seek(fd, whence, offset)
+    verify_fd(fd)
+    return fd_call(fd.node.seek, fd.fd, whence, offset)
+  end
+  
+  function k.flush(fd)
+    verify_fd(fd)
+    return fd_call(fd.flush)
+  end
+
+  function k.close(fd)
+    verify_fd(fd)
+    return fd_call(fd.close)
   end
 end
 
