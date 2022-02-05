@@ -528,7 +528,7 @@ do
     end
 
     -- handlers
-    new.khid = k.sig_add_handler("key_down", function(_, kbd, char, code)
+    new.khid = k.add_signal_handler("key_down", function(_, kbd, char, code)
       if not keyboards[kbd] then return end
 
       local to_screen, to_buffer
@@ -565,4 +565,6 @@ do
     setmetatable(new, {__index = _tty})
     return new
   end
+
+  k.init_ttys()
 end

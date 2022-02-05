@@ -80,14 +80,16 @@ do
   k.register_scheme("tty", provider)
 
   -- dynamically register ttys
-  local screens = {}
-  for gpu in component.list("gpu", true) do
-    for screen in component.list("screen", true) do
-      if not screens[screen] then
-        screens[screen] = true
-        printk(k.L_DEBUG, "registering TTY on %s,%s", gpu:sub(1,6),
-          screen:sub(1,6))
-        ttys[#ttys+1] = k.open_tty(gpu, screen)
+  function k.init_ttys()
+    local screens = {}
+    for gpu in component.list("gpu", true) do
+      for screen in component.list("screen", true) do
+        if not screens[screen] then
+          screens[screen] = true
+          printk(k.L_DEBUG, "registering TTY on %s,%s", gpu:sub(1,6),
+            screen:sub(1,6))
+          ttys[#ttys+1] = k.open_tty(gpu, screen)
+        end
       end
     end
   end
