@@ -27,5 +27,4 @@ do
   function k.log_to_screen(message)
     k.write(console, message.."\n")
   end
-  printk(k.L_INFO, "\27[91mtest")
 end
