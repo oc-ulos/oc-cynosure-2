@@ -6,7 +6,7 @@
   - [ ] Shebang support
 - [ ] TTY
   - [x] Rewrite output function
-  - [ ] Keyboard input
+  - [x] Keyboard input
   - [ ] Mouse input when enabled
   - [ ] Extra GPU functions
 - [ ] Finish managed filesystem driver
