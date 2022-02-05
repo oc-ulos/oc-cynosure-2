@@ -399,6 +399,8 @@ do
     -- i can't believe i haven't just done this in the past
     line = line:gsub("[\n\v\f]", "\27[B")
       :gsub("\r", "\27[G")
+      -- TODO: perhaps custom escape for tab?
+      :gsub("\t", "  ")
 
     while #line > 0 do
       local nesc = line:find("\27", nil, true)
@@ -521,6 +523,9 @@ do
       cursor = true, echo = true, line = true,
       raw = false
     }
+
+    -- prevent inverted colors
+    togglecursor(new)
 
     local keyboards = {}
     for _, kbaddr in pairs(component.invoke(screen, "getKeyboards")) do
