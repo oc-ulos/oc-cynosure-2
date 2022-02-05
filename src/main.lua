@@ -23,6 +23,7 @@ local k = {}
 --#include "src/errno.lua"
 --@[{bconf.BIT32 == 'y' and '#include "src/bit32.lua"' or ''}]
 --#include "src/urls/main.lua"
+--#include "src/signals.lua"
 --#include "src/tty.lua"
 --#include "src/ttyprintk.lua"
 --#include "src/buffer.lua"
