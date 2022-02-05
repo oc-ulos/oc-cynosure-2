@@ -40,7 +40,7 @@ dirs = {
       error(a .. ": not defined")
     end
   end},
-  {"$%[%{(.+)%}%]", function(ex)
+  {"$%[%{(.-)%}%]", function(ex)
     return assert(io.popen(ex, "r"):read("a")):gsub("\n$","")
   end},
   {"@%[%{(.+)%}%]", function(ex)

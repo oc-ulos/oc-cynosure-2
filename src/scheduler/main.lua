@@ -1,4 +1,6 @@
 -- main scheduler source file
 -- just #includes a couple more files
+--#include "src/scheduler/thread.lua"
 --#include "src/scheduler/process.lua"
 --#include "src/scheduler/loop.lua"
+--@[{bconf.PREEMPT_MODE ~= 'none' and '#include "src/scheduler/preempt.lua"'}]
