@@ -26,7 +26,27 @@ do
 
   local provider = {}
 
+  -- TODO: Actually implement the functions and their arguments
+
   function provider.open()
+  end
+
+  function provider.close()
+  end
+
+  function provider.read()
+  end
+
+  function provider.write()
+  end
+
+  function provider.opendir()
+  end
+
+  function provider.readdir()
+  end
+
+  function provider.flush()
   end
 
   k.register_scheme("file", provider)
