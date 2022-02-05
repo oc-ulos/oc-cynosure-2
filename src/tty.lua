@@ -419,7 +419,8 @@ do
           local args = {}
           local num = ""
           local plen = #params
-          for c, pos in params:gmatch(".()") do
+          component.invoke(component.list("sandbox")(), "log", params)
+          for pos, c in params:gmatch("()(.)") do
             if c == ";" then
               args[#args+1] = tonumber(num) or 0
               num = ""
