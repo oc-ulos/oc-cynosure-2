@@ -63,13 +63,16 @@ do
     checkArg(1, fd, "table")
   end
 
-  function provider.opendir()
+  function provider.opendir(path)
+    checkArg(1, path, "string")
   end
 
-  function provider.readdir()
+  function provider.readdir(dirfd)
+    checkArg(1, dirfd, "table")
   end
 
-  function provider.close()
+  function provider.close(fd)
+    checkArg(1, fd, "table")
   end
 
   k.register_scheme("file", provider)
