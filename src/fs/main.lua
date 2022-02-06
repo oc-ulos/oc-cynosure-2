@@ -37,12 +37,27 @@ do
     return true
   end
 
-  local provider = {}
-
   -- TODO: Actually implement functionality
 
   local fds = {}
   local mounts = {}
+
+  function k.split_path(path)
+    local segments = {}
+    for piece in path:gmatch("[^/\\]+") do
+      if piece == ".." then
+        segments[#segments] = nil
+      elseif piece ~= "." then
+        segments[#segments+1] = piece
+      end
+    end
+    return segments
+  end
+
+  local function path_to_node(path)
+  end
+  
+  local provider = {}
 
   function provider.open(file, mode)
     checkArg(1, file, "string")
