@@ -39,18 +39,28 @@ do
 
   local provider = {}
 
-  -- TODO: Actually implement the functions and their arguments
+  -- TODO: Actually implement functionality
 
-  function provider.open()
+  local fds = {}
+  local mounts = {}
+
+  function provider.open(file, mode)
+    checkArg(1, file, "string")
+    checkArg(2, mode, "string")
   end
 
-  function provider.read()
+  function provider.read(fd, fmt)
+    checkArg(1, fd, "table")
+    checkArg(2, fmt, "string", "number")
   end
 
-  function provider.write()
+  function provider.write(fd, data)
+    checkArg(1, fd, "table")
+    checkArg(2, data, "string")
   end
 
-  function provider.flush()
+  function provider.flush(fd)
+    checkArg(1, fd, "table")
   end
 
   function provider.opendir()

@@ -76,7 +76,7 @@ do
   
   function k.open(url, mode)
     checkArg(1, url, "string")
-    checkArg(2, mode, "number")
+    checkArg(2, mode, "string")
     local result = table.pack(call(url, "open", mode))
     if not result[1] then
       return nil, result[2]
