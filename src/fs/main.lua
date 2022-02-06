@@ -39,7 +39,6 @@ do
 
   -- TODO: Actually implement functionality
 
-  local fds = {}
   local mounts = {}
 
   function k.split_path(path)
@@ -68,6 +67,9 @@ do
       end
     end
     return mounts[mnt]
+  end
+
+  function k.mount()
   end
   
   local provider = {}
