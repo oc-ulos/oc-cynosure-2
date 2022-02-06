@@ -43,6 +43,7 @@ do
   local mounts = {}
 
   function k.split_path(path)
+    checkArg(1, path, "string")
     local segments = {}
     for piece in path:gmatch("[^/\\]+") do
       if piece == ".." then
@@ -54,7 +55,19 @@ do
     return segments
   end
 
+  function k.clean_path(path)
+    checkArg(1, path, "string")
+    return "/" .. table.concat(k.split_path(path), "/")
+  end
+
   local function path_to_node(path)
+    local mnt = "/"
+    for k, v in pairs(mounts) do
+      if path:sub(1, #k) == k and #k > mnt then
+        mnt = k
+      end
+    end
+    return mounts[mnt]
   end
   
   local provider = {}
