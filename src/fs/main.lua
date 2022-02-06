@@ -69,7 +69,26 @@ do
     return mounts[mnt]
   end
 
-  function k.mount()
+  --- Mounts a drive or filesystem at the given path.
+  ---@param node table|string The component proxy or address
+  ---@param path string The path at which to mount it
+  function k.mount(node, path)
+    checkArg(1, node, "table", "string")
+    checkArg(2, path, "string")
+    if type(node) == "string" then node = component.proxy(node) end
+    if not node then return nil, k.errno.ENODEV end
+    local proxy = recognize_filesystem(node)
+    if not proxy then return nil, k.errno.EUNATCH end
+    mounts[k.clean_path(path)] = proxy
+    return true
+  end
+
+  --- Unmounts something from the given path
+  ---@param path string
+  function k.unmount(path)
+    checkArg(1, path, "string")
+    mounts[k.clean_path(path)] = nil
+    return true
   end
   
   local provider = {}
