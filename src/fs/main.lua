@@ -75,11 +75,18 @@ do
   function k.mount(node, path)
     checkArg(1, node, "table", "string")
     checkArg(2, path, "string")
+
     if type(node) == "string" then node = component.proxy(node) end
     if not node then return nil, k.errno.ENODEV end
+
     local proxy = recognize_filesystem(node)
     if not proxy then return nil, k.errno.EUNATCH end
-    mounts[k.clean_path(path)] = proxy
+
+    local path = k.clean_path(path)
+    mounts[path] = proxy
+
+    if proxy.mount then proxy:mount(path) end
+
     return true
   end
 
@@ -87,7 +94,18 @@ do
   ---@param path string
   function k.unmount(path)
     checkArg(1, path, "string")
-    mounts[k.clean_path(path)] = nil
+
+    path = k.clean_path(path)
+    if not mounts[path] then
+      return nil, k.errno.EINVAL
+    end
+
+    local node = mounts[path]
+    if node.unmount then
+      node:unmount(path)
+    end
+
+    mounts[path] = nil
     return true
   end
   
