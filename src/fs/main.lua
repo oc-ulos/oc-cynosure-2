@@ -18,10 +18,23 @@
 
 printk(k.L_INFO, "fs/main")
 
+---@alias fs_recognizer fun(component: table): table
+
 do
+  ---@type fs_recognizer[]
   k.fstypes = {}
 
-  function k.register_fstype()
+  --- Registers a filesystem type
+  ---@param name string
+  ---@param recognizer fs_recognizer
+  function k.register_fstype(name, recognizer)
+    checkArg(1, name, "string")
+    checkArg(2, recognizer, "function")
+    if k.fstypes[name] then
+      panic("attempted to double-register fstype " .. name)
+    end
+    k.fstypes[name] = recognizer
+    return true
   end
 
   local provider = {}
