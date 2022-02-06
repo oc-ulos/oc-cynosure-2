@@ -44,13 +44,13 @@ do
   function provider.open()
   end
 
-  function provider.close()
-  end
-
   function provider.read()
   end
 
   function provider.write()
+  end
+
+  function provider.flush()
   end
 
   function provider.opendir()
@@ -59,7 +59,7 @@ do
   function provider.readdir()
   end
 
-  function provider.flush()
+  function provider.close()
   end
 
   k.register_scheme("file", provider)
