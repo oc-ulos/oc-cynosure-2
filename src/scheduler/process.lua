@@ -108,6 +108,11 @@ do
 
       -- controlling TTY
       tty = false,
+
+      -- working directory
+      cwd = parent.cwd or "/"
+      -- root directory
+      root = parent.root or "/"
     }, process_mt)
   end
 end
