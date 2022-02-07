@@ -62,9 +62,14 @@ do
   function k.check_absolute(path)
     checkArg(1, path, "string")
     if path:sub(1, 1) == "/" then
-      return table.concat(k.split_path(path), "/")
+      return "/" .. table.concat(k.split_path(path), "/")
     else
-      return table.concat(k.split_path(k.current_process().cwd .. "/" .. path), "/")
+      local current = k.current_process()
+      if current then
+        return "/" .. table.concat(k.split_path(current.cwd .. "/" .. path), "/")
+      else
+        return "/" .. table.concat(k.split_path(path), "/")
+      end
     end
   end
 
