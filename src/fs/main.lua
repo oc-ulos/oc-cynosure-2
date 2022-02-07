@@ -60,13 +60,13 @@ do
   end
 
   local function path_to_node(path)
-    local mnt = "/"
+    local mnt, rem = "/", ""
     for k, v in pairs(mounts) do
       if path:sub(1, #k) == k and #k > mnt then
-        mnt = k
+        mnt, rem = k, path:sub(#k+1)
       end
     end
-    return mounts[mnt]
+    return mounts[mnt], rem
   end
 
   --- Mounts a drive or filesystem at the given path.
@@ -114,32 +114,48 @@ do
   function provider.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
+    local node, remain = path_to_node(file)
+    if not node:exists(remain) then
+      return nil, k.errno.ENOENT
+    end
+    return { fd = node:open(remain, mode), node = node }
+  end
+
+  local function verify_fd(fd)
+    checkArg(1, fd, "table")
+    if not (fd.fd and fd.node) then
+      error("bad argument #1 (file descriptor expected)", 2)
+    end
   end
 
   function provider.read(fd, fmt)
-    checkArg(1, fd, "table")
+    verify_fd(fd)
     checkArg(2, fmt, "string", "number")
+    return fd.node:read(fd.fd, fmt)
   end
 
   function provider.write(fd, data)
-    checkArg(1, fd, "table")
+    verify_fd(fd)
     checkArg(2, data, "string")
+    return fd.node:write(fd.fd, data)
   end
 
   function provider.flush(fd)
-    checkArg(1, fd, "table")
+    verify_fd(fd)
+    return fd.node:flush(fd.fd)
   end
 
   function provider.opendir(path)
     checkArg(1, path, "string")
+    
   end
 
   function provider.readdir(dirfd)
-    checkArg(1, dirfd, "table")
+    verify_fd(dirfd)
   end
 
   function provider.close(fd)
-    checkArg(1, fd, "table")
+    verify_fd(fd)
   end
 
   k.register_scheme("file", provider)
