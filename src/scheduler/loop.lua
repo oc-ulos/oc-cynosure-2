@@ -74,4 +74,8 @@ do
     pid = pid + 1
     processes[pid] = k.create_process(pid, processes[current])
   end
+
+  function k.current_process()
+    return processes[current]
+  end
 end

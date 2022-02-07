@@ -59,6 +59,15 @@ do
     return "/" .. table.concat(k.split_path(path), "/")
   end
 
+  function k.check_absolute(path)
+    checkArg(1, path, "string")
+    if path:sub(1, 1) == "/" then
+      return table.concat(k.split_path(path), "/")
+    else
+      return table.concat(k.split_path(k.current_process().cwd .. "/" .. path), "/")
+    end
+  end
+
   local function path_to_node(path)
     local mnt, rem = "/", ""
     for k, v in pairs(mounts) do
