@@ -129,10 +129,10 @@ do
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
     local node, remain = path_to_node(file)
-    if not node:exists(remain) then
-      return nil, k.errno.ENOENT
-    end
-    return { fd = node:open(remain, mode), node = node }
+    if not node:exists(remain) then return nil, k.errno.ENOENT end
+    local fd, err = node:open(remain, node)
+    if not fd then return nil, err end
+    return { fd = fd, node = node }
   end
 
   local function verify_fd(fd)
@@ -161,15 +161,19 @@ do
 
   function provider.opendir(path)
     checkArg(1, path, "string")
-    
+    local node, remain = path_to_file(path)
+    if not node:exists(remain) then return nil, k.errno.ENOENT end
+    local fd, err = node:opendir(path)
+    if not fd then return nil, err end
+    return { fd = fd, node = node, dir = true }
   end
 
   function provider.readdir(dirfd)
-    verify_fd(dirfd)
+    verify_fd(dirfd, true)
   end
 
   function provider.close(fd)
-    verify_fd(fd)
+    verify_fd(fd, true)
   end
 
   function provider.stat(path)
@@ -182,6 +186,15 @@ do
   end
 
   function provider.unlink()
+  end
+
+  function provider.setattr()
+  end
+
+  function provider.chmod()
+  end
+
+  function provider.chown()
   end
 
   k.register_scheme("file", provider)
