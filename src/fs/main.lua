@@ -172,6 +172,18 @@ do
     verify_fd(fd)
   end
 
+  function provider.stat(path)
+  end
+
+  function provider.mkdir()
+  end
+
+  function provider.link()
+  end
+
+  function provider.unlink()
+  end
+
   k.register_scheme("file", provider)
 end
 
