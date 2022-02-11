@@ -142,10 +142,7 @@ do
     if not (fd.fd and fd.node) then
       error("bad argument #1 (file descriptor expected)", 2)
     end
-    -- This comparison ensures that both sides are booleans. If we didn't
-    -- check this, it would error if one was `nil` and the other `false` -
-    -- which is not the intended result. This way it will only error if
-    -- their boolean values are different, which is what we want.
+    -- The `(not not val)` part a just boolean cast.
     if (not not fd.dir) ~= (not not dir) then
       error("bad argument #1 (cannot supply dirfd where fd is required, or vice versa)", 2)
     end
