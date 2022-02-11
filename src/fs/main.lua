@@ -142,7 +142,7 @@ do
     if not (fd.fd and fd.node) then
       error("bad argument #1 (file descriptor expected)", 2)
     end
-    -- The `(not not val)` part a just boolean cast.
+    -- The `(not not val)` part a boolean cast.
     if (not not fd.dir) ~= (not not dir) then
       error("bad argument #1 (cannot supply dirfd where fd is required, or vice versa)", 2)
     end
