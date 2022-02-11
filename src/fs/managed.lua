@@ -31,11 +31,11 @@ do
   --  created:number
 
   -- take the attribute file data and return a table
-  local function load_attributes()
+  local function load_attributes(data)
   end
 
   -- take a table of attributes and return file data
-  local function dump_attributes()
+  local function dump_attributes(attributes)
   end
 
   -- get the attributes of a specific file
@@ -43,51 +43,51 @@ do
   end
 
   -- set the attributes of a specific file
-  function _node:set_attributes(file)
+  function _node:set_attributes(file, attributes)
   end
 
-  function _node:exists()
+  function _node:exists(path)
   end
 
-  function _node:stat()
+  function _node:stat(path)
   end
 
-  function _node:chmod()
+  function _node:chmod(path, mode)
   end
 
-  function _node:chown()
+  function _node:chown(path, uid, gid)
   end
   
-  function _node:link()
+  function _node:link(source, dest)
   end
 
-  function _node:unlink()
+  function _node:unlink(path)
   end
   
-  function _node:mkdir()
+  function _node:mkdir(path)
   end
 
-  function _node:opendir()
+  function _node:opendir(path)
   end
 
-  function _node:readdir()
+  function _node:readdir(dirfd)
   end
 
-  function _node:open()
+  function _node:open(path, mode)
   end
 
-  function _node:read()
+  function _node:read(fd, fmt)
   end
   
-  function _node:write()
+  function _node:write(fd, data)
   end
   
-  function _node:seek()
+  function _node:seek(fd, whence, offset)
   end
 
   -- this function does nothing
   function _node:flush() end
 
-  function _node:close()
+  function _node:close(fd)
   end
 end
