@@ -19,4 +19,5 @@
 printk(k.L_INFO, "fs/managed")
 
 do
+  local _node = {}
 end
