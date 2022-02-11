@@ -66,7 +66,8 @@ do
     else
       local current = k.current_process()
       if current then
-        return "/" .. table.concat(k.split_path(current.cwd .. "/" .. path), "/")
+        return "/" .. table.concat(k.split_path(current.cwd .. "/" .. path),
+          "/")
       else
         return "/" .. table.concat(k.split_path(path), "/")
       end
@@ -74,6 +75,7 @@ do
   end
 
   local function path_to_node(path)
+    path = k.check_absolute(path)
     local mnt, rem = "/", ""
     for k, v in pairs(mounts) do
       if path:sub(1, #k) == k and #k > mnt then
@@ -135,10 +137,13 @@ do
     return { fd = fd, node = node }
   end
 
-  local function verify_fd(fd)
+  local function verify_fd(fd, dir)
     checkArg(1, fd, "table")
     if not (fd.fd and fd.node) then
       error("bad argument #1 (file descriptor expected)", 2)
+    end
+    if (not not fd.dir) ~= (not not dir) then
+      error("bad argument #1 (cannot supply dirfd where fd is required, or vice versa)", 2)
     end
   end
 
@@ -163,38 +168,68 @@ do
     checkArg(1, path, "string")
     local node, remain = path_to_file(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
-    local fd, err = node:opendir(path)
+    local fd, err = node:opendir(remain)
     if not fd then return nil, err end
     return { fd = fd, node = node, dir = true }
   end
 
   function provider.readdir(dirfd)
     verify_fd(dirfd, true)
+    return fd.node:readdir(fd.fd)
   end
 
   function provider.close(fd)
     verify_fd(fd, true)
+    return fd.node:close(fd.fd)
   end
 
   function provider.stat(path)
+    checkArg(1, path, "string")
+    local node, remain = path_to_file(path)
+    return node:stat(remain)
   end
 
-  function provider.mkdir()
+  function provider.mkdir(path)
+    checkArg(1, path, "string")
+    local node, remain = path_to_file(path)
+    if node:exists(remain) then return nil, k.errno.EEXIST end
+    return node:mkdir(remain)
   end
 
-  function provider.link()
+  function provider.link(source, dest)
+    checkArg(1, source, "string")
+    checkArg(2, dest, "string")
+    local node, sremain = path_to_file(source)
+    local _node, dremain = path_to_file(dest)
+    if _node ~= node then return nil, k.errno.EXDEV end
+    if node:exists(dremain) then return nil, k.errno.EEXIST end
+    return node:link(sremain, dremain)
   end
 
-  function provider.unlink()
+  function provider.unlink(path)
+    checkArg(1, path, "string")
+    local node, remain = path_to_file(path)
+    if not node:exists(remain) then return nil, k.errno.ENOENT end
+    return node:unlink(remain)
   end
 
-  function provider.setattr()
+  function provider.chmod(path, mode)
+    checkArg(1, path, "string")
+    checkArg(2, mode, "number")
+    local node, remain = path_to_file(path)
+    if not node:exists(remain) then return nil, k.errno.ENOENT end
+    -- only preserve the lower 12 bits
+    mode = bit32.band(mode, 0x1FF)
+    return node:chmod(remain, mode)
   end
 
-  function provider.chmod()
-  end
-
-  function provider.chown()
+  function provider.chown(path, uid, gid)
+    checkArg(1, path, "string")
+    checkArg(2, uid, "number")
+    checkArg(3, gid, "number")
+    local node, remain = path_to_file(path)
+    if not node:exists(remain) then return nil, k.errno.ENOENT end
+    return node:chown(remain, uid, gid)
   end
 
   k.register_scheme("file", provider)
