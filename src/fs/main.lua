@@ -37,6 +37,16 @@ do
     return true
   end
 
+  local function recognize_filesystem(component)
+    for _, recognizer in pairs(k.fstypes) do
+      local fs = recognizer(component)
+      if fs then
+        return fs
+      end
+    end
+    return nil
+  end
+
   -- TODO: Actually implement functionality
 
   local mounts = {}
@@ -167,7 +177,7 @@ do
 
   function provider.opendir(path)
     checkArg(1, path, "string")
-    local node, remain = path_to_file(path)
+    local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
     local fd, err = node:opendir(remain)
     if not fd then return nil, err end
@@ -186,13 +196,13 @@ do
 
   function provider.stat(path)
     checkArg(1, path, "string")
-    local node, remain = path_to_file(path)
+    local node, remain = path_to_node(path)
     return node:stat(remain)
   end
 
   function provider.mkdir(path)
     checkArg(1, path, "string")
-    local node, remain = path_to_file(path)
+    local node, remain = path_to_node(path)
     if node:exists(remain) then return nil, k.errno.EEXIST end
     return node:mkdir(remain)
   end
@@ -200,8 +210,8 @@ do
   function provider.link(source, dest)
     checkArg(1, source, "string")
     checkArg(2, dest, "string")
-    local node, sremain = path_to_file(source)
-    local _node, dremain = path_to_file(dest)
+    local node, sremain = path_to_node(source)
+    local _node, dremain = path_to_node(dest)
     if _node ~= node then return nil, k.errno.EXDEV end
     if node:exists(dremain) then return nil, k.errno.EEXIST end
     return node:link(sremain, dremain)
@@ -209,7 +219,7 @@ do
 
   function provider.unlink(path)
     checkArg(1, path, "string")
-    local node, remain = path_to_file(path)
+    local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
     return node:unlink(remain)
   end
@@ -217,7 +227,7 @@ do
   function provider.chmod(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number")
-    local node, remain = path_to_file(path)
+    local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
     -- only preserve the lower 12 bits
     mode = bit32.band(mode, 0x1FF)
@@ -228,7 +238,7 @@ do
     checkArg(1, path, "string")
     checkArg(2, uid, "number")
     checkArg(3, gid, "number")
-    local node, remain = path_to_file(path)
+    local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
     return node:chown(remain, uid, gid)
   end
