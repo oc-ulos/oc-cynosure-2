@@ -37,6 +37,16 @@ do
     return true
   end
 
+  local function recognize_filesystem(component)
+    for _, recognizer in pairs(k.fstypes) do
+      local fs = recognizer(component)
+      if fs then
+        return fs
+      end
+    end
+    return nil
+  end
+
   -- TODO: Actually implement functionality
 
   local mounts = {}
