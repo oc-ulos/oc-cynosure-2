@@ -108,7 +108,7 @@ do
     checkArg(1, node, "table", "string")
     checkArg(2, path, "string")
 
-    if cur_user() ~= 0 then return nil, k.errno.EACCES end
+    if cur_proc().uid ~= 0 then return nil, k.errno.EACCES end
 
     if type(node) == "string" then node = component.proxy(node) end
     if not node then return nil, k.errno.ENODEV end
@@ -129,7 +129,7 @@ do
   function k.unmount(path)
     checkArg(1, path, "string")
 
-    if cur_user() ~= 0 then return nil, k.errno.EACCES end
+    if cur_proc().uid ~= 0 then return nil, k.errno.EACCES end
 
     path = k.clean_path(path)
     if not mounts[path] then
@@ -164,7 +164,8 @@ do
 
     local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
-    return { fd = fd, node = node }
+    local stream = k.fd_from_node(node, fd, mode)
+    return { fd = stream, node = stream }
   end
 
   local function verify_fd(fd, dir)

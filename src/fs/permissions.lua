@@ -86,7 +86,7 @@ do
 
     -- TODO: more fine-grained rules for precisely when root can do certain
     -- TODO: things
-    if proc.uid == 0 then return true end
+    if perm ~= "x" and proc.uid == 0 then return true end
 
     local ogo = (proc.uid == stat.uid and 1) or (proc.gid == stat.gid and 2)
       or 3

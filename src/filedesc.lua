@@ -35,6 +35,7 @@ do
     if not self.proxy.close then return nil, k.errno.EOPPNOTSUPP end
     return self.proxy.close(self.fd)
   end
+
   --- Create a file descriptor object from a managed filesystem's file
   --- descriptor
   ---@param proxy table

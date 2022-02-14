@@ -24,18 +24,47 @@ do
   --- Registers an executable format with the kernel
   ---@param name string
   ---@param recognizer function TODO: Annotate arguments
-  function k.register_executable_format(name, recognizer)
+  function k.register_executable_format(name, recognizer, loader)
     checkArg(1, name, "string")
     checkArg(2, recognizer, "function")
+    checkArg(3, loader, "function")
     if formats[name] then
       return nil, k.errno.EEXIST
     end
 
-    formats[name] = recognizer
+    formats[name] = { recognizer = recognizer, loader = loader }
+    return true
+  end
+
+  local default_proc = { uid = 0, gid = 0 }
+  local function cur_proc()
+    return k.current_process() or default_proc
   end
 
   function k.load_executable(path)
     checkArg(1, path, "string")
+
     local stat, err = k.stat(path)
+    if not stat then return nil, err end
+
+    if not k.process_has_permission(cur_proc(), stat, "x") then
+      return nil, k.errno.EACCES
+    end
+
+    local fd, err = k.open(path, "r")
+    if not fd then
+      return nil, err
+    end
+
+    local header = k.read(fd, 128)
+    k.seek(fd, "set", 0)
+
+    for _, format in pairs(formats) do
+      if format.recognizer(header) then
+        return format.loader(fd)
+      end
+    end
+
+    return nil, k.errno.ENOEXEC
   end
 end
