@@ -88,7 +88,7 @@ do
     path = k.check_absolute(path)
     local mnt, rem = "/", ""
     for k, v in pairs(mounts) do
-      if path:sub(1, #k) == k and #k > mnt then
+      if path:sub(1, #k) == k and #k > #mnt then
         mnt, rem = k, path:sub(#k+1)
       end
     end
