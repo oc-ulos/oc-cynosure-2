@@ -32,18 +32,74 @@ do
 
   -- take the attribute file data and return a table
   local function load_attributes(data)
+    local attributes = {}
+    for line in data:gmatch("[^\n]+") do
+      local key, val = line:match("^(.-):(.+)$")
+      attributes[key] = tonumber(val)
+    end
+    return attributes
   end
 
+  local serialize_order = {"uid", "gid", "mode", "devmaj", "devmin", "created"}
   -- take a table of attributes and return file data
   local function dump_attributes(attributes)
+    local data = ""
+    for _, key in ipairs(serialize_order) do
+      if attributes[key] then
+        data = data .. string.format("%s:%d\n", key, attributes[key])
+      end
+    end
+    return data
+  end
+
+  -- sanitize a path to not contain a .attr
+  local function sanitize(path)
+    local segments = k.split_path(path)
+    local final = segments[#segments]
+    if final:sub(1,1) == "." and final:sub(-5) == ".attr" then
+      return nil, k.errno.EACCES
+    end
+    return path
+  end
+
+  local function attr_path(path)
+    local segments = k.split_path(path)
+    return "/" .. table.concat(segments, "/", 1, #segments - 1) .. "." ..
+      segments[#segments] .. ".attr"
   end
 
   -- get the attributes of a specific file
   function _node:get_attributes(file)
+    checkArg(1, file, "string")
+    local err
+    file, err = sanitize(file)
+    if not file then return nil, err end
+    local fd, err = self.fs.open(attr_path(file), "r")
+    if not fd then
+      return {
+        uid = 0,
+        gid = 0,
+        mode = bit32.bor(self.fs.isDirectory(file) and 0x4000 or 0x8000, 511),
+        created = self.fs.lastModified(file)
+      }
+    end
+    local data = self.fs.read(fd, 2048)
+    self.fs.close(fd)
+    return load_attributes(data)
   end
 
   -- set the attributes of a specific file
   function _node:set_attributes(file, attributes)
+    checkArg(1, file, "string")
+    checkArg(2, attributes, "table")
+    local err
+    file, err = sanitize(file)
+    if not file then return nil, err end
+    local fd, err = self.fs.open(attr_path(file), "w")
+    if not fd then return nil, k.errno.EROFS end
+    self.fs.write(fd, dump_attributes(attributes))
+    self.fs.close(fd)
+    return true
   end
 
   function _node:exists(path)
