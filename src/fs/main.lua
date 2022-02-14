@@ -19,6 +19,7 @@
 printk(k.L_INFO, "fs/main")
 
 ---@alias fs_recognizer fun(component: table): table
+--#include "src/fs/permissions.lua"
 
 do
   ---@type fs_recognizer[]
@@ -95,12 +96,19 @@ do
     return mounts[mnt], rem or "/"
   end
 
+  local default_proc = {uid = 0, gid = 0}
+  local function cur_proc()
+    return k.current_process() or default_proc
+  end
+
   --- Mounts a drive or filesystem at the given path.
   ---@param node table|string The component proxy or address
   ---@param path string The path at which to mount it
   function k.mount(node, path)
     checkArg(1, node, "table", "string")
     checkArg(2, path, "string")
+
+    if cur_user() ~= 0 then return nil, k.errno.EACCES end
 
     if type(node) == "string" then node = component.proxy(node) end
     if not node then return nil, k.errno.ENODEV end
@@ -120,6 +128,8 @@ do
   ---@param path string
   function k.unmount(path)
     checkArg(1, path, "string")
+
+    if cur_user() ~= 0 then return nil, k.errno.EACCES end
 
     path = k.clean_path(path)
     if not mounts[path] then
@@ -142,8 +152,14 @@ do
     checkArg(2, mode, "string")
 
     local node, remain = path_to_node(file)
-    if not node:exists(remain) and mode ~= "w" then
+    if mode ~= "w" and not node:exists(remain) then
       return nil, k.errno.ENOENT
+    end
+
+    local stat = node:stat(remain)
+
+    if not k.process_has_permission(cur_proc(), stat.mode, mode) then
+      return nil, k.errno.EACCES
     end
 
     local fd, err = node:open(remain, mode)
@@ -156,7 +172,7 @@ do
     if not (fd.fd and fd.node) then
       error("bad argument #1 (file descriptor expected)", 2)
     end
-    -- The `(not not val)` part a boolean cast.
+    -- Casts both sides to booleans to ensure correctness when comparing
     if (not not fd.dir) ~= (not not dir) then
       error("bad argument #1 (cannot supply dirfd where fd is required, or vice versa)", 2)
     end
@@ -181,10 +197,18 @@ do
 
   function provider.opendir(path)
     checkArg(1, path, "string")
+
     local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
+
+    local stat = node:stat(remain)
+    if not k.process_has_permission(cur_proc(), stat, "r") then
+      return nil, k.errno.EACCES
+    end
+
     local fd, err = node:opendir(remain)
     if not fd then return nil, err end
+
     return { fd = fd, node = node, dir = true }
   end
 
@@ -208,16 +232,37 @@ do
     checkArg(1, path, "string")
     local node, remain = path_to_node(path)
     if node:exists(remain) then return nil, k.errno.EEXIST end
+
+    local segments = k.split_path(remain)
+    local parent = "/" .. table.concat(segments, "/", 1, #segments - 1)
+    local stat = node:stat(parent)
+
+    if not stat then return nil, k.errno.ENOENT end
+    if not k.process_has_permission(cur_proc(), stat, "w") then
+      return nil, k.errno.EACCES
+    end
+
     return node:mkdir(remain)
   end
 
   function provider.link(source, dest)
     checkArg(1, source, "string")
     checkArg(2, dest, "string")
+
     local node, sremain = path_to_node(source)
     local _node, dremain = path_to_node(dest)
+
     if _node ~= node then return nil, k.errno.EXDEV end
     if node:exists(dremain) then return nil, k.errno.EEXIST end
+
+    local segments = k.split_path(dremain)
+    local parent = "/" .. table.concat(segments, "/", 1, #segments - 1)
+    local stat = node:stat(parent)
+
+    if not k.process_has_permission(cur_proc(), stat, "w") then
+      return nil, k.errno.EACCES
+    end
+
     return node:link(sremain, dremain)
   end
 
@@ -225,6 +270,15 @@ do
     checkArg(1, path, "string")
     local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
+
+    local segments = k.split_path(remain)
+    local parent = "/" .. table.concat(segments, "/", 1, #segments - 1)
+    local stat = node:stat(parent)
+
+    if not k.process_has_permission(cur_proc(), stat, "w") then
+      return nil, k.errno.EACCES
+    end
+
     return node:unlink(remain)
   end
 
@@ -233,6 +287,12 @@ do
     checkArg(2, mode, "number")
     local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
+
+    local stat = node:stat(remain)
+    if not k.process_has_permission(cur_proc(), stat, "w") then
+      return nil, k.errno.EACCES
+    end
+
     -- only preserve the lower 12 bits
     mode = bit32.band(mode, 0x1FF)
     return node:chmod(remain, mode)
@@ -244,6 +304,12 @@ do
     checkArg(3, gid, "number")
     local node, remain = path_to_node(path)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
+
+    local stat = node:stat(remain)
+    if not k.process_has_permission(cur_proc(), stat, "w") then
+      return nil, k.errno.EACCES
+    end
+
     return node:chown(remain, uid, gid)
   end
 

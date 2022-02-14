@@ -255,7 +255,6 @@ do
     checkArg(2, mode, "string")
     return setmetatable({
       stream = stream,
-      call = ":",
       mode = split_chars(mode),
       rbuf = "",
       wbuf = "",

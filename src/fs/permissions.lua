@@ -52,4 +52,39 @@ do
 
     return bitmap
   end
+
+  --- Check if the specified owner/group/other has the specified r, w, or x
+  --- permission(s) in the provided mode.
+  ---@param ogo number Owner=1/Group=2/Other=3
+  ---@param mode number The mode (e.g. file mode) to check
+  ---@param perm string The combination of "r", "w", or "x" to check
+  function k.has_permission(ogo, mode, perm)
+    checkArg(1, ogo, "number")
+    checkArg(2, mode, "number")
+    checkArg(3, perm, "string")
+
+    local val_check = 0
+
+    local base_index = ogo * 3
+    for c in perm:gmatch(".") do
+      if c == "r" then
+        val_check = bit32.bor(val_check, order[base_index - 2])
+      elseif c == "w" then
+        val_check = bit32.bor(val_check, order[base_index - 1])
+      elseif c == "x" then
+        val_check = bit32.bor(val_check, order[base_index])
+      end
+    end
+
+    return bit32.band(mode, val_check) == val_check
+  end
+
+  function k.process_has_permission(proc, stat, perm)
+    checkArg(1, proc, "table")
+    checkArg(2, stat, "table")
+    checkArg(3, perm, "string")
+    local ogo = (proc.uid == stat.uid and 1) or (proc.gid == stat.gid and 2)
+      or 3
+    return k.has_permission(ogo, stat.mode, perm)
+  end
 end
