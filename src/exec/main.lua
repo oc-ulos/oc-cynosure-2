@@ -21,9 +21,10 @@ printk(k.L_INFO, "exec/main")
 do
   local formats = {}
 
-  --- Registers an executable format with the kernel
-  ---@param name string
-  ---@param recognizer function TODO: Annotate arguments
+  --- Registers an executable format with the kernel. The given recognizer function should return true if the 128 bytes of data it is passed contains the header corresponding to its executable format. The loader function shall return a function whose signature is function(args, env) for use in execve()
+  ---@param name string The name of the format
+  ---@param recognizer function Recognizes an executable file header
+  ---@param loader function Loads an executable file for use in execve()
   function k.register_executable_format(name, recognizer, loader)
     checkArg(1, name, "string")
     checkArg(2, recognizer, "function")
@@ -68,3 +69,6 @@ do
     return nil, k.errno.ENOEXEC
   end
 end
+
+--@[{bconf.EXEC_CLE == 'y' and '#include "src/exec/cle.lua"' or ""}]
+--@[{bconf.EXEC_SHEBANG == 'y' and '#include "src/exec/shebang.lua"' or ""}]
