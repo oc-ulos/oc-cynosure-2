@@ -86,7 +86,7 @@ do
 
   local function path_to_node(path)
     path = k.check_absolute(path)
-    local mnt, rem = "/", ""
+    local mnt, rem = "/", path
     for k, v in pairs(mounts) do
       if path:sub(1, #k) == k and #k > #mnt then
         mnt, rem = k, path:sub(#k+1)
