@@ -150,9 +150,6 @@ do
   end
 
   function _node:chmod(path, mode)
-    checkArg(1, path, "string")
-    checkArg(2, mode, "number")
-
     if is_attribute(path) then return nil, k.errno.EACCES end
     if not self:exists(path) then return nil, k.errno.ENOENT end
 
@@ -163,10 +160,6 @@ do
   end
 
   function _node:chown(path, uid, gid)
-    checkArg(1, path, "string")
-    checkArg(2, uid, "number")
-    checkArg(3, gid, "number")
-
     if is_attribute(path) then return nil, k.errno.EACCES end
     if not self:exists(path) then return nil, k.errno.ENOENT end
 
@@ -196,9 +189,6 @@ do
   end
 
   function _node:open(path, mode)
-    checkArg(1, path, "string")
-    checkArg(2, mode, "string")
-
     if is_attribute(path) then return nil, k.errno.EACCES end
 
     local fd = self.fs.open(path, mode)
@@ -206,21 +196,14 @@ do
   end
 
   function _node:read(fd, count)
-    checkArg(1, fd, "table")
-    checkArg(2, count, "number")
     return self.fs.read(fd, count)
   end
 
   function _node:write(fd, data)
-    checkArg(1, fd, "table")
-    checkArg(2, data, "string")
     return self.fs.write(fd, data)
   end
 
   function _node:seek(fd, whence, offset)
-    checkArg(1, fd, "table")
-    checkArg(2, whence, "number")
-    checkArg(3, offset, "number")
     return self.fs.seek(fd, whence, offset)
   end
 
@@ -228,7 +211,6 @@ do
   function _node:flush() end
 
   function _node:close(fd)
-    checkArg(1, fd, "table")
     return self.fs.close(fd)
   end
 
