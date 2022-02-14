@@ -177,12 +177,21 @@ do
     return self:set_attributes(path, attributes)
   end
 
-  function _node:link() --source, dest)
+  function _node:link()
     -- TODO: support symbolic links
     return nil, k.errno.ENOTSUP
   end
 
   function _node:unlink(path)
+    checkArg(1, path, "string")
+
+    if is_attribute(path) then return nil, k.errno.EACCES end
+    if not self:exists(path) then return nil, k.errno.ENOENT end
+
+    self.fs.remove(path)
+    self.fs.remove(attr_path(path))
+
+    return true
   end
 
   function _node:mkdir(path)
@@ -191,14 +200,31 @@ do
   end
 
   function _node:opendir(path)
+    checkArg(1, path, "string")
+
+    if is_attribute(path) then return nil, k.errno.EACCES end
+    if not self:exists(path) then return nil, k.errno.ENOENT end
+    if not self.fs.isDirectory(path) then return nil, k.errno.ENOTDIR end
+
+    return { index = 0, files = self.fs.list(path) }
   end
 
   function _node:readdir(dirfd)
+    checkArg(1, dirfd, "table")
+    if not (dirfd.index and dirfd.files) then
+      error("bad argument #1 to 'readdir' (expected dirfd)")
+    end
+
+    dirfd.index = dirfd.index + 1
+    if dirfd.files[dirfd.index] then
+      return { inode = -1, name = dirfd.files[dirfd.index] }
+    end
   end
 
   function _node:open(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "string")
+
     if is_attribute(path) then return nil, k.errno.EACCES end
 
     local fd = self.fs.open(path, mode)
