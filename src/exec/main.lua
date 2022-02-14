@@ -21,7 +21,7 @@ printk(k.L_INFO, "exec/main")
 do
   local formats = {}
 
-  --- Registers an executable format with the kernel. The given recognizer function should return true if the 128 bytes of data it is passed contains the header corresponding to its executable format. The loader function shall return a function whose signature is function(args, env) for use in execve()
+  --- Registers an executable format with the kernel. The given recognizer function should return true if the 128 bytes of data it is passed contains the header corresponding to its executable format. The loader function shall return a function whose signature is function(args, env) for use in execve().
   ---@param name string The name of the format
   ---@param recognizer function Recognizes an executable file header
   ---@param loader function Loads an executable file for use in execve()
