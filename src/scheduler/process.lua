@@ -113,6 +113,9 @@ do
       cwd = parent.cwd or "/",
       -- root directory
       root = parent.root or "/",
+
+      -- file descriptors
+      fds = {}
     }, process_mt)
   end
 end
