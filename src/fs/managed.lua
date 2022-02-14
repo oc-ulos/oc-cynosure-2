@@ -53,14 +53,14 @@ do
     return data
   end
 
-  -- sanitize a path to not contain a .attr
-  local function sanitize(path)
+  -- Check if a path points to an attribute file
+  local function is_attribute(path)
     local segments = k.split_path(path)
     local final = segments[#segments]
     if final:sub(1,1) == "." and final:sub(-5) == ".attr" then
-      return nil, k.errno.EACCES
+      return true
     end
-    return path
+    return false
   end
 
   local function attr_path(path)
@@ -72,12 +72,10 @@ do
   -- get the attributes of a specific file
   function _node:get_attributes(file)
     checkArg(1, file, "string")
-    local err
 
-    file, err = sanitize(file)
-    if not file then return nil, err end
+    if is_attribute(file) then return nil, k.errno.EACCES end
 
-    local fd, err = self.fs.open(attr_path(file), "r")
+    local fd = self.fs.open(attr_path(file), "r")
     if not fd then
       -- default to root/root, rwxrwxrwx permissions
       return {
@@ -106,12 +104,10 @@ do
   function _node:set_attributes(file, attributes)
     checkArg(1, file, "string")
     checkArg(2, attributes, "table")
-    local err
 
-    file, err = sanitize(file)
-    if not file then return nil, err end
+    if is_attribute(file) then return nil, k.errno.EACCES end
 
-    local fd, err = self.fs.open(attr_path(file), "w")
+    local fd = self.fs.open(attr_path(file), "w")
     if not fd then return nil, k.errno.EROFS end
 
     self.fs.write(fd, dump_attributes(attributes))
@@ -119,10 +115,35 @@ do
     return true
   end
 
+  -- Takes a file path and returns only whether that path exists.  Similar to
+  -- stat(), but faster since there's no attribute checking.
   function _node:exists(path)
+    checkArg(1, path, "string")
+    -- this is a couple lines of code compressed into one.
+    return not not ((not is_attribute(path)) and self.fs.exists(path))
   end
 
+  -- Returns attributes about the given file.
   function _node:stat(path)
+    checkArg(1, path, "string")
+    if is_attribute(path) then return nil, k.errno.EACCES end
+    if not self:exists(path) then return nil, k.errno.ENOENT end
+
+    local attributes = self:get_attributes(path)
+    -- TODO: populate the 'dev' and 'rdev' fields?
+    local stat = {
+      dev = -1,
+      ino = -1,
+      mode = attributes.mode,
+      nlink = 1,
+      uid = attributes.uid,
+      gid = attributes.gid,
+      rdev = -1,
+      size = self.fs.size(path),
+      blksize = 2048,
+    }
+
+    stat.blocks = math.ceil(stat.size / 512)
   end
 
   function _node:chmod(path, mode)
@@ -130,13 +151,13 @@ do
 
   function _node:chown(path, uid, gid)
   end
-  
+
   function _node:link(source, dest)
   end
 
   function _node:unlink(path)
   end
-  
+
   function _node:mkdir(path)
   end
 
@@ -151,10 +172,10 @@ do
 
   function _node:read(fd, fmt)
   end
-  
+
   function _node:write(fd, data)
   end
-  
+
   function _node:seek(fd, whence, offset)
   end
 
