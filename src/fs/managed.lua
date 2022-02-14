@@ -168,6 +168,13 @@ do
   end
 
   function _node:open(path, mode)
+    checkArg(1, path, "string")
+    checkArg(2, mode, "string")
+    
+    if is_attribute(path) then return nil, k.errno.EACCES end
+    
+    local fd = self.fs.open(path, mode)
+    if not fd then return nil, k.errno.ENOENT else return fd end
   end
 
   function _node:read(fd, fmt)
