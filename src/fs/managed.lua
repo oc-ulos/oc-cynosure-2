@@ -33,10 +33,12 @@ do
   -- take the attribute file data and return a table
   local function load_attributes(data)
     local attributes = {}
+
     for line in data:gmatch("[^\n]+") do
       local key, val = line:match("^(.-):(.+)$")
       attributes[key] = tonumber(val)
     end
+
     return attributes
   end
 
@@ -44,11 +46,13 @@ do
   -- take a table of attributes and return file data
   local function dump_attributes(attributes)
     local data = ""
+
     for _, key in ipairs(serialize_order) do
       if attributes[key] then
         data = data .. string.format("%s:%d\n", key, attributes[key])
       end
     end
+
     return data
   end
 
@@ -72,8 +76,10 @@ do
   function _node:get_attributes(file)
     checkArg(1, file, "string")
     local err
+
     file, err = sanitize(file)
     if not file then return nil, err end
+
     local fd, err = self.fs.open(attr_path(file), "r")
     if not fd then
       return {
@@ -83,6 +89,7 @@ do
         created = self.fs.lastModified(file)
       }
     end
+
     local data = self.fs.read(fd, 2048)
     self.fs.close(fd)
     return load_attributes(data)
@@ -93,10 +100,13 @@ do
     checkArg(1, file, "string")
     checkArg(2, attributes, "table")
     local err
+
     file, err = sanitize(file)
     if not file then return nil, err end
+
     local fd, err = self.fs.open(attr_path(file), "w")
     if not fd then return nil, k.errno.EROFS end
+    
     self.fs.write(fd, dump_attributes(attributes))
     self.fs.close(fd)
     return true
