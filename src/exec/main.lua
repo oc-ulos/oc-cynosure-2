@@ -36,5 +36,6 @@ do
 
   function k.load_executable(path)
     checkArg(1, path, "string")
+    local stat, err = k.stat(path)
   end
 end

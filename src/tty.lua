@@ -301,10 +301,10 @@ do
         self.bg = colors[n - 91]
         self.gpu.setForeground(self.bg)
       elseif n == 39 then
-        self.fg = colors[8]
+        self.fg = colors[1]
         self.gpu.setForeground(self.fg)
       elseif n == 49 then
-        self.bg = colors[1]
+        self.bg = colors[8]
         self.gpu.setForeground(self.bg)
       end
     end
@@ -515,7 +515,7 @@ do
       w = w, h = h, cx = 1, cy = 1,
       scrolltop = 1, scrollbot = h,
       rbuf = "", wbuf = "",
-      fg = colors[1], bg = colors[8],
+      fg = colors[8], bg = colors[1],
       -- attributes
       altcursor = false, showctrl = false,
       mousereport = 0, autocr = true,
@@ -523,8 +523,9 @@ do
       raw = false
     }
 
-    -- prevent inverted colors
-    togglecursor(new)
+    gpu.setForeground(new.bg)
+    gpu.setBackground(new.fg)
+    gpu.fill(1, 1, w, h, " ")
 
     local keyboards = {}
     for _, kbaddr in pairs(component.invoke(screen, "getKeyboards")) do

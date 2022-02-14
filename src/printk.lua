@@ -59,6 +59,7 @@ do
   end
 
   -- actual printk implementation
+
   -- the maximum log buffer size is (total memory / 1024)
   local log_buffer = {}
   local function log_to_buffer(message)

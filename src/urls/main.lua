@@ -54,7 +54,7 @@ do
       return nil, resource
     end
     if not provider[method] then
-      return nil, k.errno.EOPNOTSUPP
+      return nil, k.errno.ENOTSUP
     end
     return provider, provider[method](resource, ...)
   end
@@ -69,11 +69,58 @@ do
 
   local function fd_call(func, ...)
     if not func then
-      return nil, k.errno.EOPPNOTSUPP
+      return nil, k.errno.ENOTSUP
     end
     return func(...)
   end
 
+  -- More-or-less filesystem-specific calls. Using these on non-files is an
+  -- error case and will return ENOTSUP
+  function k.stat(url)
+    checkArg(1, url, "string")
+    return call(url, "stat")
+  end
+
+  function k.mkdir(url)
+    checkArg(1, url, "string")
+    return call(url, "mkdir")
+  end
+
+  function k.link(source, dest)
+    checkArg(1, source, "string")
+    checkArg(2, dest, "string")
+
+    local ap, ar = k.lookup_url(source)
+    local bp, br = k.lookup_url(dest)
+
+    if not ap then return nil, ar end
+    if not bp then return nil, br end
+    if ap ~= bp then return nil, k.errno.EXDEV end
+
+    if not ap.link then return nil, k.errno.ENOTSUP end
+
+    return call(source, "link", dest)
+  end
+
+  function k.unlink(url)
+    checkArg(1, url, "string")
+    return call(url, "unlink")
+  end
+
+  function k.chmod(url, mode)
+    checkArg(1, url, "string")
+    checkArg(2, mode, "number")
+    return call(url, "chmod", mode)
+  end
+
+  function k.chown(url, uid, gid)
+    checkArg(1, url, "string")
+    checkArg(2, uid, "number")
+    checkArg(3, gid, "number")
+    return call(url, "chown", uid, gid)
+  end
+
+  -- somewhat more generic calls
   function k.open(url, mode)
     checkArg(1, url, "string")
     checkArg(2, mode, "string")
@@ -108,9 +155,29 @@ do
     return fd_call(fd.flush)
   end
 
+  function k.opendir(url)
+    checkArg(1, url, "string")
+    local result = table.pack(call(url, "opendir"))
+    if not result[1] then
+      return nil, result[2]
+    end
+    if not result[2] then
+      return nil, result[3]
+    end
+    return { fd = result[2], node = result[1], refs = 1 }
+  end
+
+  function k.readdir(dirfd)
+    verify_fd(dirfd)
+    return fd_call(dirfd.node.readdir, dirfd.fd)
+  end
+
   function k.close(fd)
     verify_fd(fd)
-    return fd_call(fd.close)
+    fd.refs = fd.refs - 1
+    if fd.refs == 0 then
+      return fd_call(fd.close)
+    end
   end
 end
 
