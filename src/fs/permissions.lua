@@ -83,6 +83,11 @@ do
     checkArg(1, proc, "table")
     checkArg(2, stat, "table")
     checkArg(3, perm, "string")
+
+    -- TODO: more fine-grained rules for precisely when root can do certain
+    -- TODO: things
+    if proc.uid == 0 then return true end
+
     local ogo = (proc.uid == stat.uid and 1) or (proc.gid == stat.gid and 2)
       or 3
     return k.has_permission(ogo, stat.mode, perm)
