@@ -42,15 +42,12 @@ do
     return attributes
   end
 
-  local serialize_order = {"uid", "gid", "mode", "devmaj", "devmin", "created"}
   -- take a table of attributes and return file data
   local function dump_attributes(attributes)
     local data = ""
 
-    for _, key in ipairs(serialize_order) do
-      if attributes[key] then
-        data = data .. string.format("%s:%d\n", key, attributes[key])
-      end
+    for key, val in ipairs(attributes) do
+      data = data .. string.format("%s:%d\n", key, val)
     end
 
     return data
@@ -92,7 +89,16 @@ do
 
     local data = self.fs.read(fd, 2048)
     self.fs.close(fd)
-    return load_attributes(data)
+
+    local attributes = load_attributes(data)
+    attributes.uid = attributes.uid or 0
+    attributes.gid = attributes.gid or 0
+    -- default to root/root, rwxrwxrwx permissions
+    attributes.mode = attributes.mode or (self.fs.isDirectory(file)
+      and 0x41FF or 0x81FF)
+    attributes.created = attributes.created or self.fs.lastModified(file)
+
+    return attributes
   end
 
   -- set the attributes of a specific file
@@ -106,7 +112,7 @@ do
 
     local fd, err = self.fs.open(attr_path(file), "w")
     if not fd then return nil, k.errno.EROFS end
-    
+
     self.fs.write(fd, dump_attributes(attributes))
     self.fs.close(fd)
     return true
