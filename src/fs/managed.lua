@@ -184,4 +184,13 @@ do
 
   function _node:close(fd)
   end
+
+  -- register the filesystem type with the kernel
+  k.register_fstype("managed", function(comp)
+    if type(comp) == "table" and comp.type == "filesystem" then
+      return comp
+    elseif type(comp) == "string" and component.type(comp) == "filesystem" then
+      return component.proxy(comp)
+    end
+  end)
 end
