@@ -132,7 +132,7 @@ do
     checkArg(2, mode, "string")
     local node, remain = path_to_node(file)
     if not node:exists(remain) then return nil, k.errno.ENOENT end
-    local fd, err = node:open(remain, node)
+    local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
     return { fd = fd, node = node }
   end
