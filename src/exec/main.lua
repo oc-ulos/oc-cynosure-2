@@ -30,9 +30,11 @@ do
     if formats[name] then
       return nil, k.errno.EEXIST
     end
-    
+
+    formats[name] = recognizer
   end
 
-  function k.load_executable()
+  function k.load_executable(path)
+    checkArg(1, path, "string")
   end
 end
