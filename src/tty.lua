@@ -45,9 +45,8 @@ do
   -- i've implemented most of what console_codes(4) specifies
   local nocsi = {}
   local commands = {}
-  local oscommand = {}
   local controllers = {}
-  
+
   local function scroll(self, n)
     self.gpu.copy(1, 1, self.w, self.h, 0, -n)
     if n < 0 then n = self.h + n end
@@ -108,7 +107,7 @@ do
   -- ESC # 8 implemented in write logic below
   -- ESC ( and ESC ) not implemented for the same reason as ESC %
   -- ESC > and ESC = not implemented
-  
+
   -- CSI @ is not implemented
 
   -- CUU - cursor up
@@ -122,7 +121,7 @@ do
     local n = args[1] or 1
     self.cy = self.cy + n
   end
-  
+
   -- CUF - cursor "forward" (right)
   function commands:C(args)
     local n = args[1] or 1
@@ -263,12 +262,12 @@ do
       end
     end
   end
-  
+
   -- SM - set mode
   function commands:h(args)
     hl(self, true, args)
   end
-  
+
   -- RM - reset mode
   function commands:l(args)
     hl(self, false, args)
@@ -278,7 +277,7 @@ do
   function commands:m(args)
     args[1] = args[1] or 0
     for i=1, #args, 1 do
-      local n = args[1]
+      local n = args[i]
       -- bold mode (1) not implemented
       -- half-bright (2) not implemented
       -- underscore (4) not implemented
@@ -345,7 +344,7 @@ do
   end
 
   -- who thought having ` as a command was a good idea?
-  commands["`"] = function(args)
+  commands["`"] = function(self, args)
     local n = args[1] or 1
     self.cx = math.max(1, math.min(self.w, n))
   end
@@ -408,14 +407,14 @@ do
       local chunk = line:sub(1, e)
       line = line:sub(#chunk + 1)
       textwrite(self, chunk)
-      
+
       if nesc then
         local css, params, csc, len
           = line:match("^\27(.)([%d;]*)([%a%d`])()")
-        
+
         if css and params and csc and len then
           line = line:sub(len)
-          
+
           local args = {}
           local num = ""
           local plen = #params
@@ -430,7 +429,7 @@ do
               end
             end
           end
-  
+
           if css == "[" then
             local func = commands[csc]
             if func then func(self, args) end
@@ -461,7 +460,7 @@ do
     self.wbuf = self.wbuf .. str
     local dc = (not not self.wbuf:find("\n", nil, true)) or #self.wbuf > 512
     if dc then togglecursor(self) end
-      
+
     repeat
       local idx = self.wbuf:find("\n")
       if not idx then if #self.wbuf > 512 then idx = #self.wbuf end end
@@ -471,7 +470,7 @@ do
         internalwrite(self, chunk)
       end
     until not idx
-    
+
     if dc then togglecursor(self) end
 
     return self
@@ -510,7 +509,7 @@ do
     screen = screen or gpu.getScreen()
 
     local w, h = gpu.getResolution()
-    
+
     local new = {
       gpu = gpu,
       w = w, h = h, cx = 1, cy = 1,
@@ -544,10 +543,10 @@ do
         to_buffer = "\27" .. interim .. c
       elseif char < 32 then
         to_buffer = string.char(char)
-        to_screen = "^"..sub32_lookups[ch]:upper()
+        to_screen = "^"..sub32_lookups[char]:upper()
       end
 
-      if not self.attributes.raw then
+      if not new.attributes.raw then
         if char == 13 then
           to_buffer, to_screen = "\n", "\n"
         elseif char == 8 then

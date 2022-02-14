@@ -22,7 +22,7 @@ do
   local _args = table.pack(...)
   k.original_cmdline = table.concat(_args, " ", 1, _args.n)
 
-  for i, arg in ipairs(_args) do
+  for _, arg in ipairs(_args) do
     local key, val = arg, true
     if arg:find("=") then
       key, val = arg:match("^(.-)=(.+)$")

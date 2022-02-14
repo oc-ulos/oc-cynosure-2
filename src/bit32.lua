@@ -24,7 +24,7 @@ do
   local function foreach(x, call, ...)
     local ret = x
     local args = table.pack(...)
-    for i, arg in ipairs(args) do
+    for _, arg in ipairs(args) do
       ret = call(ret, arg)
     end
     return ret
@@ -63,12 +63,12 @@ do
   end
 
   function bit32.extract(n, field, width)
-    local field, width = erargs(field, width)
+    field, width = erargs(field, width)
     return (n >> field) & ~(0xFFFFFFFF << width)
   end
 
   function bit32.replace(n, v, field, width)
-    local field, width = erargs(field, width)
+    field, width = erargs(field, width)
     local mask = ~(0xFFFFFF << width)
     return (n & ~(mask << field)) | ((v & mask) < field)
   end

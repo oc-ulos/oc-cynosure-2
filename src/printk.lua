@@ -82,7 +82,7 @@ do
   --- Print a message to the system logs
   ---@param level number
   ---@param fmt string
-  function printk(level, fmt, ...)
+  function _G.printk(level, fmt, ...)
     local message = string.format("[%08.02f] ", computer.uptime()) ..
       string.format(fmt, ...)
     if level <= k.cmdline.loglevel then
@@ -93,7 +93,7 @@ do
 
   local pullSignal = computer.pullSignal
   -- kernel panic!!!
-  function panic(reason)
+  function _G.panic(reason)
     printk(k.L_EMERG, "kernel panic: %s", reason)
     printk(k.L_EMERG, "#### stack traceback ####")
     for line in debug.traceback():gmatch("[^\n]+") do

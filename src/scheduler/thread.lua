@@ -31,7 +31,7 @@ do
     sysyield_string = sysyield_string .. string.format("%02x",
       math.random(0, 255))
   end
-  
+
   local function rand_char()
     local area = math.random(1, 3)
     if area == 1 then -- number
@@ -63,7 +63,7 @@ do
     if sig and #self.queue < 256 then
       table.insert(self.queue, table.pack(sig, ...))
     end
-    
+
     local resume_args
 
     -- if we were forcibly yielded, we do *not* pass anything to .resume().
@@ -81,7 +81,7 @@ do
     elseif self.status == "S" then
       resume_args = table.pack(k.perform_system_call(
         table.unpack(self.syscall_data)))
-      
+
     -- if status is "s", then don't resume, ever, until the status is no longer
     -- "s".  See thread:stop() and thread:continue().
     elseif self.status == "s" then

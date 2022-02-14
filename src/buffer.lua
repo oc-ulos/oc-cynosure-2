@@ -19,10 +19,11 @@
 printk(k.L_INFO, "buffer")
 
 do
-  local buffer = {}
+  -- this tonumber() is so my LSP will stop yelling at me
   local bufsize = tonumber(k.cmdline["io.bufsize"])
-    or @[{bconf.BUFFER_SIZE or 512}]
+    or tonumber("@[{bconf.BUFFER_SIZE or 512}]")
 
+  local buffer = {}
   -- read a line from the buffer
   function buffer:readline()
     -- slow cop-out for non-buffered streams...
@@ -40,17 +41,17 @@ do
         -- ...unless the filesystem driver implements a buffer, in which case
         -- it'd *probably* be fine
         local dat = ""
-        
+
         repeat
           local n = self.stream:read(1)
           dat = dat .. (n or "")
         until n == "\n" or not n
-        
+
         return dat
       end
-   
+
     else
-      
+
       -- if we don't have a newline in the buffer, we haven't read a full line,
       -- so just keep reading
       while not self.rbuf:match("\n") do
@@ -62,10 +63,10 @@ do
       -- find the first newline in the read buffer;  if there is none, then
       -- return the whole buffer
       local n = self.rbuf:find("\n") or #self.rbuf
-      
+
       local dat = self.rbuf:sub(1, n)
       self.rbuf = self.rbuf:sub(n + 1)
-      
+
       return dat
     end
   end
@@ -82,7 +83,7 @@ do
         "bad argument to 'read' (format 'n' not supported in unbuffered mode)",
         0)
     end
-    
+
     -- this function will happily read an arbitrary amount of whitespace
     -- before getting to the number
     local breakonwhitespace = false
@@ -103,7 +104,7 @@ do
       else
         -- we've read a number now, so break on whitespace
         breakonwhitespace = true
-        
+
         -- this allows reading decimals and hex numbers
         if not tonumber(dat .. ch .. "0") then
           self.rbuf = ch .. self.rbuf
@@ -129,7 +130,7 @@ do
 
       -- if we've reached EOF, then break
       if not chunk then break end
-      
+
       -- add chunk to read buffer
       self.rbuf = self.rbuf .. chunk
       -- decrement n by length of chunk
@@ -195,17 +196,17 @@ do
       if #self.wbuf <= bufsize then
         return self
       end
-      
+
       dat = self.wbuf
       self.wbuf = ""
-    
+
     elseif self.bufmode == "line" then
       -- line buffering: write to the last newline
       local lastnl = #self.wbuf - (self.wbuf:reverse():find("\n") or 0)
-      
+
       dat = self.wbuf:sub(1, lastnl)
       self.wbuf = self.wbuf:sub(lastnl + 1)
-      
+
     else
       -- no buffering: unconditionally write the whole thing
       dat = self.wbuf

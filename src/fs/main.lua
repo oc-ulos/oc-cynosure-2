@@ -87,7 +87,7 @@ do
   local function path_to_node(path)
     path = k.check_absolute(path)
     local mnt, rem = "/", path
-    for k, v in pairs(mounts) do
+    for k in pairs(mounts) do
       if path:sub(1, #k) == k and #k > #mnt then
         mnt, rem = k, path:sub(#k+1)
       end
@@ -108,7 +108,7 @@ do
     local proxy = recognize_filesystem(node)
     if not proxy then return nil, k.errno.EUNATCH end
 
-    local path = k.clean_path(path)
+    path = k.clean_path(path)
     mounts[path] = proxy
 
     if proxy.mount then proxy:mount(path) end
@@ -145,7 +145,7 @@ do
     if not node:exists(remain) and mode ~= "w" then
       return nil, k.errno.ENOENT
     end
-    
+
     local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
     return { fd = fd, node = node }
@@ -190,7 +190,7 @@ do
 
   function provider.readdir(dirfd)
     verify_fd(dirfd, true)
-    return fd.node:readdir(fd.fd)
+    return dirfd.node:readdir(dirfd.fd)
   end
 
   function provider.close(fd)

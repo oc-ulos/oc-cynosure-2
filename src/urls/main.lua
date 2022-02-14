@@ -73,7 +73,7 @@ do
     end
     return func(...)
   end
-  
+
   function k.open(url, mode)
     checkArg(1, url, "string")
     checkArg(2, mode, "string")
@@ -102,7 +102,7 @@ do
     verify_fd(fd)
     return fd_call(fd.node.seek, fd.fd, whence, offset)
   end
-  
+
   function k.flush(fd)
     verify_fd(fd)
     return fd_call(fd.flush)

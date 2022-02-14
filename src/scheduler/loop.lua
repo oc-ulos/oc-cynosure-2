@@ -41,7 +41,7 @@ do
 
     while processes[1] do
       local deadline = 0
-      for cpid, process in pairs(processes) do
+      for _, process in pairs(processes) do
         local proc_deadline = process:deadline()
         if proc_deadline < deadline then
           deadline = proc_deadline
@@ -61,6 +61,7 @@ do
       end
 
       for cpid, process in pairs(processes) do
+        current = cpid
         process:resume(table.unpack(signal, 1, signal.n))
         if not next(process.threads) then
           computer.pushSignal("process_exit", cpid)
@@ -70,9 +71,10 @@ do
     end
   end
 
-  function k.add_process(proc)
+  function k.add_process()
     pid = pid + 1
     processes[pid] = k.create_process(pid, processes[current])
+    return pid
   end
 
   function k.current_process()

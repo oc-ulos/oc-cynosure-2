@@ -27,6 +27,8 @@ do
   function process:resume(sig, ...)
     if self.stopped then return end
 
+    sig = table.pack(sig, ...)
+
     local resumed = false
     if sig and #self.queue < 256 then
       self.queue[#self.queue + 1] = sig
@@ -57,7 +59,7 @@ do
 
   function process:deadline()
     local deadline = math.huge
-    for i, thread in pairs(self.threads) do
+    for _, thread in pairs(self.threads) do
       if thread.deadline < deadline then
         deadline = thread.deadline
       end
@@ -73,10 +75,10 @@ do
 
   local process_mt = { __index = process }
 
-  local default = {handles = {}, _G = {}, pid = 0}
+  local default_parent = {handles = {}, _G = {}, pid = 0}
 
   function k.create_process(pid, parent)
-    parent = parent or default
+    parent = parent or default_parent
     return setmetatable({
       -- local signal queue
       queue = {},
@@ -84,12 +86,12 @@ do
       stopped = false,
       -- all the threads
       threads = {},
-      
+
       -- process ID
       pid = pid,
       -- parent process ID
       ppid = parent.pid,
-      
+
       -- process group ID
       pgid = parent.pgid or 0,
       -- session ID
