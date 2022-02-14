@@ -182,6 +182,9 @@ do
   end
 
   function _node:write(fd, data)
+    checkArg(1, fd, "table")
+    checkArg(2, data, "string")
+    return self.fs.write(fd, data)
   end
 
   function _node:seek(fd, whence, offset)
@@ -191,6 +194,8 @@ do
   function _node:flush() end
 
   function _node:close(fd)
+    checkArg(1, fd, "table")
+    return self.fs.close(fd)
   end
 
   local fs_mt = { __index = _node }
