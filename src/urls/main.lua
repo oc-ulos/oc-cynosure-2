@@ -39,7 +39,7 @@ do
   function k.lookup_url(url)
     local scheme, resource = url:match("(.*):/?/?(.*)")
     if not scheme then
-      scheme, resource = "file", resource
+      scheme, resource = "file", url
     end
     if not k.schemes[scheme] then
       return nil, k.errno.EUNATCH

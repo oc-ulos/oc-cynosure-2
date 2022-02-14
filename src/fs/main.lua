@@ -86,13 +86,13 @@ do
 
   local function path_to_node(path)
     path = k.check_absolute(path)
-    local mnt, rem = "/", ""
+    local mnt, rem = "/", path
     for k, v in pairs(mounts) do
-      if path:sub(1, #k) == k and #k > mnt then
+      if path:sub(1, #k) == k and #k > #mnt then
         mnt, rem = k, path:sub(#k+1)
       end
     end
-    return mounts[mnt], rem
+    return mounts[mnt], rem or "/"
   end
 
   --- Mounts a drive or filesystem at the given path.
@@ -134,15 +134,19 @@ do
     mounts[path] = nil
     return true
   end
-  
+
   local provider = {}
 
   function provider.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
+
     local node, remain = path_to_node(file)
-    if not node:exists(remain) then return nil, k.errno.ENOENT end
-    local fd, err = node:open(remain, node)
+    if not node:exists(remain) and mode ~= "w" then
+      return nil, k.errno.ENOENT
+    end
+    
+    local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
     return { fd = fd, node = node }
   end
