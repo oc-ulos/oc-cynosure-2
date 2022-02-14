@@ -185,7 +185,7 @@ do
   function _node:close(fd)
   end
 
-  local fs_mt = { __index = node }
+  local fs_mt = { __index = _node }
 
   -- register the filesystem type with the kernel
   k.register_fstype("managed", function(comp)
