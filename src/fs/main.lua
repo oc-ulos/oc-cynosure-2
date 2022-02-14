@@ -140,8 +140,12 @@ do
   function provider.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
+
     local node, remain = path_to_node(file)
-    if not node:exists(remain) then return nil, k.errno.ENOENT end
+    if not node:exists(remain) and mode ~= "w" then
+      return nil, k.errno.ENOENT
+    end
+    
     local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
     return { fd = fd, node = node }
