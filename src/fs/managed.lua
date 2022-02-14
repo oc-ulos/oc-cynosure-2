@@ -79,10 +79,11 @@ do
 
     local fd, err = self.fs.open(attr_path(file), "r")
     if not fd then
+      -- default to root/root, rwxrwxrwx permissions
       return {
         uid = 0,
         gid = 0,
-        mode = bit32.bor(self.fs.isDirectory(file) and 0x4000 or 0x8000, 511),
+        mode = self.fs.isDirectory(file) and 0x41FF or 0x81FF,
         created = self.fs.lastModified(file)
       }
     end
