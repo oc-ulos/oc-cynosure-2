@@ -145,6 +145,8 @@ do
     }
 
     stat.blocks = math.ceil(stat.size / 512)
+
+    return stat
   end
 
   function _node:chmod(path, mode)
@@ -155,7 +157,8 @@ do
     if not self:exists(path) then return nil, k.errno.ENOENT end
 
     local attributes = self:get_attributes(path)
-    attributes.mode = mode
+    -- userspace can't change the file type of a file
+    attributes.mode = bit32.bor(bit32.band(attributes.mode, 0xF000), mode)
     return self:set_attributes(path, attributes)
   end
 
@@ -173,7 +176,9 @@ do
     return self:set_attributes(path, attributes)
   end
 
-  function _node:link(source, dest)
+  function _node:link() --source, dest)
+    -- TODO: support symbolic links
+    return nil, k.errno.ENOTSUP
   end
 
   function _node:unlink(path)
@@ -181,7 +186,7 @@ do
 
   function _node:mkdir(path)
     checkArg(1, path, "string")
-    return self.fs.makeDirectory(path)
+    return (not is_attribute(path)) and self.fs.makeDirectory(path)
   end
 
   function _node:opendir(path)
