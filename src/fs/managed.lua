@@ -185,12 +185,14 @@ do
   function _node:close(fd)
   end
 
+  local fs_mt = { __index = node }
+
   -- register the filesystem type with the kernel
   k.register_fstype("managed", function(comp)
     if type(comp) == "table" and comp.type == "filesystem" then
-      return comp
+      return setmetatable({fs = comp}, fs_mt)
     elseif type(comp) == "string" and component.type(comp) == "filesystem" then
-      return component.proxy(comp)
+      return setmetatable({fs = component.proxy(comp)}, fs_mt)
     end
   end)
 end
