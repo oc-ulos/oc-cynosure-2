@@ -148,9 +148,29 @@ do
   end
 
   function _node:chmod(path, mode)
+    checkArg(1, path, "string")
+    checkArg(2, mode, "number")
+
+    if is_attribute(path) then return nil, k.errno.EACCES end
+    if not self:exists(path) then return nil, k.errno.ENOENT end
+
+    local attributes = self:get_attributes(path)
+    attributes.mode = mode
+    return self:set_attributes(path, attributes)
   end
 
   function _node:chown(path, uid, gid)
+    checkArg(1, path, "string")
+    checkArg(2, uid, "number")
+    checkArg(3, gid, "number")
+
+    if is_attribute(path) then return nil, k.errno.EACCES end
+    if not self:exists(path) then return nil, k.errno.ENOENT end
+
+    local attributes = self:get_attributes(path)
+    attributes.uid = uid
+    attributes.gid = gid
+    return self:set_attributes(path, attributes)
   end
 
   function _node:link(source, dest)
@@ -160,6 +180,8 @@ do
   end
 
   function _node:mkdir(path)
+    checkArg(1, path, "string")
+    return self.fs.makeDirectory(path)
   end
 
   function _node:opendir(path)
@@ -178,7 +200,10 @@ do
     if not fd then return nil, k.errno.ENOENT else return fd end
   end
 
-  function _node:read(fd, fmt)
+  function _node:read(fd, count)
+    checkArg(1, fd, "table")
+    checkArg(2, count, "number")
+    return self.fs.read(fd, count)
   end
 
   function _node:write(fd, data)
@@ -188,6 +213,10 @@ do
   end
 
   function _node:seek(fd, whence, offset)
+    checkArg(1, fd, "table")
+    checkArg(2, whence, "number")
+    checkArg(3, offset, "number")
+    return self.fs.seek(fd, whence, offset)
   end
 
   -- this function does nothing
