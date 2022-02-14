@@ -92,7 +92,7 @@ do
         mnt, rem = k, path:sub(#k+1)
       end
     end
-    return mounts[mnt], rem
+    return mounts[mnt], rem or "/"
   end
 
   --- Mounts a drive or filesystem at the given path.
