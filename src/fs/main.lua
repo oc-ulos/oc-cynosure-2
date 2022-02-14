@@ -134,7 +134,7 @@ do
     mounts[path] = nil
     return true
   end
-  
+
   local provider = {}
 
   function provider.open(file, mode)
