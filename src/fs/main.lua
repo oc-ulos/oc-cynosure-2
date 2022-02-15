@@ -48,8 +48,6 @@ do
     return nil
   end
 
-  -- TODO: Actually implement functionality
-
   local mounts = {}
 
   function k.split_path(path)
@@ -98,7 +96,7 @@ do
 
   local default_proc = {uid = 0, gid = 0}
   local function cur_proc()
-    return k.current_process() or default_proc
+    return k.current_process and k.current_process() or default_proc
   end
 
   --- Mounts a drive or filesystem at the given path.
@@ -319,3 +317,4 @@ end
 
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
+--#include "src/fs/rootfs.lua"
