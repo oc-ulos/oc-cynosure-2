@@ -19,4 +19,49 @@
 printk(k.L_INFO, "syscalls")
 
 do
+  k.syscalls = {}
+
+  function k.perform_system_call(name, ...)
+    checkArg(1, name, "string")
+
+    if not k.syscalls[name] then
+      return nil, k.errno.ENOSYS
+    end
+
+    local result = table.pack(pcall(k.syscalls[name], ...))
+    if result[1] then
+      table.remove(result, 1)
+      result.n = result.n - 1
+    end
+
+    return table.unpack(result, 1, result.n)
+  end
+
+  function k.syscalls.open(url, mode)
+    checkArg(1, url, "string")
+    checkArg(2, mode, "string")
+
+    local fd, err = k.open(url, mode)
+    if not fd then
+      return nil, err
+    end
+
+    local current = k.current_process()
+    local n = #current.fds + 1
+    current.fds[n] = fd
+
+    return n
+  end
+
+  function k.syscalls.read(fd, fmt)
+    checkArg(1, fd, "number")
+    checkArg(2, fmt, "string", "number")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.read(current.fds[fd], fmt)
+  end
 end
