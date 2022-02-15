@@ -194,20 +194,45 @@ do
   end
 
   function k.syscalls.getuid()
+    return k.current_process().uid
   end
 
   function k.syscalls.geteuid()
+    return k.current_process().euid
   end
 
-  function k.syscalls.setgid()
+  function k.syscalls.setgid(gid)
+    checkArg(1, gid, "number")
+    local current = k.current_process()
+    if current.egid == 0 then
+      current.sgid = gid
+      current.egid = gid
+      current.gid = gid
+    elseif gid==current.gid or gid==current.egid or gid==current.sgid then
+      current.egid = gid
+    else
+      return nil, k.errno.EPERM
+    end
   end
 
-  function k.syscalls.setegid()
+  function k.syscalls.setegid(gid)
+    checkArg(1, gid, "number")
+    local current = k.current_process()
+    if current.egid == 0 then
+      current.sgid = gid
+      current.egid = gid
+    elseif gid==current.gid or gid==current.egid or gid==current.sgid then
+      current.egid = gid
+    else
+      return nil, k.errno.EPERM
+    end
   end
 
   function k.syscalls.getgid()
+    return k.current_process().gid
   end
 
   function k.syscalls.getegid()
+    return k.current_process().egid
   end
 end
