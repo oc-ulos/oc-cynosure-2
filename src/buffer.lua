@@ -229,7 +229,7 @@ do
     checkArg(2, offset, "number", "nil")
     self:flush()
     if self.stream.seek then
-      return self.stream:seek(whence or "cur", offset)
+      return self.stream:seek(whence or "cur", offset or 0)
     end
     return nil, k.errno.EBADF
   end

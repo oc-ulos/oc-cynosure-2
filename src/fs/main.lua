@@ -186,6 +186,13 @@ do
     return fd.node:write(fd.fd, data)
   end
 
+  function provider.seek(fd, whence, offset)
+    verify_fd(fd)
+    checkArg(2, whence, "string")
+    checkArg(3, offset, "number")
+    return fd.node:seek(fd.fd, whence, offset)
+  end
+
   function provider.flush(fd)
     verify_fd(fd)
     return fd.node:flush(fd.fd)

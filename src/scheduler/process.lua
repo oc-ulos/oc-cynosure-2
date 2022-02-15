@@ -86,6 +86,8 @@ do
       stopped = false,
       -- all the threads
       threads = {},
+      -- how many threads?
+      thread_count = 0,
 
       -- process ID
       pid = pid,

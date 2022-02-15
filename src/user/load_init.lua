@@ -42,7 +42,11 @@ do
   else -- 2) init_paths
     for _, path in ipairs(init_paths) do
       func, err = k.load_executable(path, proc.env)
-      if func then break end
+      if func then
+        break
+      elseif err ~= k.errno.ENOENT then
+        panic_with_error(err)
+      end
     end
   end
 

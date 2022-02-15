@@ -89,9 +89,6 @@ do
   function k.load(chunk, name, mode, env)
     chunk = wrap(chunk)
     env[sys] = sysyield
-    local ok, err = load(chunk, name, mode, env)
-    if not ok then
-      return nil, err
-    end
+    return load(chunk, name, mode, env)
   end
 end

@@ -20,16 +20,14 @@ printk(k.L_INFO, "exec/lua")
 
 do
   k.register_executable_format("lua", function(header)
-    printk(k.L_DEBUG, "%s(%s)", type(header), tostring(header))
     return header:sub(1, 6) == "--!lua"
   end, function(fd, env)
-    local chunk = ""
-    repeat
-      local data = k.read(fd, math.huge)
-      chunk = chunk .. (data or "")
-    until not data or data == ""
+    local data = k.read(fd, math.huge)
 
-    chunk = k.load(chunk, "=lua", "t", env)
+    local chunk, err = k.load(data, "=lua", "t", env)
+    if not chunk then
+      printk(k.L_DEBUG, "load failed - %s", tostring(err))
+    end
     if not chunk then return nil, k.errno.ENOEXEC else return chunk end
   end)
 end

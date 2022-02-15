@@ -20,19 +20,19 @@ printk(k.L_INFO, "filedesc")
 
 do
   local function fread(self, n)
-    if not self.proxy.read then return nil, k.errno.EOPPNOTSUPP end
+    if not self.proxy.read then return nil, k.errno.ENOTSUP end
     return self.proxy.read(self.fd, n)
   end
   local function fwrite(self, d)
-    if not self.proxy.write then return nil, k.errno.EOPPNOTSUPP end
+    if not self.proxy.write then return nil, k.errno.ENOTSUP end
     return self.proxy.write(self.fd, d)
   end
   local function fseek(self, w, o)
-    if not self.proxy.seek then return nil, k.errno.EOPPNOTSUPP end
+    if not self.proxy.seek then return nil, k.errno.ENOTSUP end
     return self.proxy.seek(self.fd, w, o)
   end
   local function fclose(self)
-    if not self.proxy.close then return nil, k.errno.EOPPNOTSUPP end
+    if not self.proxy.close then return nil, k.errno.ENOTSUP end
     return self.proxy.close(self.fd)
   end
 
