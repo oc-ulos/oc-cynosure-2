@@ -1,5 +1,5 @@
 --[[
-  Template kernel source file
+  Component scheme
   Copyright (C) 2022 Ocawesome101
 
   This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,88 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "template")
+printk(k.L_INFO, "urls/scheme_component")
 
 do
+  -- Provides a scheme structured such that component://filesystem/abc3f31e is
+  -- a filesystem component.
+  local provider = {}
+
+  -- This scheme only provides a few methods. Most of its functionality is
+  -- done through ioctl().
+  function provider.open(path)
+    checkArg(1, path, "string")
+    local ctype, caddr = table.unpack(k.split_path(path))
+    if not (ctype and caddr) then return nil, k.errno.ENOENT end
+    local proxy = component.proxy(caddr)
+    if (not proxy) or proxy.type ~= ctype then
+      return nil, k.errno.ENOENT
+    end
+    return { proxy = proxy }
+  end
+
+  local ioctls = {}
+
+  function ioctls.invoke(fd, call, ...)
+    checkArg(3, call, "string")
+    if not fd.proxy[call] then
+      return nil, k.errno.EINVAL
+    end
+    return fd.proxy[call](...)
+  end
+
+  function ioctls.address(fd)
+    return fd.proxy.address
+  end
+
+  function ioctls.slot(fd)
+    return fd.proxy.slot
+  end
+
+  function ioctls.type(fd)
+    return fd.proxy.type
+  end
+
+  function provider.ioctl(fd, method, ...)
+    checkArg(1, fd, "table")
+    checkArg(2, method, "string")
+
+    if fd.iterator then return nil, k.errno.EBADF end
+
+    if ioctls[method] then
+      return ioctls[method](fd, ...)
+    else
+      return nil, k.errno.ENOTTY
+    end
+  end
+
+  function provider.opendir(path)
+    checkArg(1, path, "string")
+    local segments = k.split_path(path)
+    if #segments > 1 then return nil, k.errno.ENOENT end
+    if #segments == 0 then
+      local types = {}
+
+      for _, ctype in component.list() do types[ctype] = true end
+      for ctype in pairs(types) do types[#types+1] = ctype end
+
+      local i = 0
+      return { iterator = function()
+        i = i + 1
+        return types[i]
+      end }
+    else
+      return { iterator = component.list(segments[1], true) }
+    end
+  end
+
+  function provider.readdir(dirfd)
+    checkArg(1, dirfd, "table")
+    if not dirfd.iterator then return nil, k.errno.EBADF end
+    return { inode = -1, name = dirfd.iterator() }
+  end
+
+  function provider.close() end
+
+  k.register_scheme("component", provider)
 end

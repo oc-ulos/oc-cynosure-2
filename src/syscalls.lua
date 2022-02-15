@@ -149,7 +149,13 @@ do
       return nil, k.errno.EBADF
     end
 
-    return k.close(current.fds[fd])
+    k.close(current.fds[fd])
+
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
+    return true
   end
 
   k.syscalls.mkdir = k.mkdir

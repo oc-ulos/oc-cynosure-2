@@ -66,7 +66,7 @@ do
 
   local function attr_path(path)
     local segments = k.split_path(path)
-    return "/" .. table.concat(segments, "/", 1, #segments - 1) .. "." ..
+    return "/" .. table.concat(segments, "/", 1, #segments - 1) .. "/." ..
       segments[#segments] .. ".attr"
   end
 
@@ -87,10 +87,10 @@ do
       }
     end
 
-    local data = assert(self.fs.read(fd, 2048))
+    local data = self.fs.read(fd, 2048)
     self.fs.close(fd)
 
-    local attributes = load_attributes(data)
+    local attributes = load_attributes(data or "")
     attributes.uid = attributes.uid or 0
     attributes.gid = attributes.gid or 0
     -- default to root/root, rwxrwxrwx permissions
