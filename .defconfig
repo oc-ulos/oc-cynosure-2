@@ -45,6 +45,7 @@ PREEMPT_MODE=good
 # executable formats
 EXEC_CLE=y
 EXEC_SHEBANG=y
+EXEC_LUA=y
 # file systems
 FS_SFS=n
 FS_MANAGED=y

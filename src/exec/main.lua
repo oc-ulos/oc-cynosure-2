@@ -73,3 +73,4 @@ end
 
 --@[{bconf.EXEC_CLE == 'y' and '#include "src/exec/cle.lua"' or ""}]
 --@[{bconf.EXEC_SHEBANG == 'y' and '#include "src/exec/shebang.lua"' or ""}]
+--@[{bconf.EXEC_LUA == 'y' and '#include "src/exec/lua.lua"' or ""}]
