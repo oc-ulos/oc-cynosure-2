@@ -154,7 +154,7 @@ do
 
     local stat = node:stat(remain)
 
-    if not k.process_has_permission(cur_proc(), stat.mode, mode) then
+    if not k.process_has_permission(cur_proc(), stat, mode) then
       return nil, k.errno.EACCES
     end
 
