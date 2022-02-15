@@ -19,7 +19,7 @@
 printk(k.L_INFO, "scheduler/preempt")
 
 do
-  local sys = k.sysyield_string
+  local sys = "a"..k.sysyield_string
   local patterns = {
     { "if([ %(])(.-)([ %)])then([ \n])", "if%1%2%3then%4"..sys.."() " },
     { "elseif([ %(])(.-)([ %)])then([ \n])", "elseif%1%2%3then%4"..sys.."() " },
@@ -42,7 +42,7 @@ do
     while #code > 0 do
       local chunk, quote = code:match("(.-)([%[\"'])()")
       if not quote then
-        wrapped = wrapped .. code
+        wrapped = wrapped .. gsub(code)
         break
       end
       code = code:sub(#chunk + 2)
@@ -52,7 +52,7 @@ do
           wrapped = wrapped .. chunk .. quote
         elseif not in_str then
           in_str = quote
-          wrapped = wrapped .. chunk .. quote
+          wrapped = wrapped .. gsub(chunk) .. quote
         else
           wrapped = wrapped .. gsub(chunk) .. quote
         end
@@ -81,6 +81,8 @@ do
         end
       end
     end
+
+    component.invoke(component.list("sandbox")(), "log", wrapped)
     return wrapped
   end
 
