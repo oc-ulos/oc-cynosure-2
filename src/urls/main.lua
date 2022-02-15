@@ -78,12 +78,12 @@ do
   -- error case and will return ENOTSUP
   function k.stat(url)
     checkArg(1, url, "string")
-    return call(url, "stat")
+    return select(2, call(url, "stat"))
   end
 
   function k.mkdir(url)
     checkArg(1, url, "string")
-    return call(url, "mkdir")
+    return select(2, call(url, "mkdir"))
   end
 
   function k.link(source, dest)
@@ -99,25 +99,25 @@ do
 
     if not ap.link then return nil, k.errno.ENOTSUP end
 
-    return call(source, "link", dest)
+    return select(2, call(source, "link", dest))
   end
 
   function k.unlink(url)
     checkArg(1, url, "string")
-    return call(url, "unlink")
+    return select(2, call(url, "unlink"))
   end
 
   function k.chmod(url, mode)
     checkArg(1, url, "string")
     checkArg(2, mode, "number")
-    return call(url, "chmod", mode)
+    return select(2, call(url, "chmod", mode))
   end
 
   function k.chown(url, uid, gid)
     checkArg(1, url, "string")
     checkArg(2, uid, "number")
     checkArg(3, gid, "number")
-    return call(url, "chown", uid, gid)
+    return select(2, call(url, "chown", uid, gid))
   end
 
   -- somewhat more generic calls

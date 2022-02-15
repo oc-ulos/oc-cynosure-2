@@ -121,7 +121,7 @@ do
   function _node:exists(path)
     checkArg(1, path, "string")
     -- this is a couple lines of code compressed into one.
-    return not not ((not is_attribute(path)) and self.fs.exists(path))
+    return self.fs.exists(path)
   end
 
   -- Returns attributes about the given file.
