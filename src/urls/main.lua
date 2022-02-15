@@ -135,6 +135,15 @@ do
     return {fd = stream, node = stream, refs = 1}
   end
 
+  function k.ioctl(fd, operation, ...)
+    verify_fd(fd)
+    checkArg(2, operation, "string")
+    if not fd.node.ioctl then
+      return nil, k.errno.ENOSYS
+    end
+    return fd.node.ioctl(fd.fd, operation, ...)
+  end
+
   function k.read(fd, format)
     verify_fd(fd)
     checkArg(2, format, "string", "number")

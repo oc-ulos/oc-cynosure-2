@@ -244,6 +244,16 @@ do
     end
   end
 
+  local modes = { full = true, line = true, none = true }
+  function buffer:ioctl(op, mode)
+    checkArg(1, op, "string")
+    checkArg(2, mode, "string")
+    if op ~= "setvbuf" then return nil, k.errno.ENOSYS end
+    if not modes[mode] then return nil, k.errno.EINVAL end
+    self.bufmode = mode
+    return true
+  end
+
   local function split_chars(s)
     local cs = {}
     for c in s:gmatch(".") do cs[c] = true end

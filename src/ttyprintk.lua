@@ -23,7 +23,7 @@ do
   if not console then
     panic("cannot open console: " .. err)
   end
-  console.fd.bufmode = "none"
+  k.ioctl(console, "setvbuf", "none")
   k.write(console, "\27[39;49m\27[2J")
   function k.log_to_screen(message)
     k.write(console, message.."\n")
