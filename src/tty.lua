@@ -48,9 +48,11 @@ do
   local controllers = {}
 
   local function scroll(self, n)
-    self.gpu.copy(1, 1, self.w, self.h, 0, -n)
+    local top, bot = self.scrolltop, self.scrollbot
+    local height = bot - top + 1
+    self.gpu.copy(1, top, self.w, height, 0, -n)
     if n < 0 then n = self.h + n end
-    self.gpu.fill(1, n, self.w, 1, " ")
+    self.gpu.fill(1, bot - n + 1, self.w, n, " ")
   end
 
   -- RIS - reset
@@ -370,7 +372,7 @@ do
 
     while self.cy > self.scrollbot do
       scroll(self, 1)
-      self.cy = self.cy + 1
+      self.cy = self.cy - 1
     end
   end
 
@@ -449,6 +451,7 @@ do
 
   local function togglecursor(self)
     if not self.cursor then return end
+    corral(self)
     local cc, cf, cb = self.gpu.get(self.cx, self.cy)
     self.gpu.setForeground(cb)
     self.gpu.setBackground(cf)
