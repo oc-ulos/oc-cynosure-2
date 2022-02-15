@@ -82,7 +82,6 @@ do
       end
     end
 
-    component.invoke(component.list("sandbox")(), "log", wrapped)
     return wrapped
   end
 
