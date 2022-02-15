@@ -135,4 +135,25 @@ do
 
     return k.close(current.fds[fd])
   end
+
+  function k.syscalls.stat()
+  end
+
+  function k.syscalls.link()
+  end
+
+  function k.syscalls.unlink()
+  end
+
+  function k.syscalls.mount()
+  end
+
+  function k.syscalls.unmount()
+  end
+
+  function k.syscalls.execve()
+  end
+
+  function k.syscalls.fork()
+  end
 end
