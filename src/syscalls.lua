@@ -143,7 +143,13 @@ do
   k.syscalls.mount = k.mount
   k.syscalls.unmount = k.unmount
 
-  function k.syscalls.fork()
+  function k.syscalls.fork(func)
+    checkArg(1, func, "function")
+
+    local proc = k.get_process(k.add_process())
+    proc:add_thread(k.thread_from_function(func))
+
+    return proc.pid
   end
 
   function k.syscalls.execve()
