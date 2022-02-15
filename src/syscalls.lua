@@ -53,6 +53,18 @@ do
     return n
   end
 
+  function k.syscalls.ioctl(fd, operation, ...)
+    checkArg(1, fd, "number")
+    checkArg(2, operation, "string")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.ioctl(current.fds[fd], operation, ...)
+  end
+
   function k.syscalls.read(fd, fmt)
     checkArg(1, fd, "number")
     checkArg(2, fmt, "string", "number")
