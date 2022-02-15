@@ -137,6 +137,9 @@ do
       n = n - #chunk
     end
 
+    -- deal with math.huge
+    n = math.min(n, #self.rbuf)
+
     -- pop data from beginning of the read buffer
     local data = self.rbuf:sub(1, n)
     self.rbuf = self.rbuf:sub(n + 1)
