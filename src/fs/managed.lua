@@ -87,7 +87,7 @@ do
       }
     end
 
-    local data = self.fs.read(fd, 2048)
+    local data = assert(self.fs.read(fd, 2048))
     self.fs.close(fd)
 
     local attributes = load_attributes(data)
