@@ -92,7 +92,7 @@ do
     return mounts[mnt], rem or "/"
   end
 
-  local default_proc = {uid = 0, gid = 0}
+  local default_proc = {euid = 0, gid = 0}
   local function cur_proc()
     return k.current_process and k.current_process() or default_proc
   end

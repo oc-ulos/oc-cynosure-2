@@ -29,7 +29,7 @@ do
     panic("Cannot mount root filesystem from " .. tostring(dev)
       .. ": " .. ((err == k.errno.ENODEV and "No such device") or
       (err == k.errno.EUNATCH and "Protocol driver not attached") or
-      "Unknown error"))
+      "Unknown error " .. tostring(err)))
   end
 
   local address
