@@ -64,4 +64,75 @@ do
 
     return k.read(current.fds[fd], fmt)
   end
+
+  function k.syscalls.write(fd, data)
+    checkArg(1, fd, "number")
+    checkArg(2, data, "string")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.write(current.fds[fd], data)
+  end
+
+  function k.syscalls.seek(fd, whence, offset)
+    checkArg(1, fd, "number")
+    checkArg(2, whence, "string")
+    checkArg(3, offset, "number", "nil")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.seek(current.fds[fd], whence, offset or 0)
+  end
+
+  function k.syscalls.flush(fd)
+    checkArg(1, fd, "number")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.flush(current.fds[fd])
+  end
+
+  function k.syscalls.opendir(url)
+    checkArg(1, url, "string")
+
+    local fd, err = k.opendir(url)
+    if not fd then return nil, err end
+
+    local current = k.current_process()
+    local n = #current.fds + 1
+    current.fds[n] = fd
+
+    return n
+  end
+
+  function k.syscalls.readdir(fd)
+    checkArg(1, fd, "number")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.readdir(current.fds[fd])
+  end
+
+  function k.syscalls.close(fd)
+    checkArg(1, fd, "number")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    return k.close(current.fds[fd])
+  end
 end
