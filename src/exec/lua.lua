@@ -26,7 +26,7 @@ do
     repeat
       local data = k.read(fd, math.huge)
       chunk = chunk .. (data or "")
-    until not data
+    until not data or data == ""
 
     chunk = k.load(chunk, "=lua", "t", env)
     if not chunk then return nil, k.errno.ENOEXEC else return chunk end
