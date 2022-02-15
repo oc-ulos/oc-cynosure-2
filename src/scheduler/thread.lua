@@ -97,6 +97,9 @@ do
       result = table.pack(coroutine.resume(self.coro))
     end
 
+    -- first return is a boolean, we don't need that
+    if result[1] then table.remove(result, 1) end
+
     if coroutine.status(self.coro) == "dead" then
       return 1
     end
