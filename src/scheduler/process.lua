@@ -117,7 +117,10 @@ do
       root = parent.root or "/",
 
       -- file descriptors
-      fds = {}
+      fds = {},
+
+      -- environment
+      env = k.create_env(parent.env)
     }, process_mt)
   end
 end

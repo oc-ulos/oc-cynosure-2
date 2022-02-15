@@ -29,7 +29,7 @@ do
     static = 0x4
   }
 
-  local function loader(fd)
+  local function loader(fd, env)
     -- discard header
     k.read(fd, 4)
 
@@ -53,6 +53,9 @@ do
         -- nlink must not be above 0 if the exec is statically linked
         return nil, k.errno.ENOEXEC
       end
+
+      local data = k.read(fd, "a")
+      return load(data, "=static", "t", env)
     end
 
     -- not statically linked, pass to userspace interpreter
@@ -65,12 +68,13 @@ do
     local interpreter, err = k.load_executable(name)
     if not interpreter then return nil, err end
 
-    return function(args, env)
+    return function(args, proc_env)
       local current = k.current_process()
       local fds = current.fds
       local id = #fds + 1
       fds[id] = fd
-      return interpreter(table.pack(id, table.unpack(args)), env)
+      table.insert(args, 1, id)
+      return interpreter(args, proc_env)
     end
   end
 

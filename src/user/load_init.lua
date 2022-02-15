@@ -34,13 +34,14 @@ do
   end
 
   local func, err
+  local proc = k.get_process(k.add_process())
 
   -- 1) init= command-line arg
   if k.cmdline.init then
-    func, err = k.load_executable(k.cmdline.init)
+    func, err = k.load_executable(k.cmdline.init, proc.env)
   else -- 2) init_paths
     for _, path in ipairs(init_paths) do
-      func, err = k.load_executable(path)
+      func, err = k.load_executable(path, proc.env)
       if func then break end
     end
   end
@@ -49,6 +50,5 @@ do
     panic_with_error(err)
   end
 
-  local proc = k.get_process(k.add_process())
   proc:add_thread(k.thread_from_function(func))
 end

@@ -42,8 +42,9 @@ do
     return k.current_process() or default_proc
   end
 
-  function k.load_executable(path)
+  function k.load_executable(path, env)
     checkArg(1, path, "string")
+    checkArg(2, env, "table")
 
     local stat, err = k.stat(path)
     if not stat then return nil, err end
@@ -62,7 +63,7 @@ do
 
     for _, format in pairs(formats) do
       if format.recognizer(header) then
-        return format.loader(fd)
+        return format.loader(fd, env)
       end
     end
 

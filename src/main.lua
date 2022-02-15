@@ -30,6 +30,7 @@ local k = {}
 --#include "src/filedesc.lua"
 --#include "src/fs/main.lua"
 --#include "src/scheduler/main.lua"
+--#include "src/user/sandbox.lua"
 --#include "src/exec/main.lua"
 --#include "src/syscalls.lua"
 --#include "src/user/load_init.lua"
