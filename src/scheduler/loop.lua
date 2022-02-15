@@ -65,6 +65,9 @@ do
         process:resume(table.unpack(signal, 1, signal.n))
         if not next(process.threads) then
           computer.pushSignal("process_exit", cpid)
+          for _, fd in pairs(process.fds) do
+            k.close(fd)
+          end
           processes[cpid] = nil
         end
       end

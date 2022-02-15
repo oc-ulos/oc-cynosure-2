@@ -55,4 +55,10 @@ do
   end
 
   proc:add_thread(k.thread_from_function(func))
+
+  local iofd = k.open("tty:1", "rw")
+  iofd.refs = 3
+  proc.fds[0] = iofd
+  proc.fds[1] = iofd
+  proc.fds[2] = iofd
 end
