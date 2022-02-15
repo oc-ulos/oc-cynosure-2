@@ -42,12 +42,12 @@ do
   function computer.pullSignal(timeout)
     local sig = table.pack(pullsignal(timeout))
     if sig.n == 0 then return end
-    for id, handler in ipairs(handlers) do
+    for id, handler in pairs(handlers) do
       if handler.signal == sig[1] then
         local success, err = pcall(handler.callback,
           table.unpack(sig, 1, sig.n))
         if not success and err then
-          k.log(k.L_WARNING,
+          printk(k.L_WARNING,
             "error in event handler %d while handling signal %s: %s", id,
             sig[1], err)
         end
