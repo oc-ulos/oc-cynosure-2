@@ -160,8 +160,7 @@ do
 
     local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
-    local stream = k.fd_from_node(node, fd, mode)
-    return { fd = stream, node = stream }
+    return { fd = fd, node = node }
   end
 
   local function verify_fd(fd, dir)

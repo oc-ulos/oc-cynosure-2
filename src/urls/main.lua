@@ -131,7 +131,8 @@ do
     if not result[2] then
       return nil, result[3]
     end
-    return {fd = result[2], node = result[1], refs = 1}
+    local stream = k.fd_from_node(result[1], result[2], mode)
+    return {fd = stream, node = stream, refs = 1}
   end
 
   function k.read(fd, format)

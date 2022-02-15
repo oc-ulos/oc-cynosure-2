@@ -36,12 +36,6 @@ do
     return self.proxy.close(self.fd)
   end
 
-  local function wrap(func)
-    return function(_, ...)
-      return func(...)
-    end
-  end
-
   --- Create a file descriptor object from a managed filesystem's file
   --- descriptor
   ---@param proxy table
@@ -57,9 +51,7 @@ do
       read = fread, write = fwrite, seek = fseek, close = fclose,
       fd = fd, proxy = proxy
     }, mode)
-    return setmetatable({read = wrap(new.read), write = wrap(new.write),
-      seek = wrap(new.seek), flush = wrap(new.flush), close = wrap(new.close)},
-      {__index = new})
+    return new
   end
 
   local function ebadf()
