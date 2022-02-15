@@ -55,7 +55,7 @@ do
       end
 
       local data = k.read(fd, "a")
-      return load(data, "=static", "t", env)
+      return k.load(data, "=static", "t", env)
     end
 
     -- not statically linked, pass to userspace interpreter

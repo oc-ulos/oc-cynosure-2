@@ -28,7 +28,7 @@ do
       chunk = chunk .. (data or "")
     until not data
 
-    chunk = load(chunk, "=lua", "t", env)
+    chunk = k.load(chunk, "=lua", "t", env)
     if not chunk then return nil, k.errno.ENOEXEC else return chunk end
   end)
 end
