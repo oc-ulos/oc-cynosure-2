@@ -34,9 +34,6 @@ do
       result.n = result.n - 1
     end
 
-    printk(k.L_DEBUG, "syscall %s = %s, %s", name, tostring(result[1]),
-      tostring(result[2]))
-
     return table.unpack(result, 1, result.n)
   end
 

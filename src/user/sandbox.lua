@@ -55,6 +55,7 @@ do
     for key in pairs(blacklist) do
       new[key] = nil
     end
+    if not base then new.syscall = k.perform_system_call end
     return new
   end
 end

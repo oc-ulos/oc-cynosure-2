@@ -482,11 +482,12 @@ do
   function _tty:read(n)
     checkArg(1, n, "number")
     self:flush()
-    if #self.rbuf >= n then
-      local data = self.rbuf:sub(1, n)
-      self.rbuf = self.rbuf:sub(n + 1)
-      return data
+    while (self.rbuf:find("\n") or -1) < n do
+      coroutine.yield(0)
     end
+    local data = self.rbuf:sub(1, n)
+    self.rbuf = self.rbuf:sub(n + 1)
+    return data
   end
 
   function _tty:flush()

@@ -56,7 +56,6 @@ do
   --  * [w]aiting (the thread is waiting for a signal, or for a timeout)
   --  * [s]topped (got SIGSTOP)
   --  * [y]ielded (forcibly pre-empted)
-  --  * [S]yscall (waiting for syscall result)
   -- Each thread maintains a queue of signals up to 256 items long.
   local thread = {}
   function thread:resume(sig, ...)
@@ -74,14 +73,6 @@ do
       if #self.queue > 0 then
         resume_args = table.remove(self.queue, 1)
       end
-
-    -- if status is "S", the thread is waiting for a syscall result.  The
-    -- action to perform is stored in `self.syscall_data' and only performed
-    -- just before resuming in case the thread is killed.
-    elseif self.status == "S" then
-      resume_args = table.pack(k.perform_system_call(
-        table.unpack(self.syscall_data)))
-      if resume_args.n == 0 then return false end
 
     -- if status is "s", then don't resume, ever, until the status is no longer
     -- "s".  See thread:stop() and thread:continue().
@@ -108,16 +99,12 @@ do
     -- the coroutine can return one of a couple of things:
     --  * the randomized "sysyield" string generated at runtime, indicating a
     --    forced yield, e.g.: "4b2cda328f92c82e34a8tj2bvksdp30fasd"
-    --  * "syscall" followed by some other arguments, to perform a system call
     --  * a number, to wait either for a signal or until that much time has
     --    elapsed.
     --  * nothing, to wait indefinitely for a signal
     -- The if/else chain here isn't ordered quite like that for speed reasons.
     if result[1] == sysyield_string then
       self.status = "y"
-    elseif result[1] == "syscall" then
-      self.syscall_data = table.pack(table.unpack(result, 2, result.n))
-      self.status = "S"
     elseif result.n == 0 then
       self.deadline = math.huge
       self.status = "w"

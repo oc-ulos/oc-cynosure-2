@@ -63,7 +63,7 @@ do
       if thread.deadline < deadline then
         deadline = thread.deadline
       end
-      if thread.status == "S" or thread.status == "y" then
+      if thread.status == "y" then
         return -1
       end
       if thread.status == "w" and #self.queue > 0 then
