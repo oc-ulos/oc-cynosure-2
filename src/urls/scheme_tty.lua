@@ -19,7 +19,7 @@
 printk(k.L_INFO, "urls/scheme_tty")
 
 do
-  local provider = {}
+  local provider = { default_mode = "none" }
 
   local ttys = {}
 

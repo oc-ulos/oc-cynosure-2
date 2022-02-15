@@ -124,14 +124,22 @@ do
   function k.open(url, mode)
     checkArg(1, url, "string")
     checkArg(2, mode, "string")
+
     local result = table.pack(call(url, "open", mode))
     if not result[1] then
       return nil, result[2]
     end
+
     if not result[2] then
       return nil, result[3]
     end
+
     local stream = k.fd_from_node(result[1], result[2], mode)
+
+    if result[1].default_mode then
+      stream:ioctl("setvbuf", result[1].default_mode)
+    end
+
     return {fd = stream, node = stream, refs = 1}
   end
 
