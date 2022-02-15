@@ -479,6 +479,16 @@ do
     return self
   end
 
+  function _tty:read(n)
+    checkArg(1, n, "number")
+    self:flush()
+    if #self.rbuf >= n then
+      local data = self.rbuf:sub(1, n)
+      self.rbuf = self.rbuf:sub(n + 1)
+      return data
+    end
+  end
+
   function _tty:flush()
     local dc = #self.wbuf > 0
     if dc then togglecursor(self) end

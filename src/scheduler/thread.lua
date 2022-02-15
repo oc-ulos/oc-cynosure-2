@@ -81,6 +81,7 @@ do
     elseif self.status == "S" then
       resume_args = table.pack(k.perform_system_call(
         table.unpack(self.syscall_data)))
+      if resume_args.n == 0 then return false end
 
     -- if status is "s", then don't resume, ever, until the status is no longer
     -- "s".  See thread:stop() and thread:continue().
