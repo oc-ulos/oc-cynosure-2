@@ -80,4 +80,8 @@ do
   function k.current_process()
     return processes[current]
   end
+
+  function k.get_process(pid)
+    return processes[pid]
+  end
 end

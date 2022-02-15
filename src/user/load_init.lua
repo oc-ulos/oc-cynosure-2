@@ -33,11 +33,22 @@ do
       or "Please specify a working one"))
   end
 
+  local func, err
+
   -- 1) init= command-line arg
   if k.cmdline.init then
-    local func, err = k.load_executable(k.cmdline.init)
-    if not func then
-      panic_with_error(err)
+    func, err = k.load_executable(k.cmdline.init)
+  else -- 2) init_paths
+    for _, path in ipairs(init_paths) do
+      func, err = k.load_executable(path)
+      if func then break end
     end
   end
+
+  if not func then
+    panic_with_error(err)
+  end
+
+  local proc = k.get_process(k.add_process())
+  proc:add_thread(k.thread_from_function(func))
 end
