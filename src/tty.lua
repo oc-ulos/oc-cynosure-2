@@ -481,12 +481,17 @@ do
 
   function _tty:read(n)
     checkArg(1, n, "number")
+
     self:flush()
-    while (self.rbuf:find("\n") or -1) < n do
-      coroutine.yield(0)
+    if self.raw then
+      while #self.rbuf < n do coroutine.yield() end
+    else
+      while (self.rbuf:find("\n") or -1) < n do coroutine.yield(0) end
     end
+
     local data = self.rbuf:sub(1, n)
     self.rbuf = self.rbuf:sub(n + 1)
+
     return data
   end
 
