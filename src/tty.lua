@@ -486,7 +486,7 @@ do
     if self.raw then
       while #self.rbuf < n do coroutine.yield() end
     else
-      while (self.rbuf:find("\n") or -1) < n do coroutine.yield(0) end
+      while (self.rbuf:find("\n$") or -1) < n do coroutine.yield(0) end
     end
 
     local data = self.rbuf:sub(1, n)
