@@ -98,7 +98,7 @@ if args[3] == "-strip-comments" then
   local rhand = assert(io.open(args[2], "r"))
   local data = rhand:read("a")
     :gsub(" *%-%-%[(=*)%[.-%]%1%]", "")
-    :gsub(" *%-%-[^\n]*\n", "")
+    :gsub("[ \n]+%-%-[^\n]*\n", "")
     :gsub("\n+", "\n")
     :gsub("\n( +)([^/\\_ ])", "\n%2")
   rhand:close()
