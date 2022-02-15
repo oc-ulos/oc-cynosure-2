@@ -227,6 +227,10 @@ do
 
     if is_attribute(path) then return nil, k.errno.EACCES end
 
+    if self.fs.isDirectory(path) then
+      return nil, k.errno.EISDIR
+    end
+
     local fd = self.fs.open(path, mode)
     if not fd then return nil, k.errno.ENOENT else return fd end
   end
