@@ -135,4 +135,106 @@ do
 
     return k.close(current.fds[fd])
   end
+
+  k.syscalls.mkdir = k.mkdir
+
+  k.syscalls.stat = k.stat
+
+  k.syscalls.link = k.link
+  k.syscalls.unlink = k.unlink
+  k.syscalls.mount = k.mount
+  k.syscalls.unmount = k.unmount
+
+  function k.syscalls.fork(func)
+    checkArg(1, func, "function")
+
+    local proc = k.get_process(k.add_process())
+    proc:add_thread(k.thread_from_function(func))
+
+    return proc.pid
+  end
+
+  function k.syscalls.execve(path, args, env)
+    checkArg(1, path, "string")
+    checkArg(2, args, "table")
+    checkArg(3, env, "table", "nil")
+
+    local current = k.current_process()
+
+    local func, err = k.load_executable(path, current.env)
+    if not func then return nil, err end
+
+    current.threads = {}
+    current:add_thread(k.thread_from_function(func))
+  end
+
+  function k.syscalls.setuid(uid)
+    checkArg(1, uid, "number")
+    local current = k.current_process()
+    if current.euid == 0 then
+      current.suid = uid
+      current.euid = uid
+      current.uid = uid
+    elseif uid==current.uid or uid==current.euid or uid==current.suid then
+      current.euid = uid
+    else
+      return nil, k.errno.EPERM
+    end
+  end
+
+  function k.syscalls.seteuid(uid)
+    checkArg(1, uid, "number")
+    local current = k.current_process()
+    if current.euid == 0 then
+      current.euid = uid
+      current.suid = 0
+    elseif uid==current.uid or uid==current.euid or uid==current.suid then
+      current.euid = uid
+    else
+      return nil, k.errno.EPERM
+    end
+  end
+
+  function k.syscalls.getuid()
+    return k.current_process().uid
+  end
+
+  function k.syscalls.geteuid()
+    return k.current_process().euid
+  end
+
+  function k.syscalls.setgid(gid)
+    checkArg(1, gid, "number")
+    local current = k.current_process()
+    if current.egid == 0 then
+      current.sgid = gid
+      current.egid = gid
+      current.gid = gid
+    elseif gid==current.gid or gid==current.egid or gid==current.sgid then
+      current.egid = gid
+    else
+      return nil, k.errno.EPERM
+    end
+  end
+
+  function k.syscalls.setegid(gid)
+    checkArg(1, gid, "number")
+    local current = k.current_process()
+    if current.egid == 0 then
+      current.sgid = gid
+      current.egid = gid
+    elseif gid==current.gid or gid==current.egid or gid==current.sgid then
+      current.egid = gid
+    else
+      return nil, k.errno.EPERM
+    end
+  end
+
+  function k.syscalls.getgid()
+    return k.current_process().gid
+  end
+
+  function k.syscalls.getegid()
+    return k.current_process().egid
+  end
 end
