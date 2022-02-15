@@ -166,10 +166,21 @@ do
     current:add_thread(k.thread_from_function(func))
   end
 
-  function k.syscalls.setuid()
+  function k.syscalls.setuid(uid)
+    checkArg(1, uid, "number")
+    local current = k.current_process()
+    if current.euid == 0 then
+      current.suid = 0
+      current.euid = uid
+    elseif uid==current.uid or uid==current.euid or uid==current.suid then
+      current.euid = uid
+    else
+      return nil, k.errno.EACCES
+    end
   end
 
-  function k.syscalls.seteuid()
+  function k.syscalls.seteuid(uid)
+    checkArg(1, uid, "number")
   end
 
   function k.syscalls.getuid()
