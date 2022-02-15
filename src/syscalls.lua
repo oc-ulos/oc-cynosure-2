@@ -152,7 +152,18 @@ do
     return proc.pid
   end
 
-  function k.syscalls.execve()
+  function k.syscalls.execve(path, args, env)
+    checkArg(1, path, "string")
+    checkArg(2, args, "table")
+    checkArg(3, env, "table", "nil")
+
+    local current = k.current_process()
+
+    local func, err = k.load_executable(path, current.env)
+    if not func then return nil, err end
+
+    current.threads = {}
+    current:add_thread(k.thread_from_function(func))
   end
 
   function k.syscalls.setuid()
