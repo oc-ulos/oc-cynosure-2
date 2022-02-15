@@ -34,6 +34,9 @@ do
       result.n = result.n - 1
     end
 
+    printk(k.L_DEBUG, "syscall %s = %s, %s", name, tostring(result[1]),
+      tostring(result[2]))
+
     return table.unpack(result, 1, result.n)
   end
 
@@ -86,7 +89,8 @@ do
       return nil, k.errno.EBADF
     end
 
-    return k.write(current.fds[fd], data)
+    local ok, err = k.write(current.fds[fd], data)
+    return not not ok, err
   end
 
   function k.syscalls.seek(fd, whence, offset)

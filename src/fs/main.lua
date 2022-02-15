@@ -152,10 +152,12 @@ do
       return nil, k.errno.ENOENT
     end
 
-    local stat = node:stat(remain)
+    if mode ~= "w" then
+      local stat = node:stat(remain)
 
-    if not k.process_has_permission(cur_proc(), stat, mode) then
-      return nil, k.errno.EACCES
+      if not k.process_has_permission(cur_proc(), stat, mode) then
+        return nil, k.errno.EACCES
+      end
     end
 
     local fd, err = node:open(remain, mode)
@@ -221,7 +223,7 @@ do
   end
 
   function provider.close(fd)
-    verify_fd(fd, true)
+    verify_fd(fd, fd.dir) -- close closes either type of fd
     return fd.node:close(fd.fd)
   end
 

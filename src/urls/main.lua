@@ -186,7 +186,8 @@ do
     verify_fd(fd)
     fd.refs = fd.refs - 1
     if fd.refs == 0 then
-      return fd_call(fd.close)
+      fd_call(fd.node.flush, fd.fd)
+      return fd_call(fd.node.close, fd.fd)
     end
   end
 end
