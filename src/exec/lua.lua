@@ -24,7 +24,7 @@ do
   end, function(fd, env)
     local chunk = ""
     repeat
-      local data = k.read(fd, 1024)
+      local data = k.read(fd, math.huge)
       chunk = chunk .. (data or "")
     until not data
 
