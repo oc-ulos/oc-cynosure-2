@@ -95,7 +95,6 @@ do
   local pullSignal = computer.pullSignal
   -- kernel panic!!!
   function _G.panic(reason)
-    printk(k.L_EMERG, "kernel panic: %s", reason)
     printk(k.L_EMERG, "#### stack traceback ####")
     for line in debug.traceback():gmatch("[^\n]+") do
       if line ~= "stack traceback:" then
@@ -103,6 +102,7 @@ do
       end
     end
     printk(k.L_EMERG, "#### end traceback ####")
+    printk(k.L_EMERG, "kernel panic - not syncing: %s", reason)
     while true do pullSignal() end
   end
 end
