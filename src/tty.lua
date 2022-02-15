@@ -546,11 +546,15 @@ do
         to_screen = "^" .. interim .. c
         to_buffer = "\27" .. interim .. c
       elseif char < 32 then
+        if char == 0 then return end
         to_buffer = string.char(char)
         to_screen = "^"..sub32_lookups[char]:upper()
+      else
+        to_buffer = string.char(char)
+        to_screen = string.char(char)
       end
 
-      if not new.attributes.raw then
+      if not new.raw then
         if char == 13 then
           to_buffer, to_screen = "\n", "\n"
         elseif char == 8 then
