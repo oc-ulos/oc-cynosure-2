@@ -136,6 +136,8 @@ do
     return k.close(current.fds[fd])
   end
 
+  k.syscalls.mkdir = k.mkdir
+
   k.syscalls.stat = k.stat
 
   k.syscalls.link = k.link
