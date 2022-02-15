@@ -79,6 +79,11 @@ do
 
   function k.create_process(pid, parent)
     parent = parent or default_parent
+    if parent.fds then
+      if parent.fds[0] then parent.fds[0].refs = parent.fds[0].refs + 1 end
+      if parent.fds[1] then parent.fds[1].refs = parent.fds[1].refs + 1 end
+      if parent.fds[2] then parent.fds[2].refs = parent.fds[2].refs + 1 end
+    end
     return setmetatable({
       -- local signal queue
       queue = {},
@@ -119,7 +124,11 @@ do
       root = parent.root or "/",
 
       -- file descriptors
-      fds = {},
+      fds = {
+        [0] = parent.fds and parent.fds[0],
+        [1] = parent.fds and parent.fds[1],
+        [2] = parent.fds and parent.fds[2]
+      },
 
       -- environment
       env = k.create_env(parent.env)
