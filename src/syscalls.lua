@@ -170,17 +170,27 @@ do
     checkArg(1, uid, "number")
     local current = k.current_process()
     if current.euid == 0 then
-      current.suid = 0
+      current.suid = uid
       current.euid = uid
+      current.uid = uid
     elseif uid==current.uid or uid==current.euid or uid==current.suid then
       current.euid = uid
     else
-      return nil, k.errno.EACCES
+      return nil, k.errno.EPERM
     end
   end
 
   function k.syscalls.seteuid(uid)
     checkArg(1, uid, "number")
+    local current = k.current_process()
+    if current.euid == 0 then
+      current.euid = uid
+      current.suid = 0
+    elseif uid==current.uid or uid==current.euid or uid==current.suid then
+      current.euid = uid
+    else
+      return nil, k.errno.EPERM
+    end
   end
 
   function k.syscalls.getuid()
