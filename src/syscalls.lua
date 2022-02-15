@@ -136,24 +136,40 @@ do
     return k.close(current.fds[fd])
   end
 
-  function k.syscalls.stat()
-  end
+  k.syscalls.stat = k.stat
 
-  function k.syscalls.link()
-  end
+  k.syscalls.link = k.link
+  k.syscalls.unlink = k.unlink
+  k.syscalls.mount = k.mount
+  k.syscalls.unmount = k.unmount
 
-  function k.syscalls.unlink()
-  end
-
-  function k.syscalls.mount()
-  end
-
-  function k.syscalls.unmount()
+  function k.syscalls.fork()
   end
 
   function k.syscalls.execve()
   end
 
-  function k.syscalls.fork()
+  function k.syscalls.setuid()
+  end
+
+  function k.syscalls.seteuid()
+  end
+
+  function k.syscalls.getuid()
+  end
+
+  function k.syscalls.geteuid()
+  end
+
+  function k.syscalls.setgid()
+  end
+
+  function k.syscalls.setegid()
+  end
+
+  function k.syscalls.getgid()
+  end
+
+  function k.syscalls.getegid()
   end
 end
