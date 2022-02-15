@@ -126,15 +126,17 @@ do
     -- have enough data - but if we run out, then just return what we
     -- have
     while #self.rbuf < n do
-      local chunk = self.stream:read(n)
+      local chunk = self.stream:read(n - #self.rbuf)
 
-      -- if we've reached EOF, then break
-      if not chunk then break end
+      -- if we've reached EOF, then
+      if not chunk then
+        -- return nothing if we've got nothing in the buffer
+        if #self.rbuf == 0 then return nil end
+        break
+      end
 
       -- add chunk to read buffer
       self.rbuf = self.rbuf .. chunk
-      -- decrement n by length of chunk
-      n = n - #chunk
     end
 
     -- deal with math.huge
