@@ -45,7 +45,7 @@ do
   function k.fd_from_node(proxy, fd, mode)
     checkArg(1, proxy, "table")
     -- ocvm returns userdata rather than a number
-    checkArg(2, fd, "number", "userdata")
+    checkArg(2, fd, "table", "userdata")
     checkArg(3, mode, "string")
     local new = k.buffer_from_stream({
       read = fread, write = fwrite, seek = fseek, close = fclose,
