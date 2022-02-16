@@ -192,6 +192,20 @@ do
     return k.current_process().cwd
   end
 
+  function k.syscalls.chdir(path)
+    checkArg(1, path, "string")
+
+    local stat = k.stat(path)
+    if not stat then
+      return nil, k.errno.ENOENT
+    end
+
+    local current = k.current_process()
+    current.cwd = path
+
+    return true
+  end
+
   function k.syscalls.setuid(uid)
     checkArg(1, uid, "number")
     local current = k.current_process()
