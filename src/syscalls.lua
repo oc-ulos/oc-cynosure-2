@@ -204,6 +204,17 @@ do
     return status
   end
 
+  function k.syscalls.exit(status)
+    checkArg(1, status, "number")
+
+    local current = k.current_process()
+    current.status = status
+    current.threads[current.current_thread] = nil
+    current.thread_count = current.thread_count - 1
+
+    coroutine.yield(0)
+  end
+
   function k.syscalls.getcwd()
     return k.current_process().cwd
   end

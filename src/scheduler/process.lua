@@ -40,6 +40,7 @@ do
     end
 
     for i, thread in pairs(self.threads) do
+      self.current_thread = i
       local result = thread:resume(table.unpack(signal, 1, signal.n))
       resumed = resumed or not not result
 
@@ -93,6 +94,11 @@ do
       threads = {},
       -- how many threads?
       thread_count = 0,
+      -- which thread?
+      current_thread = 0,
+
+      -- exit status
+      status = 0,
 
       -- process ID
       pid = pid,

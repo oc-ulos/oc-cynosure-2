@@ -64,7 +64,7 @@ do
         current = cpid
         process:resume(table.unpack(signal, 1, signal.n))
         if not next(process.threads) then
-          computer.pushSignal("process_exit", cpid)
+          computer.pushSignal("process_exit", cpid, process.status or 0)
           for _, fd in pairs(process.fds) do
             k.close(fd)
           end
