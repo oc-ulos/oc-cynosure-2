@@ -206,8 +206,7 @@ do
       return nil, k.errno.ENOENT
     end
 
-    local dirfd = k.opendir(path)
-    if not dirfd then
+    if bit32.band(stat.mode, 0xF000) ~= k.FS_DIR then
       return nil, k.errno.ENOTDIR
     end
 
