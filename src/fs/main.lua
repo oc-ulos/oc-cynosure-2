@@ -25,6 +25,15 @@ do
   ---@type fs_recognizer[]
   k.fstypes = {}
 
+  -- fs mode constants
+  k.FS_FIFO   = 0x1000 -- FIFO
+  k.FS_CHRDEV = 0x2000 -- character device
+  k.FS_DIR    = 0x4000 -- directory
+  k.FS_BLKDEV = 0x6000 -- block device
+  k.FS_REG    = 0x8000 -- regular file
+  k.FS_SYMLNK = 0xA000 -- symbolic link
+  k.FS_SOCKET = 0xC000 -- socket
+
   --- Registers a filesystem type
   ---@param name string
   ---@param recognizer fs_recognizer
