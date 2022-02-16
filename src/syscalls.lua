@@ -315,8 +315,12 @@ do
       return nil, k.errno.EPERM
     end
 
-    -- TODO: halt command once there's a way to do that.
-    if cmd == "poweroff" then
+    if cmd == "halt" then
+      printk(k.L_INFO, "System halted.")
+      while true do
+        computer.pullSignal()
+      end
+    elseif cmd == "poweroff" then
       printk(k.L_INFO, "Power down.")
       computer.shutdown()
     elseif cmd == "restart" then
