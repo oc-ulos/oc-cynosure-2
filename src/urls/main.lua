@@ -48,12 +48,18 @@ do
   ---@param url string
   function k.lookup_url(url)
     local scheme, resource = url:match("(.*):/?/?(.*)")
+
     if not scheme then
       scheme, resource = "file", url
     end
+
     if not k.schemes[scheme] then
       return nil, k.errno.EUNATCH
     end
+
+    if #resource == 0 then resource = "/" end
+    --printk(k.L_DEBUG, "looking up scheme %s (url %s, resource %s)",
+    --  tostring(scheme), tostring(url), tostring(resource))
     return k.schemes[scheme], resource
   end
 
