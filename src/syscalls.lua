@@ -201,17 +201,14 @@ do
     checkArg(1, path, "string")
     path = k.check_absolute(path)
 
-    -- Root stat bug workaround
-    if path ~= "/" then
-      local stat = k.stat(path)
-      if not stat then
-        return nil, k.errno.ENOENT
-      end
+    local stat = k.stat(path)
+    if not stat then
+      return nil, k.errno.ENOENT
+    end
 
-      local dirfd = k.opendir(path)
-      if not dirfd then
-        return nil, k.errno.ENOTDIR
-      end
+    local dirfd = k.opendir(path)
+    if not dirfd then
+      return nil, k.errno.ENOTDIR
     end
 
     local current = k.current_process()
