@@ -222,7 +222,7 @@ do
 
     dirfd.index = dirfd.index + 1
     if dirfd.files[dirfd.index] then
-      return { inode = -1, name = dirfd.files[dirfd.index] }
+      return { inode = -1, name = dirfd.files[dirfd.index]:gsub("/", "") }
     end
   end
 

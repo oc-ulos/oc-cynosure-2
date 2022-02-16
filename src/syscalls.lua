@@ -223,9 +223,9 @@ do
     checkArg(1, path, "string")
     path = k.check_absolute(path)
 
-    local stat = k.stat(path)
+    local stat, err = k.stat(path)
     if not stat then
-      return nil, k.errno.ENOENT
+      return nil, err
     end
 
     if bit32.band(stat.mode, 0xF000) ~= k.FS_DIR then

@@ -100,6 +100,11 @@ do
       end
     end
 
+    if #rem == 0 then rem = "/" end
+
+    --printk(k.L_DEBUG, "path_to_node(%s) = %s, %s",
+    --  path, tostring(mnt), tostring(rem))
+
     return mounts[mnt], rem or "/"
   end
 
@@ -228,6 +233,8 @@ do
   function k.opendir(path)
     checkArg(1, path, "string")
 
+    path = k.check_absolute(path)
+
     local node, remain = path_to_node(path)
     if not node.opendir then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
@@ -240,12 +247,32 @@ do
     local fd, err = node:opendir(remain)
     if not fd then return nil, err end
 
-    return { fd = fd, node = node, dir = true, refs = 1 }
+    local _extra = {}
+    local extra = {}
+
+    local base = k.split_path(path)
+    for m in pairs(mounts) do
+      if m:sub(1, #path) == path then
+        local segments = k.split_path(m)
+        local nexts = segments[#base + 1]
+        if nexts then
+          if not _extra[nexts] then extra[#extra+1] = nexts end
+          _extra[nexts] = true
+        end
+      end
+    end
+
+    return { fd = fd, node = node, dir = true, refs = 1,
+      extra = extra, eindex = 1 }
   end
 
   function k.readdir(dirfd)
     verify_fd(dirfd, true)
     if not dirfd.node.readdir then return nil, k.errno.ENOSYS end
+    if dirfd.extra[dirfd.eindex] then
+      dirfd.eindex = dirfd.eindex + 1
+      return { inode = -1, name = dirfd.extra[dirfd.eindex - 1] }
+    end
     return dirfd.node:readdir(dirfd.fd)
   end
 

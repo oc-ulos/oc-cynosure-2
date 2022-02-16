@@ -24,12 +24,19 @@ do
   local ttys = {}
 
   function provider:exists(n)
+    if n == "/" then return true end
     n = n:gsub("^/", "")
     return not not ttys[tonumber(n) or 0]
   end
 
   function provider:stat(n)
     if not self:exists(n) then return nil, k.errno.ENOENT end
+    if n == "/" then
+      return {
+        dev=-1, ino=-1, mode=0x41FF, nlink=1, uid=0, gid=0,
+        rdev=-1, size=0, blksize=2048
+      }
+    end
     return {
       dev=-1, ino=-1, mode=0x21FF, nlink=1, uid=0, gid=0,
       rdev=-1, size=0, blksize=2048
