@@ -193,6 +193,17 @@ do
     coroutine.yield(0)
   end
 
+  function k.syscalls.wait(pid)
+    checkArg(1, pid, "number")
+
+    local sig, id, status
+    repeat
+      sig, id, status = coroutine.yield(0)
+    until sig == "process_exit" and id == pid
+
+    return status
+  end
+
   function k.syscalls.getcwd()
     return k.current_process().cwd
   end

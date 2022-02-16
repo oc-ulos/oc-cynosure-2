@@ -84,7 +84,8 @@ do
     return processes[current]
   end
 
-  function k.get_process(pid)
-    return processes[pid]
+  function k.get_process(rpid)
+    checkArg(1, rpid, "number")
+    return processes[rpid]
   end
 end

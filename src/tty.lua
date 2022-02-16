@@ -484,7 +484,7 @@ do
 
     self:flush()
     if self.raw then
-      while #self.rbuf < n do coroutine.yield() end
+      while #self.rbuf < n do coroutine.yield(0) end
     else
       while (self.rbuf:find("\n$") or -1) < n do coroutine.yield(0) end
     end
