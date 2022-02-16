@@ -223,8 +223,6 @@ do
 
     local current = k.current_process()
     current.cwd = path
-
-    return true
   end
 
   function k.syscalls.setuid(uid)
