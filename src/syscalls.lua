@@ -307,4 +307,25 @@ do
   function k.syscalls.getegid()
     return k.current_process().egid
   end
+
+  function k.syscalls.reboot(cmd)
+    checkArg(1, cmd, "string")
+
+    if k.current_process().euid ~= 0 then
+      return nil, k.errno.EPERM
+    end
+
+    if cmd == "halt" then
+      printk(k.L_INFO, "System halted.")
+      while true do
+        computer.pullSignal()
+      end
+    elseif cmd == "poweroff" then
+      printk(k.L_INFO, "Power down.")
+      computer.shutdown()
+    elseif cmd == "restart" then
+      printk(k.L_INFO, "Restarting system.")
+      computer.shutdown(true)
+    end
+  end
 end
