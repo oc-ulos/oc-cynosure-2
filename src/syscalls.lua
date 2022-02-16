@@ -256,14 +256,4 @@ do
   function k.syscalls.getegid()
     return k.current_process().egid
   end
-
-  -- Superglobal variables. Useful for caching.
-  local variables = {}
-  function k.syscalls.global(name, vtype)
-    checkArg(1, name, "string")
-    checkArg(2, vtype, "string")
-    -- TODO: respect vtype
-    variables[name] = variables[name] or {}
-    return variables[name]
-  end
 end
