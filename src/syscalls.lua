@@ -194,10 +194,19 @@ do
 
   function k.syscalls.chdir(path)
     checkArg(1, path, "string")
+    path = k.check_absolute(path)
 
-    local stat = k.stat(path)
-    if not stat then
-      return nil, k.errno.ENOENT
+    -- Root stat bug workaround
+    if path ~= "/" then
+      local stat = k.stat(path)
+      if not stat then
+        return nil, k.errno.ENOENT
+      end
+
+      local dirfd = k.opendir(path)
+      if not dirfd then
+        return nil, k.errno.ENOTDIR
+      end
     end
 
     local current = k.current_process()
