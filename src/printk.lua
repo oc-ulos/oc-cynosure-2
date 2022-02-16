@@ -62,10 +62,10 @@ do
 
   -- the maximum log buffer size is (total memory / 1024)
   local log_buffer = {}
-  --local sandbox = component.list("sandbox")()
+  local sandbox = component.list("sandbox")()
   local function log_to_buffer(message)
     log_buffer[#log_buffer + 1] = message
-    --if sandbox then component.invoke(sandbox, "log", message) end
+    if sandbox then component.invoke(sandbox, "log", message) end
     if #log_buffer > computer.totalMemory() / 1024 then
       table.remove(log_buffer, 1)
     end

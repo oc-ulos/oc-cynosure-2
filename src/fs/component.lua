@@ -135,5 +135,5 @@ do
 
   function provider:close() end
 
-  k.mount(provider, "/component")
+  k.mount(provider, "/kernel/component")
 end

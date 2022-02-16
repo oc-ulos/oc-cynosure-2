@@ -263,7 +263,7 @@ do
     end
 
     return { fd = fd, node = node, dir = true, refs = 1,
-      extra = extra, eindex = 1 }
+      extra = extra, eindex = 1, shown = {} }
   end
 
   function k.readdir(dirfd)
@@ -271,9 +271,13 @@ do
     if not dirfd.node.readdir then return nil, k.errno.ENOSYS end
     if dirfd.extra[dirfd.eindex] then
       dirfd.eindex = dirfd.eindex + 1
+      dirfd.shown[dirfd.extra[dirfd.eindex - 1]] = true
       return { inode = -1, name = dirfd.extra[dirfd.eindex - 1] }
     end
-    return dirfd.node:readdir(dirfd.fd)
+    repeat
+      local result = dirfd.node:readdir(dirfd.fd)
+      if result and not dirfd.shown[result.name] then return result end
+    until not result
   end
 
   function k.close(fd)
@@ -386,6 +390,7 @@ end
 
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
+--#include "src/fs/rootfs.lua"
+--#include "src/fs/kernel.lua"
 --#include "src/fs/tty.lua"
 --@[{bconf.FS_COMPONENT == 'y' and '#include "src/fs/component.lua"' or ''}]
---#include "src/fs/rootfs.lua"

@@ -98,7 +98,7 @@ do
     return tty:flush()
   end
 
-  k.mount(provider, "/tty")
+  k.mount(provider, "/kernel/tty")
 
   -- dynamically register ttys
   function k.init_ttys()
