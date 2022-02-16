@@ -65,4 +65,6 @@ do
   if not success then
     panic_with_err(component.type(address) .. " " .. address, err)
   end
+
+  k.mkdir("/sys")
 end

@@ -135,5 +135,6 @@ do
 
   function provider:close() end
 
-  k.mount(provider, "/kernel/component")
+  k.mkdir("/sys/component")
+  k.mount(provider, "/sys/component")
 end

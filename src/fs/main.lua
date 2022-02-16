@@ -122,6 +122,20 @@ do
 
     if cur_proc().euid ~= 0 then return nil, k.errno.EACCES end
 
+    if path ~= "/" then
+      local stat = k.stat(path)
+      if (not stat) then
+        return nil, k.errno.ENOENT
+      elseif bit32.band(stat.mode, 0xF000) ~= 0x4000 then
+        return nil, k.errno.ENOTDIR
+      end
+    end
+
+    path = k.clean_path(path)
+    if mounts[path] then
+      return nil, k.errno.EBUSY
+    end
+
     local proxy = node
     if type(node) == "string" then
       node = component.proxy(node)
@@ -130,7 +144,6 @@ do
     end
     if not node then return nil, k.errno.ENODEV end
 
-    path = k.clean_path(path)
     mounts[path] = proxy
 
     if proxy.mount then proxy:mount(path) end
@@ -247,37 +260,13 @@ do
     local fd, err = node:opendir(remain)
     if not fd then return nil, err end
 
-    local _extra = {}
-    local extra = {}
-
-    local base = k.split_path(path)
-    for m in pairs(mounts) do
-      if m:sub(1, #path) == path then
-        local segments = k.split_path(m)
-        local nexts = segments[#base + 1]
-        if nexts then
-          if not _extra[nexts] then extra[#extra+1] = nexts end
-          _extra[nexts] = true
-        end
-      end
-    end
-
-    return { fd = fd, node = node, dir = true, refs = 1,
-      extra = extra, eindex = 1, shown = {} }
+    return { fd = fd, node = node, dir = true, refs = 1 }
   end
 
   function k.readdir(dirfd)
     verify_fd(dirfd, true)
     if not dirfd.node.readdir then return nil, k.errno.ENOSYS end
-    if dirfd.extra[dirfd.eindex] then
-      dirfd.eindex = dirfd.eindex + 1
-      dirfd.shown[dirfd.extra[dirfd.eindex - 1]] = true
-      return { inode = -1, name = dirfd.extra[dirfd.eindex - 1] }
-    end
-    repeat
-      local result = dirfd.node:readdir(dirfd.fd)
-      if result and not dirfd.shown[result.name] then return result end
-    until not result
+    return dirfd.node:readdir(dirfd.fd)
   end
 
   function k.close(fd)
@@ -391,6 +380,5 @@ end
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
 --#include "src/fs/rootfs.lua"
---#include "src/fs/kernel.lua"
 --#include "src/fs/tty.lua"
 --@[{bconf.FS_COMPONENT == 'y' and '#include "src/fs/component.lua"' or ''}]

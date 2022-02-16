@@ -56,7 +56,7 @@ do
 
   proc:add_thread(k.thread_from_function(func))
 
-  local iofd = k.open("/kernel/tty/1", "rw")
+  local iofd = k.open("/sys/tty/1", "rw")
   iofd.refs = 3
   proc.fds[0] = iofd
   proc.fds[1] = iofd
