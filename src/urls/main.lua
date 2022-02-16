@@ -36,7 +36,12 @@ do
 
   function k.clean_url(url)
     checkArg(1, url, "string")
-    return (url:gsub("[/\\]+", "/"))
+    url = url:gsub("[/\\]+", "/")
+    local scheme = url:match("(.*):/?/?(.*)")
+    if not scheme then
+      return k.clean_url("file:" .. url)
+    end
+    return url
   end
 
   --- Takes a URL and returns its provider plus its resource
