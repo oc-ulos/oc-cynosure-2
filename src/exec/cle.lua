@@ -29,6 +29,9 @@ do
     static = 0x4
   }
 
+  -- we provide this to userspace
+  local ldcache = {}
+
   local function loader(fd, env)
     -- discard header
     k.read(fd, 4)
@@ -73,6 +76,7 @@ do
       local fds = current.fds
       local id = #fds + 1
       fds[id] = fd
+      table.insert(args, 1, ldcache)
       table.insert(args, 1, id)
       return interpreter(args, proc_env)
     end

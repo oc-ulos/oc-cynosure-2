@@ -56,6 +56,9 @@ do
       new[key] = nil
     end
     if not base then new.syscall = k.perform_system_call end
+    new.load = function(a, b, c, d)
+      return k.load(a, b, c, d or k.current_process().env)
+    end
     return new
   end
 end
