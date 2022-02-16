@@ -46,7 +46,6 @@ do
     if not scheme then
       scheme, resource = "file", url
     end
-    printk(k.L_DEBUG, "looking up scheme %s (url %s)", tostring(scheme), url)
     if not k.schemes[scheme] then
       return nil, k.errno.EUNATCH
     end

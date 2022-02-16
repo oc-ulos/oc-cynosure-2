@@ -25,7 +25,6 @@ do
 
   function provider.stat(path)
     checkArg(1, path, "string")
-    printk(k.L_DEBUG, "key look a stat")
 
     local ctype, caddr = table.unpack(k.split_path(path))
     if (not caddr) and component.list(ctype)() or not ctype then
@@ -98,10 +97,12 @@ do
     local segments = k.split_path(path)
     if #segments > 1 then return nil, k.errno.ENOENT end
     if #segments == 0 then
-      local types = {}
+      local types, _types = {}, {}
 
-      for _, ctype in component.list() do types[ctype] = true end
-      for ctype in pairs(types) do types[#types+1] = ctype end
+      for _, ctype in component.list() do
+        if type(ctype) == "string" then _types[ctype] = true end
+      end
+      for ctype in pairs(_types) do types[#types+1] = ctype end
 
       local i = 0
       return { iterator = function()
