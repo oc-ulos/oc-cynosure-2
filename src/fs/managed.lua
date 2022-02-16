@@ -56,16 +56,21 @@ do
   -- Check if a path points to an attribute file
   local function is_attribute(path)
     checkArg(1, path, "string")
+
     local segments = k.split_path(path)
+    if #segments == 0 then return false end
+
     local final = segments[#segments]
     if final:sub(1,1) == "." and final:sub(-5) == ".attr" then
       return true
     end
+
     return false
   end
 
   local function attr_path(path)
     local segments = k.split_path(path)
+    if #segments == 0 then return "/.attr" end
     return "/" .. table.concat(segments, "/", 1, #segments - 1) .. "/." ..
       segments[#segments] .. ".attr"
   end
