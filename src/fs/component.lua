@@ -1,5 +1,5 @@
 --[[
-  Component scheme
+  Component pseudo-filesystem
   Copyright (C) 2022 Ocawesome101
 
   This program is free software: you can redistribute it and/or modify
@@ -16,14 +16,27 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "urls/scheme_component")
+printk(k.L_INFO, "fs/component")
 
 do
-  -- Provides a scheme structured such that component://filesystem/abc3f31e is
+  -- Provides a vfs structured such that /component/filesystem/abc3f31e is
   -- a filesystem component.
   local provider = {}
 
-  function provider.stat(path)
+  function provider:exists(path)
+    checkArg(1, path, "string")
+
+    local ctype, caddr = table.unpack(k.split_path(path))
+    if caddr then
+      return not not component.list(ctype, true)[caddr]
+    elseif ctype then
+      return not not component.list(ctype, true)()
+    else
+      return true
+    end
+  end
+
+  function provider:stat(path)
     checkArg(1, path, "string")
 
     local ctype, caddr = table.unpack(k.split_path(path))
@@ -44,9 +57,9 @@ do
     return nil, k.errno.ENOENT
   end
 
-  -- This scheme only provides a few methods. Most of its functionality is
+  -- This VFS only provides a few methods. Most of its functionality is
   -- done through ioctl().
-  function provider.open(path)
+  function provider:open(path)
     checkArg(1, path, "string")
     local ctype, caddr = table.unpack(k.split_path(path))
     if not (ctype and caddr) then return nil, k.errno.ENOENT end
@@ -79,7 +92,7 @@ do
     return fd.proxy.type
   end
 
-  function provider.ioctl(fd, method, ...)
+  function provider:ioctl(fd, method, ...)
     checkArg(1, fd, "table")
     checkArg(2, method, "string")
 
@@ -92,7 +105,7 @@ do
     end
   end
 
-  function provider.opendir(path)
+  function provider:opendir(path)
     checkArg(1, path, "string")
     local segments = k.split_path(path)
     if #segments > 1 then return nil, k.errno.ENOENT end
@@ -114,13 +127,13 @@ do
     end
   end
 
-  function provider.readdir(dirfd)
+  function provider:readdir(dirfd)
     checkArg(1, dirfd, "table")
     if not dirfd.iterator then return nil, k.errno.EBADF end
     return { inode = -1, name = dirfd.iterator() }
   end
 
-  function provider.close() end
+  function provider:close() end
 
-  k.register_scheme("component", provider)
+  k.mount(provider, "/component")
 end

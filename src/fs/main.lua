@@ -92,12 +92,14 @@ do
 
   local function path_to_node(path)
     path = k.check_absolute(path)
+
     local mnt, rem = "/", path
-    for k in pairs(mounts) do
-      if path:sub(1, #k) == k and #k > #mnt then
-        mnt, rem = k, path:sub(#k+1)
+    for m in pairs(mounts) do
+      if path:sub(1, #m) == m and #m > #mnt then
+        mnt, rem = m, path:sub(#m+1)
       end
     end
+
     return mounts[mnt], rem or "/"
   end
 
@@ -115,11 +117,13 @@ do
 
     if cur_proc().euid ~= 0 then return nil, k.errno.EACCES end
 
-    if type(node) == "string" then node = component.proxy(node) end
+    local proxy = node
+    if type(node) == "string" then
+      node = component.proxy(node)
+      proxy = recognize_filesystem(node)
+      if not proxy then return nil, k.errno.EUNATCH end
+    end
     if not node then return nil, k.errno.ENODEV end
-
-    local proxy = recognize_filesystem(node)
-    if not proxy then return nil, k.errno.EUNATCH end
 
     path = k.clean_path(path)
     mounts[path] = proxy
@@ -150,13 +154,12 @@ do
     return true
   end
 
-  local provider = {}
-
-  function provider.open(file, mode)
+  function k.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
 
     local node, remain = path_to_node(file)
+    if not node.open then return nil, k.errno.ENOSYS end
     if mode ~= "w" and not node:exists(remain) then
       return nil, k.errno.ENOENT
     end
@@ -171,7 +174,9 @@ do
 
     local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
-    return { fd = fd, node = node }
+    local stream = k.fd_from_node(node, fd, mode)
+    if node.default_mode then stream:ioctl("setvbuf", node.default_mode) end
+    return { fd = stream, node = stream, refs = 1 }
   end
 
   local function verify_fd(fd, dir)
@@ -185,35 +190,46 @@ do
     end
   end
 
-  function provider.read(fd, fmt)
+  function k.ioctl(fd, op, ...)
+    verify_fd(fd)
+    checkArg(2, op, "string")
+    if not fd.node.ioctl then return nil, k.errno.ENOSYS end
+    return fd.node.ioctl(fd.fd, op, ...)
+  end
+
+  function k.read(fd, fmt)
     verify_fd(fd)
     checkArg(2, fmt, "string", "number")
-    return fd.node:read(fd.fd, fmt)
+    if not fd.node.read then return nil, k.errno.ENOSYS end
+    return fd.node.read(fd.fd, fmt)
   end
 
-  function provider.write(fd, data)
+  function k.write(fd, data)
     verify_fd(fd)
     checkArg(2, data, "string")
-    return fd.node:write(fd.fd, data)
+    if not fd.node.write then return nil, k.errno.ENOSYS end
+    return fd.node.write(fd.fd, data)
   end
 
-  function provider.seek(fd, whence, offset)
+  function k.seek(fd, whence, offset)
     verify_fd(fd)
     checkArg(2, whence, "string")
     checkArg(3, offset, "number")
-    return fd.node:seek(fd.fd, whence, offset)
+    return fd.node.seek(fd.fd, whence, offset)
   end
 
-  function provider.flush(fd)
+  function k.flush(fd)
     if fd.dir then return end -- cannot flush dirfd
     verify_fd(fd)
-    return fd.node:flush(fd.fd)
+    if not fd.node.flush then return nil, k.errno.ENOSYS end
+    return fd.node.flush(fd.fd)
   end
 
-  function provider.opendir(path)
+  function k.opendir(path)
     checkArg(1, path, "string")
 
     local node, remain = path_to_node(path)
+    if not node.opendir then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
 
     local stat = node:stat(remain)
@@ -224,28 +240,36 @@ do
     local fd, err = node:opendir(remain)
     if not fd then return nil, err end
 
-    return { fd = fd, node = node, dir = true }
+    return { fd = fd, node = node, dir = true, refs = 1 }
   end
 
-  function provider.readdir(dirfd)
+  function k.readdir(dirfd)
     verify_fd(dirfd, true)
+    if not dirfd.node.readdir then return nil, k.errno.ENOSYS end
     return dirfd.node:readdir(dirfd.fd)
   end
 
-  function provider.close(fd)
+  function k.close(fd)
     verify_fd(fd, fd.dir) -- close closes either type of fd
-    return fd.node:close(fd.fd)
+    fd.refs = fd.refs - 1
+    if fd.refs == 0 then
+      if not fd.node.close then return nil, k.errno.ENOSYS end
+      if fd.dir then return fd.node:close(fd.fd) end
+      return fd.node.close(fd.fd)
+    end
   end
 
-  function provider.stat(path)
+  function k.stat(path)
     checkArg(1, path, "string")
     local node, remain = path_to_node(path)
+    if not node.stat then return nil, k.errno.ENOSYS end
     return node:stat(remain)
   end
 
-  function provider.mkdir(path)
+  function k.mkdir(path)
     checkArg(1, path, "string")
     local node, remain = path_to_node(path)
+    if not node.mkdir then return nil, k.errno.ENOSYS end
     if node:exists(remain) then return nil, k.errno.EEXIST end
 
     local segments = k.split_path(remain)
@@ -260,7 +284,7 @@ do
     return node:mkdir(remain)
   end
 
-  function provider.link(source, dest)
+  function k.link(source, dest)
     checkArg(1, source, "string")
     checkArg(2, dest, "string")
 
@@ -268,6 +292,7 @@ do
     local _node, dremain = path_to_node(dest)
 
     if _node ~= node then return nil, k.errno.EXDEV end
+    if not node.link then return nil, k.errno.ENOSYS end
     if node:exists(dremain) then return nil, k.errno.EEXIST end
 
     local segments = k.split_path(dremain)
@@ -281,9 +306,10 @@ do
     return node:link(sremain, dremain)
   end
 
-  function provider.unlink(path)
+  function k.unlink(path)
     checkArg(1, path, "string")
     local node, remain = path_to_node(path)
+    if not node.unlink then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
 
     local segments = k.split_path(remain)
@@ -297,10 +323,11 @@ do
     return node:unlink(remain)
   end
 
-  function provider.chmod(path, mode)
+  function k.chmod(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number")
     local node, remain = path_to_node(path)
+    if not node.chmod then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
 
     local stat = node:stat(remain)
@@ -313,11 +340,12 @@ do
     return node:chmod(remain, mode)
   end
 
-  function provider.chown(path, uid, gid)
+  function k.chown(path, uid, gid)
     checkArg(1, path, "string")
     checkArg(2, uid, "number")
     checkArg(3, gid, "number")
     local node, remain = path_to_node(path)
+    if not node.chown then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
 
     local stat = node:stat(remain)
@@ -327,10 +355,10 @@ do
 
     return node:chown(remain, uid, gid)
   end
-
-  k.register_scheme("file", provider)
 end
 
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
+--#include "src/fs/tty.lua"
+--@[{bconf.FS_COMPONENT == 'y' and '#include "src/fs/component.lua"' or ''}]
 --#include "src/fs/rootfs.lua"

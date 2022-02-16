@@ -49,14 +49,14 @@ EXEC_LUA=y
 # file systems
 FS_SFS=n
 FS_MANAGED=y
-# optional schemes
-SCHEME_MISC=n
-SCHEME_EXEC=n
-SCHEME_CONFIG=n
-SCHEME_EVENT=n
-SCHEME_HTTP=y
-SCHEME_TCP=y
-SCHEME_COMPONENT=y
+# optional pseudo-filesystems
+FS_MISC=n
+FS_EXEC=n
+FS_CONFIG=n
+FS_EVENT=n
+FS_HTTP=y
+FS_TCP=y
+FS_COMPONENT=y
 # networking protocols
 PROTOCOL_CFTP=n
 PROTOCOL_MTEL=n

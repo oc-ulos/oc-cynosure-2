@@ -24,11 +24,10 @@ local k = {}
 --@[{bconf.BIT32 == 'y' and '#include "src/bit32.lua"' or ''}]
 --#include "src/buffer.lua"
 --#include "src/filedesc.lua"
---#include "src/urls/main.lua"
+--#include "src/fs/main.lua"
 --#include "src/signals.lua"
 --#include "src/tty.lua"
 --#include "src/ttyprintk.lua"
---#include "src/fs/main.lua"
 --#include "src/scheduler/main.lua"
 --#include "src/user/sandbox.lua"
 --#include "src/exec/main.lua"

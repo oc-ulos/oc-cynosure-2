@@ -125,9 +125,9 @@ do
       tty = false,
 
       -- working directory
-      cwd = parent.cwd or "file:/",
+      cwd = parent.cwd or "/",
       -- root directory
-      root = parent.root or "file:/",
+      root = parent.root or "/",
 
       -- file descriptors
       fds = {

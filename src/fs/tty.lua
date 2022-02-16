@@ -23,14 +23,27 @@ do
 
   local ttys = {}
 
-  function provider.opendir(d)
+  function provider:exists(n)
+    n = n:gsub("^/", "")
+    return not not ttys[tonumber(n) or 0]
+  end
+
+  function provider:stat(n)
+    if not self:exists(n) then return nil, k.errno.ENOENT end
+    return {
+      dev=-1, ino=-1, mode=0x21FF, nlink=1, uid=0, gid=0,
+      rdev=-1, size=0, blksize=2048
+    }
+  end
+
+  function provider:opendir(d)
     if d ~= "/" then
       return nil, k.errno.ENOENT
     end
     return {n = 0}
   end
 
-  function provider.readdir(fd)
+  function provider:readdir(fd)
     if type(fd) ~= "table" or not fd.n then
       return nil, k.errno.EBADF
     end
@@ -43,15 +56,16 @@ do
     end
   end
 
-  function provider.close()
+  function provider:close()
   end
 
-  function provider.open(tty)
+  function provider:open(tty)
     checkArg(1, tty, "string")
+    tty = tty:gsub("^/", "")
     return ttys[tonumber(tty) or 0], k.errno.ENOENT
   end
 
-  function provider.read(tty, n)
+  function provider:read(tty, n)
     checkArg(1, tty, "table")
     checkArg(2, n, "number")
     if not tty.read then
@@ -60,7 +74,7 @@ do
     return tty:read(n)
   end
 
-  function provider.write(tty, data)
+  function provider:write(tty, data)
     checkArg(1, tty, "table")
     checkArg(2, data, "string")
     if not tty.write then
@@ -69,7 +83,7 @@ do
     return tty:write(data)
   end
 
-  function provider.flush(tty)
+  function provider:flush(tty)
     checkArg(1, tty, "table")
     if not tty.flush then
       return nil, k.errno.EBADF
@@ -77,7 +91,7 @@ do
     return tty:flush()
   end
 
-  k.register_scheme("tty", provider)
+  k.mount(provider, "/tty")
 
   -- dynamically register ttys
   function k.init_ttys()
