@@ -205,6 +205,7 @@ do
   end
 
   function provider.flush(fd)
+    if fd.dir then return end -- cannot flush dirfd
     verify_fd(fd)
     return fd.node:flush(fd.fd)
   end

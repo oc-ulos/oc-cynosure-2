@@ -264,6 +264,7 @@ do
 
   function _node:close(fd)
     checkArg(1, fd, "table")
+    if fd.index then return true end
     return self.fs.close(fd)
   end
 
