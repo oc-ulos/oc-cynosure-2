@@ -193,6 +193,33 @@ do
     coroutine.yield(0)
   end
 
+  function k.syscalls.getcwd()
+    return k.current_process().cwd
+  end
+
+  function k.syscalls.chdir(path)
+    checkArg(1, path, "string")
+    path = k.check_absolute(path)
+
+    -- Root stat bug workaround
+    if path ~= "/" then
+      local stat = k.stat(path)
+      if not stat then
+        return nil, k.errno.ENOENT
+      end
+
+      local dirfd = k.opendir(path)
+      if not dirfd then
+        return nil, k.errno.ENOTDIR
+      end
+    end
+
+    local current = k.current_process()
+    current.cwd = path
+
+    return true
+  end
+
   function k.syscalls.setuid(uid)
     checkArg(1, uid, "number")
     local current = k.current_process()
