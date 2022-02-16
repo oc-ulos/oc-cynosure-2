@@ -188,6 +188,10 @@ do
     return true
   end
 
+  function k.syscalls.getcwd()
+    return k.current_process().cwd
+  end
+
   function k.syscalls.setuid(uid)
     checkArg(1, uid, "number")
     local current = k.current_process()
