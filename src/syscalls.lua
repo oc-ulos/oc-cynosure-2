@@ -189,7 +189,8 @@ do
 
     current.threads = {}
     current:add_thread(k.thread_from_function(func))
-    return true
+
+    coroutine.yield(0)
   end
 
   function k.syscalls.setuid(uid)
