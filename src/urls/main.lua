@@ -34,6 +34,11 @@ do
     return true
   end
 
+  function k.clean_url(url)
+    checkArg(1, url, "string")
+    return (url:gsub("[/\\]+", "/"))
+  end
+
   --- Takes a URL and returns its provider plus its resource
   ---@param url string
   function k.lookup_url(url)
@@ -41,6 +46,7 @@ do
     if not scheme then
       scheme, resource = "file", url
     end
+    printk(k.L_DEBUG, "looking up scheme %s (url %s)", tostring(scheme), url)
     if not k.schemes[scheme] then
       return nil, k.errno.EUNATCH
     end
@@ -51,10 +57,10 @@ do
   local function call(url, method, ...)
     local provider, resource = k.lookup_url(url)
     if not provider then
-      return nil, resource
+      return nil, nil, resource
     end
     if not provider[method] then
-      return nil, k.errno.ENOTSUP
+      return nil, nil, k.errno.ENOTSUP
     end
     return provider, provider[method](resource, ...)
   end

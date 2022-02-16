@@ -39,7 +39,7 @@ do
 
   local pullsignal = computer.pullSignal
 
-  function computer.pullSignal(timeout)
+  function k.pullSignal(timeout)
     local sig = table.pack(pullsignal(timeout))
     if sig.n == 0 then return end
     for id, handler in pairs(handlers) do

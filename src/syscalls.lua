@@ -221,7 +221,7 @@ do
 
   function k.syscalls.chdir(path)
     checkArg(1, path, "string")
-    path = k.check_absolute(path)
+    path = k.clean_url(path)
 
     local stat = k.stat(path)
     if not stat then

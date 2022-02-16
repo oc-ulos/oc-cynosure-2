@@ -23,6 +23,28 @@ do
   -- a filesystem component.
   local provider = {}
 
+  function provider.stat(path)
+    checkArg(1, path, "string")
+    printk(k.L_DEBUG, "key look a stat")
+
+    local ctype, caddr = table.unpack(k.split_path(path))
+    if (not caddr) and component.list(ctype)() or not ctype then
+      return {
+        dev=-1, ino=-1, mode=0x41FF, nlink=1, uid=0, gid=0,
+        rdev=-1, size=0, blksize=2048
+      }
+    end
+
+    if component.list(ctype, true)[caddr] then
+      return {
+        dev=-1, ino=-1, mode=0x61FF, nlink=1, uid=0, gid=0,
+        rdev=-1, size=0, blksize=2048
+      }
+    end
+
+    return nil, k.errno.ENOENT
+  end
+
   -- This scheme only provides a few methods. Most of its functionality is
   -- done through ioctl().
   function provider.open(path)
