@@ -185,6 +185,7 @@ do
 
     current.threads = {}
     current:add_thread(k.thread_from_function(func))
+    return true
   end
 
   function k.syscalls.setuid(uid)
