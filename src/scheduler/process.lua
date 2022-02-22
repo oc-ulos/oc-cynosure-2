@@ -137,7 +137,7 @@ do
       },
 
       -- environment
-      env = k.create_env(parent.env)
+      env = k.create_env(parent.env),
     }, process_mt)
   end
 end
