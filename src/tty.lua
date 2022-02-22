@@ -453,8 +453,15 @@ do
     if not self.cursor then return end
     corral(self)
     local cc, cf, cb = self.gpu.get(self.cx, self.cy)
-    self.gpu.setForeground(cb)
-    self.gpu.setBackground(cf)
+    if self.cursor_on then
+      self.gpu.setForeground(self.fg)
+      self.gpu.setBackground(self.bg)
+      self.cursor_on = false
+    else
+      self.gpu.setForeground(cb)
+      self.gpu.setBackground(cf)
+      self.cursor_on = true
+    end
     self.gpu.set(self.cx, self.cy, cc)
   end
 

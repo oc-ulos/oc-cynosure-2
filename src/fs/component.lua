@@ -23,12 +23,23 @@ do
   -- a filesystem component.
   local provider = {}
 
+  -- Takes the first few characters of a component address and returns the
+  -- full address.
+  local function resolve_address(addr, ctype)
+    for check in component.list(ctype, true) do
+      if check:sub(1, #addr) == addr then
+        return check
+      end
+    end
+  end
+
   function provider:exists(path)
     checkArg(1, path, "string")
 
     local ctype, caddr = table.unpack(k.split_path(path))
     if caddr then
-      return not not component.list(ctype, true)[caddr]
+      return not not component.list(ctype,
+        true)[resolve_address(caddr) or caddr]
     elseif ctype then
       return not not component.list(ctype, true)()
     else
@@ -40,14 +51,14 @@ do
     checkArg(1, path, "string")
 
     local ctype, caddr = table.unpack(k.split_path(path))
-    if (not caddr) and component.list(ctype)() or not ctype then
+    if (not caddr) and component.list(ctype, true)() or not ctype then
       return {
         dev=-1, ino=-1, mode=0x41FF, nlink=1, uid=0, gid=0,
         rdev=-1, size=0, blksize=2048
       }
     end
 
-    if component.list(ctype, true)[caddr] then
+    if component.list(ctype, true)[resolve_address(caddr) or caddr] then
       return {
         dev=-1, ino=-1, mode=0x61FF, nlink=1, uid=0, gid=0,
         rdev=-1, size=0, blksize=2048
@@ -61,12 +72,15 @@ do
   -- done through ioctl().
   function provider:open(path)
     checkArg(1, path, "string")
+
     local ctype, caddr = table.unpack(k.split_path(path))
     if not (ctype and caddr) then return nil, k.errno.ENOENT end
-    local proxy = component.proxy(caddr)
+
+    local proxy = component.proxy(resolve_address(caddr) or caddr)
     if (not proxy) or proxy.type ~= ctype then
       return nil, k.errno.ENOENT
     end
+
     return { proxy = proxy }
   end
 
@@ -74,9 +88,11 @@ do
 
   function ioctls.invoke(fd, call, ...)
     checkArg(3, call, "string")
+
     if not fd.proxy[call] then
       return nil, k.errno.EINVAL
     end
+
     return fd.proxy[call](...)
   end
 
@@ -92,7 +108,7 @@ do
     return fd.proxy.type
   end
 
-  function provider:ioctl(fd, method, ...)
+  function provider.ioctl(fd, method, ...)
     checkArg(1, fd, "table")
     checkArg(2, method, "string")
 
@@ -107,14 +123,17 @@ do
 
   function provider:opendir(path)
     checkArg(1, path, "string")
+
     local segments = k.split_path(path)
     if #segments > 1 then return nil, k.errno.ENOENT end
+
     if #segments == 0 then
       local types, _types = {}, {}
 
       for _, ctype in component.list() do
         if type(ctype) == "string" then _types[ctype] = true end
       end
+
       for ctype in pairs(_types) do types[#types+1] = ctype end
 
       local i = 0
@@ -123,13 +142,19 @@ do
         return types[i]
       end }
     else
-      return { iterator = component.list(segments[1], true) }
+      local iter = component.list(segments[1], true)
+      return { iterator = function()
+        local addr = iter()
+        if addr then return addr:sub(1, 8) end
+      end }
     end
   end
 
   function provider:readdir(dirfd)
     checkArg(1, dirfd, "table")
+
     if not dirfd.iterator then return nil, k.errno.EBADF end
+
     return { inode = -1, name = dirfd.iterator() }
   end
 
