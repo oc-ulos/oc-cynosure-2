@@ -51,14 +51,24 @@ do
 
   function k.create_env(base)
     checkArg(1, base, "table", "nil")
+
     local new = deepcopy(base or _G)
     for key in pairs(blacklist) do
       new[key] = nil
     end
-    if not base then new.syscall = k.perform_system_call end
+
     new.load = function(a, b, c, d)
       return k.load(a, b, c, d or k.current_process().env)
     end
+
+    local yield = new.coroutine.yield
+    new.coroutine.yield = function(request, ...)
+      if request == "syscall" then
+        return k.perform_system_call(...)
+      end
+      return yield(request, ...)
+    end
+
     return new
   end
 end
