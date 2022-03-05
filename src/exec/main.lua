@@ -61,8 +61,10 @@ do
     local header = k.read(fd, 128)
     k.seek(fd, "set", 0)
 
+    local extension = path:match("%.(.-)$")
+
     for _, format in pairs(formats) do
-      if format.recognizer(header) then
+      if format.recognizer(header, extension) then
         return format.loader(fd, env)
       end
     end
