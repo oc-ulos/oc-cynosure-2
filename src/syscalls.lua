@@ -188,7 +188,9 @@ do
     if not func then return nil, err end
 
     current.threads = {}
-    current:add_thread(k.thread_from_function(func))
+    current:add_thread(k.thread_from_function(function()
+      return func(args, env)
+    end))
 
     coroutine.yield(0)
   end
