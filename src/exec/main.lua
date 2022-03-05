@@ -67,6 +67,8 @@ do
       end
     end
 
+    k.close(fd)
+
     return nil, k.errno.ENOEXEC
   end
 end
