@@ -382,3 +382,4 @@ end
 --#include "src/fs/rootfs.lua"
 --#include "src/fs/tty.lua"
 --@[{bconf.FS_COMPONENT == 'y' and '#include "src/fs/component.lua"' or ''}]
+--@[{bconf.FS_PROC == 'y' and '#include "src/fs/proc.lua"' or ''}]

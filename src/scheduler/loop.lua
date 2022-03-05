@@ -88,4 +88,12 @@ do
     checkArg(1, rpid, "number")
     return processes[rpid]
   end
+
+  function k.get_pids()
+    local procs = {}
+    for ppid in pairs(processes) do
+      procs[#procs + 1] = ppid
+    end
+    return procs
+  end
 end
