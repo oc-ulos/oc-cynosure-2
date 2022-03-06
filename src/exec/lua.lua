@@ -28,7 +28,8 @@ do
     local chunk, err = k.load(data, "=lua", "t", env)
     if not chunk then
       printk(k.L_DEBUG, "load failed - %s", tostring(err))
+      return nil, k.errno.ENOEXEC
     end
-    if not chunk then return nil, k.errno.ENOEXEC else return chunk end
+    return chunk
   end)
 end

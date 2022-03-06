@@ -378,6 +378,7 @@ do
 
   -- write some text
   local function textwrite(self, line)
+    corral(self)
     while #line > 0 do
       local chunk = line:sub(1, self.w - self.cx + 1)
       line = line:sub(#chunk + 1)
@@ -408,7 +409,7 @@ do
       local e = (nesc and nesc - 1) or #line
       local chunk = line:sub(1, e)
       line = line:sub(#chunk + 1)
-      textwrite(self, chunk)
+      if #chunk > 0 then textwrite(self, chunk) end
 
       if nesc then
         local css, params, csc, len
@@ -453,15 +454,8 @@ do
     if not self.cursor then return end
     corral(self)
     local cc, cf, cb = self.gpu.get(self.cx, self.cy)
-    if self.cursor_on then
-      self.gpu.setForeground(self.fg)
-      self.gpu.setBackground(self.bg)
-      self.cursor_on = false
-    else
-      self.gpu.setForeground(cb)
-      self.gpu.setBackground(cf)
-      self.cursor_on = true
-    end
+    self.gpu.setForeground(cb)
+    self.gpu.setBackground(cf)
     self.gpu.set(self.cx, self.cy, cc)
   end
 
