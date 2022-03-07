@@ -172,6 +172,8 @@ do
     return true
   end
 
+  local opened = {}
+
   function k.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
@@ -194,6 +196,7 @@ do
     if not fd then return nil, err end
     local stream = k.fd_from_node(node, fd, mode)
     if node.default_mode then stream:ioctl("setvbuf", node.default_mode) end
+    opened[stream] = true
     return { fd = stream, node = stream, refs = 1 }
   end
 
@@ -273,6 +276,7 @@ do
     verify_fd(fd, fd.dir) -- close closes either type of fd
     fd.refs = fd.refs - 1
     if fd.refs == 0 then
+      opened[fd] = false
       if not fd.node.close then return nil, k.errno.ENOSYS end
       if fd.dir then return fd.node:close(fd.fd) end
       return fd.node.close(fd.fd)
@@ -375,6 +379,14 @@ do
 
     return node:chown(remain, uid, gid)
   end
+
+  k.blacklist_signal("shutdown")
+  k.add_signal_handler("shutdown", function()
+    for fd in ipairs(opened) do
+      fd.refs = 1
+      k.close(fd)
+    end
+  end)
 end
 
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
