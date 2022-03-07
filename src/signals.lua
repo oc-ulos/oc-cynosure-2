@@ -38,21 +38,42 @@ do
   end
 
   local pullsignal = computer.pullSignal
+  local pushsignal = computer.pushSignal
 
-  function k.pullSignal(timeout)
-    local sig = table.pack(pullsignal(timeout))
-    if sig.n == 0 then return end
+  function k.handle_signal(sig)
     for id, handler in pairs(handlers) do
       if handler.signal == sig[1] then
         local success, err = pcall(handler.callback,
           table.unpack(sig, 1, sig.n))
         if not success and err then
           printk(k.L_WARNING,
-            "error in event handler %d while handling signal %s: %s", id,
+            "error in signal handler %d while handling signal %s: %s", id,
             sig[1], err)
         end
       end
     end
+  end
+
+  local push_blacklist = {}
+  function k.blacklist_signal(signal)
+    checkArg(1, signal, "string")
+    push_blacklist[signal] = true
+    return true
+  end
+
+  function k.pushSignal(sig, ...)
+    assert(sig ~= nil,
+      "bad argument #1 to 'pushSignal' (value expected, got nil)")
+    if push_blacklist[sig] then
+      return nil, k.errno.EACCES
+    end
+    return pushsignal(sig, ...)
+  end
+
+  function k.pullSignal(timeout)
+    local sig = table.pack(pullsignal(timeout))
+    if sig.n == 0 then return end
+    k.handle_signal(sig)
     return table.unpack(sig, 1, sig.n)
   end
 end
