@@ -105,7 +105,7 @@ do
     end
   end
 
-  -- ESC % not implemented, OC doesn't have a way to switch character sets
+  -- ESC % not implemented; OC doesn't have a way to switch character sets
   -- ESC # 8 implemented in write logic below
   -- ESC ( and ESC ) not implemented for the same reason as ESC %
   -- ESC > and ESC = not implemented
