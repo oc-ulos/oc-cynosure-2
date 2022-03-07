@@ -57,10 +57,10 @@ do
 
   -- RIS - reset
   function nocsi:c()
-    self.fg = colors[8]
-    self.bg = colors[1]
-    self.gpu.setForeground(colors[8])
-    self.gpu.setBackground(colors[1])
+    self.fg = 7
+    self.bg = 0
+    self.gpu.setForeground(7, true)
+    self.gpu.setBackground(0, true)
     self.gpu.fill(1, 1, self.w, self.h, " ")
   end
 
@@ -100,8 +100,8 @@ do
       for i=1, #save, 1 do
         self[save[i]] = self.saved[save[i]]
       end
-      self.gpu.setForeground(self.fg)
-      self.gpu.setBackground(self.bg)
+      self.gpu.setForeground(self.fg, true)
+      self.gpu.setBackground(self.bg, true)
     end
   end
 
@@ -287,27 +287,27 @@ do
       -- reverse video
       if n == 7 or n == 27 then
         self.fg, self.bg = self.bg, self.fg
-        self.gpu.setForeground(self.fg)
-        self.gpu.setBackground(self.bg)
+        self.gpu.setForeground(self.fg, true)
+        self.gpu.setBackground(self.bg, true)
       -- 10, 11, 12, 21, 22, 25 not implemented
       elseif n > 29 and n < 38 then
-        self.fg = colors[n - 29]
-        self.gpu.setForeground(self.fg)
+        self.fg = n - 30
+        self.gpu.setForeground(self.fg, true)
       elseif n > 89 and n < 98 then
-        self.fg = colors[n - 81]
-        self.gpu.setForeground(self.fg)
+        self.fg = n - 82
+        self.gpu.setForeground(self.fg, true)
       elseif n > 39 and n < 48 then
-        self.bg = colors[n - 39]
-        self.gpu.setBackground(self.bg)
+        self.bg = n - 40
+        self.gpu.setBackground(self.bg, true)
       elseif n > 99 and n < 108 then
-        self.bg = colors[n - 91]
-        self.gpu.setForeground(self.bg)
+        self.bg = n - 92
+        self.gpu.setForeground(self.bg, true)
       elseif n == 39 then
-        self.fg = colors[1]
-        self.gpu.setForeground(self.fg)
+        self.fg = 0
+        self.gpu.setForeground(self.fg, true)
       elseif n == 49 then
-        self.bg = colors[8]
-        self.gpu.setForeground(self.bg)
+        self.bg = 7
+        self.gpu.setForeground(self.bg, true)
       end
     end
   end
@@ -453,9 +453,9 @@ do
   local function togglecursor(self)
     if not self.cursor then return end
     corral(self)
-    local cc, cf, cb = self.gpu.get(self.cx, self.cy)
-    self.gpu.setForeground(cb)
-    self.gpu.setBackground(cf)
+    local cc, cf, cb, pf, pb = self.gpu.get(self.cx, self.cy)
+    self.gpu.setForeground(pb or cb, not not pb)
+    self.gpu.setBackground(pf or cf, not not pf)
     self.gpu.set(self.cx, self.cy, cc)
   end
 
@@ -535,7 +535,7 @@ do
       w = w, h = h, cx = 1, cy = 1,
       scrolltop = 1, scrollbot = h,
       rbuf = "", wbuf = "",
-      fg = colors[8], bg = colors[1],
+      fg = 7, bg = 0,
       -- attributes
       altcursor = false, showctrl = false,
       mousereport = 0, autocr = true,
@@ -543,8 +543,12 @@ do
       raw = false
     }
 
-    gpu.setForeground(new.bg)
-    gpu.setBackground(new.fg)
+    for i=1, #colors, 1 do
+      gpu.setPaletteColor(i-1, colors[i])
+    end
+
+    gpu.setForeground(new.bg, true)
+    gpu.setBackground(new.fg, true)
     gpu.fill(1, 1, w, h, " ")
 
     local keyboards = {}
