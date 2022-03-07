@@ -46,9 +46,11 @@ do
   local function dump_attributes(attributes)
     local data = ""
 
-    for key, val in ipairs(attributes) do
+    for key, val in pairs(attributes) do
       data = data .. string.format("%s:%d\n", key, val)
     end
+
+    printk(k.L_INFO, data)
 
     return data
   end

@@ -336,9 +336,9 @@ do
     if not node.unlink then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
 
-    local segments = k.split_path(remain)
-    local parent = "/" .. table.concat(segments, "/", 1, #segments - 1)
-    local stat = node:stat(parent)
+    -- TODO: look at the sticky bit to see exactly what we should do for perms
+    -- checks
+    local stat = node:stat(remain)
 
     if not k.process_has_permission(cur_proc(), stat, "w") then
       return nil, k.errno.EACCES
