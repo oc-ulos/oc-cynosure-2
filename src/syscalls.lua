@@ -318,16 +318,21 @@ do
     end
 
     if cmd == "halt" then
+      k.shutdown()
       printk(k.L_INFO, "System halted.")
       while true do
         computer.pullSignal()
       end
     elseif cmd == "poweroff" then
       printk(k.L_INFO, "Power down.")
+      k.shutdown()
       computer.shutdown()
     elseif cmd == "restart" then
       printk(k.L_INFO, "Restarting system.")
+      k.shutdown()
       computer.shutdown(true)
     end
+
+    return nil, k.errno.EINVAL
   end
 end

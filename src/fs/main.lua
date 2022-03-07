@@ -380,7 +380,6 @@ do
     return node:chown(remain, uid, gid)
   end
 
-  k.blacklist_signal("shutdown")
   k.add_signal_handler("shutdown", function()
     for fd in ipairs(opened) do
       fd.refs = 1
