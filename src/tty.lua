@@ -280,12 +280,18 @@ do
     args[1] = args[1] or 0
     for i=1, #args, 1 do
       local n = args[i]
+      if n == 0 then
+        self.fg = 7
+        self.bg = 0
+        self.gpu.setForeground(self.fg, true)
+        self.gpu.setBackground(self.bg, true)
+        self.echo = true
       -- bold mode (1) not implemented
       -- half-bright (2) not implemented
       -- underscore (4) not implemented
       -- blink (5) not implemented
       -- reverse video
-      if n == 7 or n == 27 then
+      elseif n == 7 or n == 27 then
         self.fg, self.bg = self.bg, self.fg
         self.gpu.setForeground(self.fg, true)
         self.gpu.setBackground(self.bg, true)
