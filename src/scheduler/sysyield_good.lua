@@ -1,3 +1,3 @@
-  local function sysyield()
-    coroutine.yield(sys)
+  function k.sysyield()
+    coroutine.yield(k.sysyield_string)
   end

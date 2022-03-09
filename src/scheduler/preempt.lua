@@ -89,7 +89,7 @@ do
 
   function k.load(chunk, name, mode, env)
     chunk = wrap(chunk)
-    env[sys] = sysyield
+    env[sys] = k.sysyield
     return load(chunk, name, mode, env)
   end
 end

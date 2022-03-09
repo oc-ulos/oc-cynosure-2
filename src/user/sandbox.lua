@@ -62,10 +62,16 @@ do
     end
 
     local yield = new.coroutine.yield
+    local last_yield = computer.uptime()
     new.coroutine.yield = function(request, ...)
       if request == "syscall" then
+        if computer.uptime() - last_yield > 3 then
+          k.sysyield()
+          last_yield = computer.uptime()
+        end
         return k.perform_system_call(...)
       end
+      last_yield = computer.uptime()
       return yield(request, ...)
     end
 
