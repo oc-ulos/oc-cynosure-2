@@ -40,13 +40,21 @@ COMPONENT_TRANSPOSER=n
 COMPONENT_TUNNEL=y
 COMPONENT_WORLDSENSOR=n
 COMPONENT_CARDDOCK=y
-# pre-emption mode
-PREEMPT_MODE=good
-# executable formats
+# Pre-emption mode.
+# * none: disabled (fastest)
+# * fast: yield every 0.1s (recommended)
+# * good: yield as much as possible (slow)
+PREEMPT_MODE=fast
+# Executable formats
+# * CLE: the Cynosure Lua Executable
+# * Shebang: scripts starting with #!/path/to/interpreter
+# * Lua: scripts starting with --!lua or whose extension is .lua
 EXEC_CLE=y
 EXEC_SHEBANG=y
 EXEC_LUA=y
-# file systems
+# File systems
+# * SFS: the Simple File System
+# * Managed: OpenComputers' managed filesystems
 FS_SFS=n
 FS_MANAGED=y
 # optional pseudo-filesystems
