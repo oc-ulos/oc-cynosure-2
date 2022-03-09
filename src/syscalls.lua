@@ -259,8 +259,10 @@ do
       current.suid = uid
       current.euid = uid
       current.uid = uid
+      return true
     elseif uid==current.uid or uid==current.euid or uid==current.suid then
       current.euid = uid
+      return true
     else
       return nil, k.errno.EPERM
     end
