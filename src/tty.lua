@@ -291,7 +291,8 @@ do
       -- underscore (4) not implemented
       -- blink (5) not implemented
       -- reverse video
-      elseif n == 7 or n == 27 then
+      elseif (n == 7 and not self.reversed) or (n == 27 and self.reversed) then
+        self.reversed = true
         self.fg, self.bg = self.bg, self.fg
         self.gpu.setForeground(self.fg, true)
         self.gpu.setBackground(self.bg, true)
@@ -311,10 +312,10 @@ do
         self.bg = n - 92
         self.gpu.setBackground(self.bg, true)
       elseif n == 39 then
-        self.fg = 0
+        self.fg = 7
         self.gpu.setForeground(self.fg, true)
       elseif n == 49 then
-        self.bg = 7
+        self.bg = 0
         self.gpu.setBackground(self.bg, true)
       end
     end
@@ -555,8 +556,8 @@ do
       gpu.setPaletteColor(i-1, colors[i])
     end
 
-    gpu.setForeground(new.bg, true)
-    gpu.setBackground(new.fg, true)
+    gpu.setForeground(new.fg, true)
+    gpu.setBackground(new.bg, true)
     gpu.fill(1, 1, w, h, " ")
 
     local keyboards = {}
