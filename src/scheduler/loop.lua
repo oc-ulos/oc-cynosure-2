@@ -75,7 +75,7 @@ do
       end
 
       -- if <8k memory free, collect some garbage
-      if computer.freeMemory() < 8192 then
+      if computer.freeMemory() < @[{bconf.MEM_THRESHOLD or 1024}] then
         printk(k.L_NOTICE,
           "low memory - collecting garbage - some signals may be dropped")
         for i=1, 10, 1 do
