@@ -78,7 +78,7 @@ do
       if computer.freeMemory() < 8192 then
         printk(k.L_NOTICE,
           "low memory - collecting garbage - some signals may be dropped")
-        for i=1, 10, 1 do
+        for i=1, 10 do
           k.pullSignal(0)
         end
       end
