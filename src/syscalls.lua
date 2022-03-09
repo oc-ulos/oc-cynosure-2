@@ -204,7 +204,7 @@ do
       return func(args, env)
     end))
 
-    coroutine.yield(0)
+    coroutine.yield()
   end
 
   function k.syscalls.wait(pid)
@@ -223,10 +223,10 @@ do
 
     local current = k.current_process()
     current.status = status
-    current.threads[current.current_thread] = nil
-    current.thread_count = current.thread_count - 1
+    current.threads = {}
+    current.thread_count = 0
 
-    coroutine.yield(0)
+    coroutine.yield()
   end
 
   function k.syscalls.getcwd()

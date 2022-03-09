@@ -70,6 +70,7 @@ do
     -- exceeded or there is a signal in the queue.
     if self.status == "w" then
       if computer.uptime() <= self.deadline and #self.queue == 0 then return end
+
       if #self.queue > 0 then
         resume_args = table.remove(self.queue, 1)
       end
@@ -90,7 +91,16 @@ do
     end
 
     -- first return is a boolean, we don't need that
-    if result[1] then table.remove(result, 1) end
+    if type(result[1]) == "boolean" then
+      table.remove(result, 1)
+      result.n = result.n - 1
+    end
+
+    if result[2] == nil then
+      self.deadline = math.huge
+      self.status = "w"
+      return
+    end
 
     if coroutine.status(self.coro) == "dead" then
       return 1
@@ -110,6 +120,9 @@ do
       self.status = "w"
     elseif type(result[1]) == "number" then
       self.deadline = computer.uptime() + result[1]
+      self.status = "w"
+    else
+      self.deadline = math.huge
       self.status = "w"
     end
 

@@ -40,7 +40,7 @@ do
     local last_yield = 0
 
     while processes[1] do
-      local deadline = 0
+      local deadline = math.huge
       for _, process in pairs(processes) do
         local proc_deadline = process:deadline()
         if proc_deadline < deadline then
@@ -64,11 +64,20 @@ do
         current = cpid
         process:resume(table.unpack(signal, 1, signal.n))
         if not next(process.threads) then
-          computer.pushSignal("process_exit", cpid, process.status or 0)
+         k.pushSignal("process_exit", cpid, process.status or 0)
           for _, fd in pairs(process.fds) do
             k.close(fd)
           end
           processes[cpid] = nil
+        end
+      end
+
+      -- if <8k memory free, collect some garbage
+      if computer.freeMemory() < 8192 then
+        printk(k.L_NOTICE,
+          "low memory - collecting garbage - some signals may be dropped")
+        for i=1, 10, 1 do
+          k.pullSignal(0)
         end
       end
     end

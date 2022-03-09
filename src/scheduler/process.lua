@@ -30,13 +30,15 @@ do
     sig = table.pack(sig, ...)
 
     local resumed = false
-    if sig and #self.queue < 256 then
+    if sig and sig.n > 0 and #self.queue < 256 then
       self.queue[#self.queue + 1] = sig
     end
 
     local signal = default
     if #self.queue > 0 then
       signal = table.remove(self.queue, 1)
+    elseif self:deadline() > computer.uptime() then
+      return
     end
 
     for i, thread in pairs(self.threads) do
