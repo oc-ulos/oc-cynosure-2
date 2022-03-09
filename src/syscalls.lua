@@ -187,6 +187,18 @@ do
     local func, err = k.load_executable(path, current.env)
     if not func then return nil, err end
 
+    local stat = k.stat(path)
+    if bit32.band(stat.mode, k.FS_SETUID) ~= 0 then
+      current.uid = stat.uid
+      current.euid = stat.uid
+      current.suid = stat.uid
+    end
+    if bit32.band(stat.mode, k.FS_SETGID) ~= 0 then
+      current.gid = stat.gid
+      current.egid = stat.egid
+      current.sgid = stat.egid
+    end
+
     current.threads = {}
     current:add_thread(k.thread_from_function(function()
       return func(args, env)

@@ -34,6 +34,10 @@ do
   k.FS_SYMLNK = 0xA000 -- symbolic link
   k.FS_SOCKET = 0xC000 -- socket
 
+  k.FS_SETUID = 0x0800 -- setuid bit
+  k.FS_SETGID = 0x0400 -- setgid bit
+  k.FS_STICKY = 0x0200 -- sticky bit
+
   --- Registers a filesystem type
   ---@param name string
   ---@param recognizer fs_recognizer
