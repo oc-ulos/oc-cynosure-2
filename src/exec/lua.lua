@@ -31,9 +31,9 @@ do
       return nil, k.errno.ENOEXEC
     end
     return function(...)
-      xpcall(chunk, function(err)
+      assert(xpcall(chunk, function(err)
         printk(k.L_NOTICE, "Lua error: %s", tostring(err))
-      end, ...)
+      end, ...))
     end
   end)
 end
