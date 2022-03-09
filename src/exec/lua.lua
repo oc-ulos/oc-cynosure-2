@@ -30,6 +30,10 @@ do
       printk(k.L_DEBUG, "load failed - %s", tostring(err))
       return nil, k.errno.ENOEXEC
     end
-    return chunk
+    return function(...)
+      xpcall(chunk, function(err)
+        printk(k.L_NOTICE, "Lua error: %s", tostring(err))
+      end, ...)
+    end
   end)
 end
