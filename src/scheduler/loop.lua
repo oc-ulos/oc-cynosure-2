@@ -62,13 +62,15 @@ do
 
       for cpid, process in pairs(processes) do
         current = cpid
-        process:resume(table.unpack(signal, 1, signal.n))
-        if not next(process.threads) then
-         k.pushSignal("process_exit", cpid, process.status or 0)
-          for _, fd in pairs(process.fds) do
-            k.close(fd)
+        if computer.uptime() >= process:deadline() or #signal > 0 then
+          process:resume(table.unpack(signal, 1, signal.n))
+          if not next(process.threads) then
+          k.pushSignal("process_exit", cpid, process.status or 0)
+            for _, fd in pairs(process.fds) do
+              k.close(fd)
+            end
+            processes[cpid] = nil
           end
-          processes[cpid] = nil
         end
       end
 

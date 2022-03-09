@@ -96,12 +96,6 @@ do
       result.n = result.n - 1
     end
 
-    if result[2] == nil then
-      self.deadline = math.huge
-      self.status = "w"
-      return
-    end
-
     if coroutine.status(self.coro) == "dead" then
       return 1
     end
