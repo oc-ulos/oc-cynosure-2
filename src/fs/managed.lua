@@ -213,7 +213,12 @@ do
     if not self:exists(path) then return nil, k.errno.ENOENT end
     if not self.fs.isDirectory(path) then return nil, k.errno.ENOTDIR end
 
-    return { index = 0, files = self.fs.list(path) }
+    local files = self.fs.list(path)
+    for i=#files, 1, -1 do
+      if is_attribute(files[i]) then table.remove(files, i) end
+    end
+
+    return { index = 0, files = files }
   end
 
   function _node:readdir(dirfd)
