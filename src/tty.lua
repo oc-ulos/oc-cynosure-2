@@ -295,6 +295,8 @@ do
         self.fg, self.bg = self.bg, self.fg
         self.gpu.setForeground(self.fg, true)
         self.gpu.setBackground(self.bg, true)
+      elseif n == 8 or n == 28 then
+        self.echo = n == 28
       -- 10, 11, 12, 21, 22, 25 not implemented
       elseif n > 29 and n < 38 then
         self.fg = n - 30
