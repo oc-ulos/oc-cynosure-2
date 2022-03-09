@@ -309,13 +309,13 @@ do
         self.gpu.setBackground(self.bg, true)
       elseif n > 99 and n < 108 then
         self.bg = n - 92
-        self.gpu.setForeground(self.bg, true)
+        self.gpu.setBackground(self.bg, true)
       elseif n == 39 then
         self.fg = 0
         self.gpu.setForeground(self.fg, true)
       elseif n == 49 then
         self.bg = 7
-        self.gpu.setForeground(self.bg, true)
+        self.gpu.setBackground(self.bg, true)
       end
     end
   end
