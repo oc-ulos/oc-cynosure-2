@@ -65,3 +65,6 @@ PROTOCOL_GERT=n
 TTY_ENABLE_GPU=y
 BIT32=n
 BUFFER_SIZE=1024
+# When available free memory goes below this threshold, the kernel's
+# automated garbage collection code will fire.
+MEM_THRESHOLD=1024
