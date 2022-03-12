@@ -155,7 +155,10 @@ do
 
     if not dirfd.iterator then return nil, k.errno.EBADF end
 
-    return { inode = -1, name = dirfd.iterator() }
+    local name = dirfd.iterator()
+    if name then
+      return { inode = -1, name = dirfd.iterator() }
+    end
   end
 
   function provider:close() end
