@@ -163,6 +163,7 @@ do
 
   function provider:close() end
 
-  k.mkdir("/sys/component")
-  k.mount(provider, "/sys/component")
+  k.register_fstype("componentfs", function(x)
+    return x == "componentfs" and provider
+  end)
 end

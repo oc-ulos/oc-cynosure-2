@@ -19,10 +19,17 @@
 printk(k.L_INFO, "ttyprintk")
 
 do
-  local console, err = k.open("/sys/tty/1", "r")
+  local ttyfs = k.fstypes.ttyfs("ttyfs")
+
+  local console, err = ttyfs:open("/1", "w")
   if not console then
     panic("cannot open console: " .. err)
   end
+  console = k.fd_from_node(ttyfs, console, "w")
+  console = { fd = console, node = console, refs = 1 }
+
+  k.console = console
+
   k.ioctl(console, "setvbuf", "none")
   k.write(console, "\27[39;49m\27[2J")
   function k.log_to_screen(message)

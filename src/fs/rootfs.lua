@@ -65,7 +65,4 @@ do
   if not success then
     panic_with_err(component.type(address) .. " " .. address, err)
   end
-
-  k.mkdir("/sys")
-  k.chmod("/sys", k.perm_string_to_bitmap("r--r--r--"))
 end

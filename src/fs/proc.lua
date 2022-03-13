@@ -163,5 +163,7 @@ do
     fd.closed = true
   end
 
-  return provider
+  k.register_fstype("procfs", function(x)
+    return x == "procfs" and provider
+  end)
 end

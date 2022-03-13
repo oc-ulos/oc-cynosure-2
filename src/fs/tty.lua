@@ -98,8 +98,9 @@ do
     return tty:flush()
   end
 
-  k.mkdir("/sys/tty")
-  k.mount(provider, "/sys/tty")
+  k.register_fstype("ttyfs", function(x)
+    return x == "ttyfs" and provider
+  end)
 
   -- dynamically register ttys
   function k.init_ttys()

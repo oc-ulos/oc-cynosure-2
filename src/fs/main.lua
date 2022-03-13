@@ -142,7 +142,7 @@ do
 
     local proxy = node
     if type(node) == "string" then
-      node = component.proxy(node)
+      node = component.proxy(node) or node
       proxy = recognize_filesystem(node)
       if not proxy then return nil, k.errno.EUNATCH end
     end
