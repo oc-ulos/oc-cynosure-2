@@ -33,6 +33,20 @@ do
       total, free, free)
   end }
 
+  files.filesystems = { data = function()
+    local result = {}
+    for fs, rec in pairs(k.fstypes) do
+      if rec(fs) then fs = fs .. " (nodev)" end
+      result[#result+1] = fs
+    end
+    return table.concat(result, "\n")
+  end }
+
+  files.cmdline = { data = k.original_cmdline }
+  files.uptime = { data = function() return tostring(computer.uptime()) end }
+
+  --@[{bconf.PROCFS_CONFIG == 'y' and '--#include "src/fs/proc_config.lua"' or ''}]
+
   local function path_to_node(path, narrow)
     local segments = k.split_path(path)
 

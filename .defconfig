@@ -58,15 +58,15 @@ EXEC_LUA=y
 FS_SFS=n
 FS_MANAGED=y
 # optional pseudo-filesystems
-FS_MISC=n
-FS_EXEC=n
-FS_CONFIG=n
-FS_EVENT=n
-FS_HTTP=y
-FS_TCP=y
 FS_COMPONENT=y
 FS_PROC=y
+# procfs configuration
+PROCFS_CONFIG=y
+PROCFS_BINFMT=n
+PROCFS_EVENT=n
 # networking protocols
+PROTOCOL_HTTP=n
+PROTOCOL_TCP=n
 PROTOCOL_CFTP=n
 PROTOCOL_MTEL=n
 PROTOCOL_GERT=n
