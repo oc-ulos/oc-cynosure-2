@@ -65,6 +65,7 @@ FS_EVENT=n
 FS_HTTP=y
 FS_TCP=y
 FS_COMPONENT=y
+FS_PROC=y
 # networking protocols
 PROTOCOL_CFTP=n
 PROTOCOL_MTEL=n
