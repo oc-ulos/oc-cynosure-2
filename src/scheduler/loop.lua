@@ -87,7 +87,7 @@ do
 
       -- if <8k memory free, collect some garbage
       if computer.freeMemory() < @[{bconf.MEM_THRESHOLD or 1024}] then
-        printk(k.L_DEBUG, "low free memory - collecting garabge")
+        printk(k.L_DEBUG, "low free memory - collecting garbage")
         collectgarbage()
       end
     end

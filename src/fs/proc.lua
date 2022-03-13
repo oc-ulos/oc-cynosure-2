@@ -23,6 +23,16 @@ do
 
   local files = {self = true}
 
+  files.meminfo = { data = function()
+    local avgfree = 0
+    for i=1, 10, 1 do avgfree = avgfree + computer.freeMemory() end
+    avgfree = avgfree / 10
+    local total, free = computer.totalMemory() // 1024, avgfree // 1024
+    return string.format(
+      "MemTotal: %d kB\nMemFree: %d kB\nMemAvailable: %d kB\n",
+      total, free, free)
+  end }
+
   local function path_to_node(path, narrow)
     local segments = k.split_path(path)
 
@@ -115,8 +125,9 @@ do
     local node, proc = path_to_node(path, 0)
     if not node then return nil, proc end
 
-    if (not proc) and node.read then
-      return { file = node }
+    if (not proc) and node.data then
+      local data = type(node.data) == "function" and node.data() or node.data
+      return { file = to_fd(data) }
     elseif type(node) ~= "table" then
       return { file = to_fd(node) }
     else
