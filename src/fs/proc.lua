@@ -21,79 +21,104 @@ printk(k.L_INFO, "fs/proc")
 do
   local provider = {}
 
-  local function path_to_attr(path)
-    local pid, attr = path:match("^/?([^/]*)/?([^/]*)$")
-    if pid == "self" then pid = tostring(k.current_process().pid) end
-    return pid, attr
-  end
-
   local files = {self = true}
+
+  local function path_to_node(path, narrow)
+    local segments = k.split_path(path)
+
+    if #segments == 0 then
+      local flist = {}
+
+      for _, pid in pairs(k.get_pids()) do
+        flist[#flist+1] = pid
+      end
+
+      for k in pairs(files) do
+        flist[#flist+1] = k
+      end
+
+      return flist
+    end
+
+    if segments[1] == "self" then
+      segments[1] = k.current_process().pid
+    end
+
+    -- disallow reading greater than /N/fds/N for security
+    if segments[2] == "fds" then
+      if #segments > 3 then
+        return nil, k.errno.ENOENT
+      elseif #segments == 3 then
+        if narrow == 1 then return nil, k.errno.ENOTDIR end
+      end
+    end
+
+    if files[segments[1]] then
+      if narrow == 1 then return nil, k.errno.ENOTDIR end
+
+      if #segments > 1 then return nil, k.errno.ENOENT end
+      return files[segments[1]]
+
+    else
+      local proc = k.get_process(tonumber(segments[1]))
+      local field = proc
+
+      for i=2, #segments, 1 do
+        field = field[tonumber(segments[i]) or segments[i]]
+          or field[segments[i]]
+        if not field then return nil, k.errno.ENOENT end
+      end
+
+      return field, proc
+    end
+  end
 
   function provider:exists(path)
     checkArg(1, path, "string")
-
-    local pid, attr = path_to_attr(path)
-    if #pid == 0 then return true end
-
-    if files[pid] and #attr == 0 then return true end
-    if files[pid] and #attr > 0 then return false end
-
-    pid = tonumber(pid)
-    if not pid then return false end
-
-    local proc = k.get_process(pid)
-    if not proc then return false end
-
-    local attr = proc[attr]
-    -- TODO: support more than two levels so it supports e.g. `proc.fds`
-    if type(attr) == "table" then return false end
-
-    return #attr == 0 or not not attr
+    return not not path_to_node(path)
   end
 
   function provider:stat(path)
     checkArg(1, path, "string")
-    if not self:exists(path) then return nil, k.errno.ENOENT end
 
-    local pid, attr = path_to_attr(path)
+    local node, proc = path_to_node(path)
+    if not node then return nil, proc end
 
-    if #pid == 0 or files[pid] then
+    if type(node) == "table" then
       return {
         dev = -1, ino = -1, mode = 0x41FF, nlink = 1, uid = 0, gid = 0,
         rdev = -1, size = 0, blksize = 2048
       }
     end
 
-    pid = tonumber(pid)
-    local proc = k.get_process(pid)
-
     return {
-      dev = -1, ino = -1, mode = #attr == 0 and 0x61FF or 0x41FF, nlink = 1,
-      uid = proc.uid, gid = proc.gid, rdev = -1, size = 0, blksize = 2048
+      dev = -1, ino = -1, mode = 0x61FF, nlink = 1,
+      uid = proc and proc.uid or 0, gid = proc and proc.gid or 0,
+      rdev = -1, size = 0, blksize = 2048
     }
   end
 
   local function to_fd(dat)
     dat = tostring(dat)
     local idx = 0
-    return k.fd_from_rwf(function(n)
-      local nidx = math.min(#dat, idx + n)
+    return k.fd_from_rwf(function(_, n)
+      local nidx = math.min(#dat + 1, idx + n)
       local chunk = dat:sub(idx, nidx)
       idx = nidx
-      return (#chunk > 0 or n == 0) and chunk
+      return #chunk > 0 and chunk
     end)
   end
 
   function provider:open(path)
     checkArg(1, path, "string")
-    if not self:exists(path) then return nil, k.errno.ENOENT end
 
-    local pid, attr = path_to_attr(path)
+    local node, proc = path_to_node(path, 0)
+    if not node then return nil, proc end
 
-    if files[pid] then
-      return { file = files[pid] }
-    elseif #attr > 0 then
-      return { file = to_fd(k.get_process(tonumber(pid))[attr]) }
+    if (not proc) and node.read then
+      return { file = node }
+    elseif type(node) ~= "table" then
+      return { file = to_fd(node) }
     else
       return nil, k.errno.EISDIR
     end
@@ -101,38 +126,22 @@ do
 
   function provider:opendir(path)
     checkArg(1, path, "string")
-    if not self:exists(path) then return nil, k.errno.ENOENT end
 
-    local pid, attr = path_to_attr(path)
+    local node, proc = path_to_node(path, 1)
+    if not node then return nil, proc end
 
-    if files[pid] then
-      return nil, k.errno.ENOTDIR
-    elseif #attr > 0 then
-      return nil, k.errno.ENOTDIR
-    elseif #pid > 0 then
+    if type(node) == "table" then
+      if not proc then return { i = 0, files = node } end
+
       local flist = {}
 
-      local proc = k.get_process(tonumber(pid))
-
-      for k, v in pairs(proc) do
-        if type(v) ~= "table" then
-          flist[#flist+1] = k
-        end
+      for k in pairs(node) do
+        flist[#flist+1] = tostring(k)
       end
 
       return { i = 0, files = flist }
     else
-      local flist = {}
-
-      for k in pairs(files) do
-        flist[#flist+1] = k
-      end
-
-      for _, ppid in pairs(k.get_pids()) do
-        flist[#flist+1] = tostring(ppid)
-      end
-
-      return { i = 0, files = flist }
+      return nil, k.errno.ENOTDIR
     end
   end
 
@@ -149,13 +158,14 @@ do
     end
   end
 
-  function provider:read(fd)
+  function provider:read(fd, n)
     checkArg(1, fd, "table")
+    checkArg(1, n, "number")
 
     if fd.closed then return nil, k.errno.EBADF end
     if not fd.file then return nil, k.errno.EBADF end
 
-    return fd.file:read()
+    return fd.file:read(n)
   end
 
   function provider:close(fd)
