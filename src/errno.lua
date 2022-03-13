@@ -33,6 +33,7 @@ do
     EISDIR = 21,
     EINVAL = 22,
     ENOTTY = 25,
+    ENOSYS = 38,
     EUNATCH = 49,
     ELIBEXEC = 83,
     ENOTSUP = 95,
