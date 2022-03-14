@@ -39,11 +39,13 @@ do
       if rec(fs) then fs = fs .. " (nodev)" end
       result[#result+1] = fs
     end
-    return table.concat(result, "\n")
+    return table.concat(result, "\n") .. "\n"
   end }
 
-  files.cmdline = { data = k.original_cmdline }
-  files.uptime = { data = function() return tostring(computer.uptime()) end }
+  files.cmdline = { data = k.original_cmdline .. "\n" }
+  files.uptime = { data = function()
+    return tostring(computer.uptime()) .. "\n"
+  end }
 
   --@[{bconf.PROCFS_CONFIG == 'y' and '--#include "src/fs/proc_config.lua"' or ''}]
 

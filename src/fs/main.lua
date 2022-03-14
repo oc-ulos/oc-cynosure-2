@@ -385,7 +385,7 @@ do
   end
 
   k.add_signal_handler("shutdown", function()
-    for fd in ipairs(opened) do
+    for fd in pairs(opened) do
       fd.refs = 1
       k.close(fd)
     end

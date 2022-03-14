@@ -52,6 +52,8 @@ do
   function k.create_env(base)
     checkArg(1, base, "table", "nil")
 
+    @[{bconf.PER_PROC_SANDBOX == "y" and "if base then return base end" or ""}]
+
     local new = deepcopy(base or _G)
     for key in pairs(blacklist) do
       new[key] = nil
