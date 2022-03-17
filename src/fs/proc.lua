@@ -143,9 +143,9 @@ do
 
     if (not proc) and node.data then
       local data = type(node.data) == "function" and node.data() or node.data
-      return { file = to_fd(data) }
+      return { file = to_fd(data), ioctl = node.ioctl }
     elseif type(node) ~= "table" then
-      return { file = to_fd(node) }
+      return { file = to_fd(node), ioctl = node.ioctl }
     else
       return nil, k.errno.EISDIR
     end
@@ -198,6 +198,17 @@ do
   function provider:close(fd)
     checkArg(1, fd, "table")
     fd.closed = true
+  end
+
+  function provider.ioctl(fd, method, ...)
+    checkArg(1, fd, "table")
+    checkArg(2, method, "string")
+
+    if fd.closed then return nil, k.errno.EBADF end
+    if not fd.file then return nil, k.errno.EBADF end
+    if not fd.ioctl then return nil, k.errno.ENOSYS end
+
+    return fd.ioctl(method, ...)
   end
 
   k.register_fstype("procfs", function(x)
