@@ -63,7 +63,7 @@ FS_PROC=y
 # procfs configuration
 PROCFS_CONFIG=y
 PROCFS_BINFMT=n
-PROCFS_EVENT=n
+PROCFS_EVENT=y
 # networking protocols
 PROTOCOL_HTTP=n
 PROTOCOL_TCP=n
