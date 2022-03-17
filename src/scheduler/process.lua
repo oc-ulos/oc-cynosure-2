@@ -138,6 +138,9 @@ do
         [2] = parent.fds and parent.fds[2]
       },
 
+      -- signal handlers
+      handlers = {},
+
       -- environment
       env = k.create_env(parent.env),
     }, process_mt)
