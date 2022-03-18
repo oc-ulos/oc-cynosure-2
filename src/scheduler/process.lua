@@ -123,9 +123,6 @@ do
       suid = parent.uid or 0,
       sgid = parent.gid or 0,
 
-      -- controlling TTY
-      tty = false,
-
       -- working directory
       cwd = parent.cwd or "/",
       -- root directory

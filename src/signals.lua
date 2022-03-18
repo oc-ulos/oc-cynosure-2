@@ -67,7 +67,8 @@ do
     if push_blacklist[sig] then
       return nil, k.errno.EACCES
     end
-    return pushsignal(sig, ...)
+    pushsignal(sig, ...)
+    return true
   end
 
   function k.pullSignal(timeout)
