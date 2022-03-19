@@ -22,6 +22,7 @@ do
   k.errno = {
     EPERM = 1,
     ENOENT = 2,
+    ESRCH = 3,
     ENOEXEC = 8,
     EBADF = 9,
     EACCES = 13,
