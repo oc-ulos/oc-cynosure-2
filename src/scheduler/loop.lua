@@ -23,6 +23,8 @@ do
   local pid = 0
   local current = 0
 
+  k.pgroups = {[0] = { sid = 0 }}
+
   function collectgarbage()
     local missed = {}
     for i=1, 10, 1 do

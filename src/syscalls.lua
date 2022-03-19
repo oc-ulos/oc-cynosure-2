@@ -41,6 +41,10 @@ do
     return table.unpack(result, 1, result.n)
   end
 
+  -------------------------------
+  -- File-related system calls --
+  -------------------------------
+
   function k.syscalls.open(url, mode)
     checkArg(1, url, "string")
     checkArg(2, mode, "string")
@@ -167,6 +171,10 @@ do
   k.syscalls.unlink = k.unlink
   k.syscalls.mount = k.mount
   k.syscalls.unmount = k.unmount
+
+  ----------------------------------
+  -- Process-related system calls --
+  ----------------------------------
 
   function k.syscalls.fork(func)
     checkArg(1, func, "function")
@@ -323,6 +331,68 @@ do
   function k.syscalls.getegid()
     return k.current_process().egid
   end
+
+  function k.syscalls.setsid()
+    local current = k.current_process()
+    if current.pgid == current.pid then
+      return nil, k.errno.EPERM
+    end
+    current.pgid = current.pid
+    current.sid = current.pid
+    return current.sid
+  end
+
+  function k.syscalls.getsid(pid)
+    checkArg(1, pid, "number", "nil")
+
+    if pid == 0 or not pid then
+      return k.current_process().sid
+    end
+
+    local proc = k.get_process(pid)
+    if not proc then
+      return nil, k.errno.ESRCH
+    end
+
+    return proc.sid
+  end
+
+  function k.syscall.setpgrp(pid, pg)
+    checkArg(1, pid, "number")
+    checkArg(2, pg, "number")
+
+    local current = k.current_process()
+    if pid == 0 then pid = current.pid end
+    if pg  == 0 then pg  = pid; k.pgroups[pg] = proc.sid end
+    local proc = k.get_process(pid)
+
+    if proc.pid ~= current.pid and proc.ppid ~= current.pid then
+      return nil, k.errno.EPERM
+    end
+
+    if k.pgroups[pg].sid ~= proc.sid then
+      return nil, k.errno.EPERM
+    end
+  end
+
+  function k.syscalls.getpgrp(pid)
+    checkArg(1, pid, "number", "nil")
+
+    if pid == 0 or not pid then
+      return k.current_process().pgid
+    end
+
+    local proc = k.get_process(pid)
+    if not proc then
+      return nil, k.errno.ESRCH
+    end
+
+    return proc.pgid
+  end
+
+  --------------------------------
+  -- Miscellaneous system calls --
+  --------------------------------
 
   function k.syscalls.reboot(cmd)
     checkArg(1, cmd, "string")
