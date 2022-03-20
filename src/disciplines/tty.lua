@@ -21,22 +21,29 @@ printk(k.L_INFO, "disciplines/tty")
 do
   local discipline = {}
 
-  function discipline.open(obj)
+  function discipline.wrap(obj)
     checkArg(1, obj, "table")
 
-    local new = setmetatable({
-      obj = obj,
-      mode = "line", rbuf = "", wbuf = "",
-      eol = "\n", erase = "\8", intr = "\3", kill = "\28",
-      quit = "", start = "\19", stop = "\17", susp = "\26"
-    }, {__index=discipline})
-    obj.discipline = new
-    new.eolpat = string.format("%%%s[^%%%s]-$", new.eol, new.eol)
-    new.eofpat = string.format("%%%s[^%%%s]-$", new.eof, new.eof)
+    local new
+    if obj.discipline then
+      new =obj.discipline
+
+    else
+      local new = setmetatable({
+        obj = obj,
+        mode = "line", rbuf = "", wbuf = "",
+        eol = "\n", erase = "\8", intr = "\3", kill = "\28",
+        quit = "", start = "\19", stop = "\17", susp = "\26"
+      }, {__index=discipline})
+      obj.discipline = new
+      new.eolpat = string.format("%%%s[^%%%s]-$", new.eol, new.eol)
+      new.eofpat = string.format("%%%s[^%%%s]-$", new.eof, new.eof)
+    end
 
     local proc = k.current_process()
-    if not proc.tty then
+    if not new.session and not proc.tty then
       proc.tty = new
+      new.session = proc.sid
     end
 
     return new
@@ -52,6 +59,20 @@ do
   }
 
   for i=1, 26, 1 do sub32_lookups[i] = string.char(96 + i) end
+
+  local function find_procs(obj)
+    local pids = k.get_pids()
+    local procs = {}
+
+    for i=1, #pids, 1 do
+      local proc = k.get_process(pids[i])
+      if proc.tty == obj then
+        procs[#procs+1] = proc
+      end
+    end
+
+    return procs
+  end
 
   -- process new input from the stream - this is keyboard input
   function discipline:processInput(inp)
@@ -118,25 +139,41 @@ do
   end
 
   function discipline:ioctl(method, args)
-    if method ~= "stty" then return nil, k.errno.ENOTTY end
-    checkArg(2, args, "table")
+    if method == "stty" then
+      checkArg(2, args, "table")
 
-    s(self, "eol", args)
-    s(self, "erase", args)
-    s(self, "intr", args)
-    s(self, "kill", args)
-    s(self, "quit", args)
-    s(self, "start", args)
-    s(self, "stop", args)
-    s(self, "susp", args)
-    -- One of those rare cases where comparing against nil
-    -- directly is the correct thing to do.
-    if args.echo ~= nil then self.echo = not not args.echo end
-    if args.raw ~= nil then self.raw = not not args.raw end
-    self.eolpat = string.format("%%%s[^%%%s]-$", self.eol, self.eol)
-    self.eofpat = string.format("%%%s[^%%%s]-$", self.eof, self.eof)
+      s(self, "eol", args)
+      s(self, "erase", args)
+      s(self, "intr", args)
+      s(self, "kill", args)
+      s(self, "quit", args)
+      s(self, "start", args)
+      s(self, "stop", args)
+      s(self, "susp", args)
 
-    return true
+      -- One of those rare cases where comparing against nil
+      -- directly is the correct thing to do.
+      if args.echo ~= nil then self.echo = not not args.echo end
+      if args.raw ~= nil then self.raw = not not args.raw end
+
+      self.eolpat = string.format("%%%s[^%%%s]-$", self.eol, self.eol)
+      self.eofpat = string.format("%%%s[^%%%s]-$", self.eof, self.eof)
+
+      return true
+
+    elseif method == "setpg" then
+      local current = k.current_process()
+      if self.pgroup and current.pgid ~= self.pgroup then
+        current:signal("SIGTTOU")
+        return true
+      end
+
+    elseif method == "getpg" then
+      return self.pgroup or math.huge
+
+    else
+      return nil, k.errno.ENOSYS
+    end
   end
 
   function discipline:read(n)

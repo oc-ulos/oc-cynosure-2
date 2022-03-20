@@ -23,7 +23,13 @@ do
   local pid = 0
   local current = 0
 
-  k.pgroups = {[0] = { sid = 0 }}
+  -- k.sessions: All process sessions, each containing
+  -- its leader's PID and all the processes within it.
+  k.sessions = {[0] = { leader = 0, pids = {} }}
+  -- k.pgroups: All process groups, each containing the
+  -- session ID to which it belongs as well as all the
+  -- process within it.
+  k.pgroups = {[0] = { sid = 0, pids = {} }}
 
   function collectgarbage()
     local missed = {}

@@ -337,8 +337,17 @@ do
     if current.pgid == current.pid then
       return nil, k.errno.EPERM
     end
+
     current.pgid = current.pid
     current.sid = current.pid
+    if current.tty then
+      current.tty.session = current.sid
+      current.tty.pgroup = current.pgid
+    end
+
+    k.sessions[current.sid] = { leader = current.pid,
+      pids = { [current.pid] = true } }
+
     return current.sid
   end
 
@@ -363,7 +372,7 @@ do
 
     local current = k.current_process()
     if pid == 0 then pid = current.pid end
-    if pg  == 0 then pg  = pid; k.pgroups[pg] = proc.sid end
+    if pg  == 0 then pg  = pid; k.pgroups[pg].sid = proc.sid end
     local proc = k.get_process(pid)
 
     if proc.pid ~= current.pid and proc.ppid ~= current.pid then
@@ -373,6 +382,14 @@ do
     if k.pgroups[pg].sid ~= proc.sid then
       return nil, k.errno.EPERM
     end
+
+    k.pgroups[proc.pgid].pids[proc.pid] = nil
+    proc.pgid = pg
+    k.pgroups[proc.pgid] = k.pgroups[proc.pgid] or { sid = proc.sid,
+      pids = {} }
+    k.pgroups[proc.pgid].pids[proc.pid] = true
+
+    return true
   end
 
   function k.syscalls.getpgrp(pid)
