@@ -39,15 +39,16 @@ do
 
   function chardev:open(path)
     if #path > 0 then return nil, k.errno.ENOTDIR end
-    return { fd = self.discipline.wrap(self.stream), default_mode = "none" }
+    return { fd = k.disciplines[self.discipline].wrap(self.stream),
+      default_mode = "none" }
   end
 
   function chardev:read(fd, n)
-    return fd:read(n)
+    return fd.fd:read(n)
   end
 
   function chardev:write(fd, data)
-    return fd:write(data)
+    return fd.fd:write(data)
   end
 
   function chardev:seek()
@@ -55,15 +56,15 @@ do
   end
 
   function chardev:flush(fd)
-    if fd.flush then fd:flush() end
+    if fd.fd.flush then fd.fd:flush() end
   end
 
   function chardev.ioctl(fd, ...)
-    return fd:ioctl(...)
+    return fd.fd:ioctl(...)
   end
 
   function chardev:close(fd)
-    return fd:close()
+    return fd.fd:close()
   end
 
   k.chardev = chardev

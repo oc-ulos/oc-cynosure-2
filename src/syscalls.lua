@@ -366,7 +366,7 @@ do
     return proc.sid
   end
 
-  function k.syscall.setpgrp(pid, pg)
+  function k.syscalls.setpgrp(pid, pg)
     checkArg(1, pid, "number")
     checkArg(2, pg, "number")
 

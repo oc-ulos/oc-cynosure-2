@@ -400,6 +400,7 @@ do
   end)
 end
 
+--#include "src/fs/devfs.lua"
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
 --#include "src/fs/rootfs.lua"

@@ -33,9 +33,11 @@ do
     checkArg(2, device, "table")
 
     local segments = k.split_path(path)
-    if #segments > 0 then
-      error("cannot register device in subdirectory of devfs", 2)
+    if #segments > 1 then
+      error("cannot register device in subdirectory '"..path.."' of devfs", 2)
     end
+
+    printk(k.L_INFO, "devfs: registering device at %s", path)
 
     devices[path] = device
   end
@@ -74,6 +76,10 @@ do
 
       local result, err = device[calling](device, path, ...)
 
+      printk(k.L_DEBUG, "got result %s,%s", tostring(result), tostring(err))
+
+      if not result then return nil, err end
+
       if result and (calling == "open" or calling == "opendir") then
         return { node = device, fd = result }
       else
@@ -99,7 +105,7 @@ do
   end
 
   setmetatable(provider, {__index = function(_, k)
-    return function(...)
+    return function(_, ...)
       return autocall(k, ...)
     end
   end})

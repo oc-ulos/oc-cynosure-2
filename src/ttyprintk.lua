@@ -19,13 +19,13 @@
 printk(k.L_INFO, "ttyprintk")
 
 do
-  local ttyfs = k.fstypes.ttyfs("ttyfs")
+  local devfs = k.fstypes.devfs("devfs")
 
-  local console, err = ttyfs:open("/1", "w")
+  local console, err = devfs:open("/tty0", "w")
   if not console then
     panic("cannot open console: " .. err)
   end
-  console = k.fd_from_node(ttyfs, console, "w")
+  console = k.fd_from_node(devfs, console, "w")
   console = { fd = console, node = console, refs = 1 }
 
   k.console = console

@@ -44,7 +44,7 @@ do
     end
 
     local proc = k.current_process()
-    if not new.session and not proc.tty then
+    if proc and not new.session and not proc.tty then
       proc.tty = new
       new.session = proc.sid
     end
