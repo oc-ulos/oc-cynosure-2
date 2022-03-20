@@ -198,8 +198,16 @@ do
 
     local fd, err = node:open(remain, mode)
     if not fd then return nil, err end
+
     local stream = k.fd_from_node(node, fd, mode)
-    if node.default_mode then stream:ioctl("setvbuf", node.default_mode) end
+    if node.default_mode then
+      stream:ioctl("setvbuf", node.default_mode)
+    end
+
+    if type(fd) == "table" and fd.default_mode then
+      stream:ioctl("setvbuf", fd.default_mode)
+    end
+
     opened[stream] = true
     return { fd = stream, node = stream, refs = 1 }
   end

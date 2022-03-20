@@ -163,7 +163,5 @@ do
 
   function provider:close() end
 
-  k.register_fstype("componentfs", function(x)
-    return x == "componentfs" and provider
-  end)
+  k.devfs.register_device("components", provider)
 end
