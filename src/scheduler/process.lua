@@ -23,9 +23,15 @@ do
   k.default_signal_handlers = {
     SIGINT  = function(p)
       p.threads = {}
+      p.thread_count = 0
+    end,
+    SIGKILL = function(p)
+      p.threads = {}
+      p.thread_count = 0
     end,
     SIGQUIT = function(p)
       p.threads = {}
+      p.thread_count = 0
     end,
     SIGTSTP = function(p)
       p.stopped = true
@@ -45,6 +51,15 @@ do
   local process = {}
   local default = {n = 0}
   function process:resume(sig, ...)
+    -- We handle user-provided signals this way because otherwise
+    -- a signal handler calling exit() would make the sending process
+    -- exit, not the receiving one.  And we handle them here because
+    -- otherwise processes wouldn't respond to SIGCONT.
+    while #self.sigqueue > 0 do
+      local psig = table.remove(self.sigqueue, 1)
+      self:signal(psig)
+    end
+
     if self.stopped then return end
 
     sig = table.pack(sig, ...)
@@ -68,6 +83,7 @@ do
 
       if result == 1 then
         self.threads[i] = nil
+        self.thread_count = self.thread_count - 1
         table.insert(self.queue, {"thread_died", i})
       end
     end
@@ -96,6 +112,14 @@ do
     return deadline
   end
 
+  function process:signal(sig)
+    if self.signal_handlers[sig] then
+      pcall(self.signal_handlers[sig])
+    else
+      pcall(k.default_signal_handlers[sig], self)
+    end
+  end
+
   local process_mt = { __index = process }
 
   local default_parent = {handles = {}, _G = {}, pid = 0}
@@ -108,7 +132,7 @@ do
       if parent.fds[2] then parent.fds[2].refs = parent.fds[2].refs + 1 end
     end
     return setmetatable({
-      -- local signal queue
+      -- local event queue
       queue = {},
       -- whether this process is stopped
       stopped = false,
@@ -160,6 +184,9 @@ do
 
       -- signal handler IDs
       signal_handlers = {},
+
+      -- signal queue
+      sigqueue = {},
 
       -- environment
       env = k.create_env(parent.env),

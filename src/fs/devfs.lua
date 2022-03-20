@@ -108,3 +108,6 @@ do
     return x == "devfs" and provider
   end)
 end
+
+--#include "src/fs/devfs_chardev.lua"
+--#include "src/fs/devfs_blockdev.lua"

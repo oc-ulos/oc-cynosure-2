@@ -69,11 +69,7 @@ do
     for i=1, #pids, 1 do
       local proc = k.get_process(pids[i])
       if proc.pgid == obj.pgroup then
-        if proc.signal_handlers[sig] then
-          pcall(proc.signal_handlers[sig])
-        else
-          pcall(k.default_signal_handlers[sig], proc)
-        end
+        table.insert(proc.sigqueue, sig)
       end
     end
   end
@@ -246,6 +242,11 @@ do
   end
 
   function discipline:close()
+    local proc = k.current_process()
+    if proc.tty == self then
+      proc.tty = false
+    end
+    return true
   end
 
   k.disciplines.tty = discipline
