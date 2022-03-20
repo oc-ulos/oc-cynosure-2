@@ -36,8 +36,8 @@ do
         mode = "line", rbuf = "", wbuf = "",
         erase = "\8", intr = "\3", kill = "\21",
         quit = "\28", start = "\19", stop = "\17",
-        susp = "\26",
-        stopped = false
+        susp = "\26", eof = "\4", raw = false,
+        stopped = false, echo = true
       }, {__index=discipline})
       obj.discipline = new
       new.eofpat = string.format("%%%s[^%%%s]-$", new.eof, new.eof)
@@ -61,7 +61,11 @@ do
     [31]  = "?"
   }
 
-  for i=1, 26, 1 do sub32_lookups[i] = string.char(96 + i) end
+  local sub32_lookups_notraw = {
+    [10] = "\n"
+  }
+
+  for i=1, 26, 1 do sub32_lookups[i] = string.char(64 + i) end
 
   local function send(obj, sig)
     local pids = k.get_pids()
@@ -74,11 +78,26 @@ do
     end
   end
 
+  local function wchar(self, c)
+    if (not self.raw) and c == "\r" then c = "\n" end
+    self.rbuf = self.rbuf .. c
+    if self.echo then
+      local byte = string.byte(c)
+      if (not self.raw) and sub32_lookups_notraw[byte] then
+        self.obj:write(sub32_lookups_notraw[byte])
+      elseif sub32_lookups[byte] then
+        self.obj:write("^"..sub32_lookups[byte])
+      elseif byte < 126 then
+        self.obj:write(c)
+      end
+    end
+  end
+
   -- process new input from the stream - this is keyboard input
   function discipline:processInput(inp)
     self:flush()
     for c in inp:gmatch(".") do
-      if c == self.erase then
+      if c == self.erase and not self.raw then
         if #self.rbuf > 0 then
           local last = self.rbuf:sub(-1)
           if self.echo then
@@ -94,15 +113,7 @@ do
         end
       elseif c == self.eof then
         if self.rbuf:sub(-1) == self.eol then
-          self.rbuf = self.rbuf .. c
-          if self.echo then
-            local byte = string.byte(c)
-            if sub32_lookups[byte] then
-              self.obj:write("^"..sub32_lookups[byte])
-            else
-              self.obj:write(c)
-            end
-          end
+          wchar(self, c)
         end
 
       elseif c == self.intr then
@@ -125,17 +136,7 @@ do
         send(self, "SIGSTOP")
 
       else
-        self.rbuf = self.rbuf .. c
-
-        if self.echo then
-          local byte = string.byte(c)
-
-          if sub32_lookups[byte] then
-            self.obj:write("^"..sub32_lookups[byte])
-          else
-            self.obj:write(c)
-          end
-        end
+        wchar(self, c)
       end
     end
   end
@@ -183,6 +184,8 @@ do
 
   function discipline:read(n)
     checkArg(1, n, "number")
+
+    self:flush()
 
     local current = k.current_process()
     if self.pgroup and current.pgid ~= self.pgroup then

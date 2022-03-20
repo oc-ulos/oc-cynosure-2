@@ -42,6 +42,12 @@ do
     SIGCONT = function(p)
       p.stopped = false
     end,
+    SIGTTIN = function(p)
+      p.stopped = true
+    end,
+    SIGTTOU = function(p)
+      p.stopped = true
+    end
   }
 
 

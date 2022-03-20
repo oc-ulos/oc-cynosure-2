@@ -532,11 +532,13 @@ do
         local c = scancode_lookups[code]
         local interim = new.altcursor and "O" or "["
         to_buffer = "\27" .. interim .. c
-      else
+      elseif char > 0 then
         to_buffer = string.char(char)
       end
 
-      new.discipline:processInput(to_buffer)
+      if to_buffer then
+        new.discipline:processInput(to_buffer)
+      end
     end)
 
     setmetatable(new, {__index = _tty})
