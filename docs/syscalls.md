@@ -1,9 +1,10 @@
 # Cynosure 2 system calls
 
-### `open(file, mode): fd`
+## `open(file, mode): fd`
 Arguments:
 - *file* The file to open
 - *mode* The file mode
+
 Returns:
 - *fd* The returned file descriptor
 
