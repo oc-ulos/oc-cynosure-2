@@ -21,22 +21,25 @@ printk(k.L_INFO, "disciplines/tty")
 do
   local discipline = {}
 
+  local eolpat = "\n[^\n]-$"
+
   function discipline.wrap(obj)
     checkArg(1, obj, "table")
 
     local new
     if obj.discipline then
-      new =obj.discipline
+      new = obj.discipline
 
     else
-      local new = setmetatable({
+      new = setmetatable({
         obj = obj,
         mode = "line", rbuf = "", wbuf = "",
-        eol = "\n", erase = "\8", intr = "\3", kill = "\28",
-        quit = "", start = "\19", stop = "\17", susp = "\26"
+        erase = "\8", intr = "\3", kill = "\21",
+        quit = "\28", start = "\19", stop = "\17",
+        susp = "\26",
+        stopped = false
       }, {__index=discipline})
       obj.discipline = new
-      new.eolpat = string.format("%%%s[^%%%s]-$", new.eol, new.eol)
       new.eofpat = string.format("%%%s[^%%%s]-$", new.eof, new.eof)
     end
 
@@ -60,18 +63,19 @@ do
 
   for i=1, 26, 1 do sub32_lookups[i] = string.char(96 + i) end
 
-  local function find_procs(obj)
+  local function send(obj, sig)
     local pids = k.get_pids()
-    local procs = {}
 
     for i=1, #pids, 1 do
       local proc = k.get_process(pids[i])
-      if proc.tty == obj then
-        procs[#procs+1] = proc
+      if proc.pgid == obj.pgroup then
+        if proc.signal_handlers[sig] then
+          pcall(proc.signal_handlers[sig])
+        else
+          pcall(k.default_signal_handlers[sig], proc)
+        end
       end
     end
-
-    return procs
   end
 
   -- process new input from the stream - this is keyboard input
@@ -83,9 +87,9 @@ do
           local last = self.rbuf:sub(-1)
           if self.echo then
             if last:byte() < 32 then
-              self.obj:write("\27[2B  \27[2B")
+              self.obj:write("\27[2D  \27[2D")
             else
-              self.obj:write("\27[B \27[B")
+              self.obj:write("\27[D \27[D")
             end
           end
           if last ~= self.eol and last ~= self.eof then
@@ -106,17 +110,23 @@ do
         end
 
       elseif c == self.intr then
-        local pids = find_procs(self)
+        send(self, "SIGINT")
 
-      elseif c == self.kill then
+      -- kill (erase current line) not implemented; this
+      -- implementation does not provide line editing
 
       elseif c == self.quit then
+        send(self, "SIGQUIT")
+        self.obj:write("^\\")
 
       elseif c == self.start then
+        self.stopped = false
 
       elseif c == self.stop then
+        self.stopped = true
 
       elseif c == self.susp then
+        send(self, "SIGSTOP")
 
       else
         self.rbuf = self.rbuf .. c
@@ -156,7 +166,6 @@ do
       if args.echo ~= nil then self.echo = not not args.echo end
       if args.raw ~= nil then self.raw = not not args.raw end
 
-      self.eolpat = string.format("%%%s[^%%%s]-$", self.eol, self.eol)
       self.eofpat = string.format("%%%s[^%%%s]-$", self.eof, self.eof)
 
       return true
@@ -179,6 +188,12 @@ do
   function discipline:read(n)
     checkArg(1, n, "number")
 
+    local current = k.current_process()
+    if self.pgroup and current.pgid ~= self.pgroup then
+      current:signal("SIGTTIN")
+      return true
+    end
+
     if self.last_eof then
       self.last_eof = false
       return nil
@@ -189,7 +204,7 @@ do
       if self.rbuf:find("%"..self.eof) then break end
     end
     if self.mode == "line" then
-      while (self.rbuf:find(self.eolpat) or 0) < n do
+      while (self.rbuf:find(eolpat) or 0) < n do
         coroutine.yield()
         if self.rbuf:find("%"..self.eof) then break end
       end
@@ -208,9 +223,13 @@ do
   function discipline:write(text)
     checkArg(1, text, "string")
 
+    while self.stopped and #self.wbuf >= @[{bconf.BUFFER_SIZE or 1024}] do
+      coroutine.yield()
+    end
+
     self.wbuf = self.wbuf .. text
 
-    local last_eol = self.wbuf:find(self.eolpat)
+    local last_eol = self.wbuf:find(eolpat)
     if last_eol then
       local data = self.wbuf:sub(1, last_eol)
       self.wbuf = self.wbuf:sub(#data + 1)

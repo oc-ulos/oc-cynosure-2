@@ -19,6 +19,26 @@
 printk(k.L_INFO, "scheduler/process")
 
 do
+  -- Default signal handlers
+  k.default_signal_handlers = {
+    SIGINT  = function(p)
+      p.threads = {}
+    end,
+    SIGQUIT = function(p)
+      p.threads = {}
+    end,
+    SIGTSTP = function(p)
+      p.stopped = true
+    end,
+    SIGSTOP = function(p)
+      p.stopped = true
+    end,
+    SIGCONT = function(p)
+      p.stopped = false
+    end,
+  }
+
+
   -- Much of the heavy lifting is done in scheduler/thread.lua in
   -- thread:resume().  The process's job is to act like a mini-scheduler of
   -- sorts.
@@ -135,8 +155,11 @@ do
         [2] = parent.fds and parent.fds[2]
       },
 
-      -- signal handlers
+      -- event handler IDs
       handlers = {},
+
+      -- signal handler IDs
+      signal_handlers = {},
 
       -- environment
       env = k.create_env(parent.env),
