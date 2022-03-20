@@ -122,10 +122,10 @@ do
     return k.flush(current.fds[fd])
   end
 
-  function k.syscalls.opendir(url)
-    checkArg(1, url, "string")
+  function k.syscalls.opendir(file)
+    checkArg(1, file, "string")
 
-    local fd, err = k.opendir(url)
+    local fd, err = k.opendir(file)
     if not fd then return nil, err end
 
     local current = k.current_process()
