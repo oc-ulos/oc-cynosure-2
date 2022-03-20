@@ -85,8 +85,14 @@ do
           process:resume(table.unpack(signal, 1, signal.n))
           if not next(process.threads) then
           k.pushSignal("process_exit", cpid, process.status or 0)
+            -- close all open files
             for _, fd in pairs(process.fds) do
               k.close(fd)
+            end
+
+            -- remove all signal handlers
+            for id in pairs(process.handlers) do
+              k.remove_signal_handler(id)
             end
             processes[cpid] = nil
           end
