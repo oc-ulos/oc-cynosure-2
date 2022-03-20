@@ -45,11 +45,11 @@ do
   -- File-related system calls --
   -------------------------------
 
-  function k.syscalls.open(url, mode)
-    checkArg(1, url, "string")
+  function k.syscalls.open(file, mode)
+    checkArg(1, file, "string")
     checkArg(2, mode, "string")
 
-    local fd, err = k.open(url, mode)
+    local fd, err = k.open(file, mode)
     if not fd then
       return nil, err
     end
