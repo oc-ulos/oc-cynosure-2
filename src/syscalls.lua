@@ -407,6 +407,59 @@ do
     return proc.pgid
   end
 
+  -- Handlers of signals whose value here is 'false' can't be
+  -- overwritten, but those signals can still be sent by kill(2).
+  local valid_signals = {
+    SIGKILL = false,
+    SIGINT  = true,
+    SIGQUIT = true,
+    SIGTSTP = true,
+    SIGSTOP = false,
+    SIGCONT = false,
+    SIGTTIN = true,
+    SIGTTOU = true
+  }
+
+  function k.syscalls.sigaction(name, handler)
+    checkArg(1, name, "string")
+    checkArg(2, handler, "function")
+
+    if not valid_signals[name] then return nil, k.errno.EINVAL end
+
+    local current = k.current_process()
+    current.signal_handlers[name] = handler
+
+    return true
+  end
+
+  -- Differs from the standard slightly: SIGEXIST, rather than 0,
+  -- is used to check if a process exists - since signals don't
+  -- have numeric IDs under Cynosure 2.
+  function k.syscalls.kill(pid, name)
+    checkArg(1, pid, "number")
+    checkArg(2, name, "string")
+
+    local proc = k.get_process(pid)
+    local current = k.current_process()
+
+    if valid_signals[name] == nil and name ~= "SIGEXIST" then
+      return nil, k.errno.EINVAL
+    end
+
+    if not proc then return nil, k.errno.ESRCH end
+
+    if current.uid == 0 or current.euid == 0 or current.uid == proc.uid or
+       current.euid == proc.uid or current.uid == proc.suid or
+       current.euid == proc.suid then
+      if name == "SIGEXIST" and proc then return true end
+      table.insert(proc.sigqueue, name)
+
+      return true
+    else
+      return nil, k.errno.EPERM
+    end
+  end
+
   --------------------------------
   -- Miscellaneous system calls --
   --------------------------------
