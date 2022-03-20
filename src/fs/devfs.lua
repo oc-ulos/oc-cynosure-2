@@ -42,6 +42,24 @@ do
     devices[path] = device
   end
 
+  k.devfs.register_device("/", {
+    opendir = function()
+      local devs = {}
+      for k in pairs(devices) do if k ~= "/" then devs[#devs+1] = k end end
+      return { devs = devs, i = 0 }
+    end,
+    readdir = function(_, fd)
+      fd.i = fd.i + 1
+      if fd.devs[fd.i] then
+        return { inode = -1, name = fd.devs[fd.i] }
+      end
+    end,
+    stat = function()
+      return { dev = -1, ino = -1, mode = 0x41FF, nlink = 1,
+        uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048 }
+    end
+  })
+
   local function path_to_node(path)
     local segments = k.split_path(path)
 
@@ -75,8 +93,6 @@ do
       if not device[calling] then return nil, k.errno.ENOSYS end
 
       local result, err = device[calling](device, path, ...)
-
-      printk(k.L_DEBUG, "got result %s,%s", tostring(result), tostring(err))
 
       if not result then return nil, err end
 

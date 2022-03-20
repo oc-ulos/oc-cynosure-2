@@ -157,7 +157,7 @@ do
 
     local name = dirfd.iterator()
     if name then
-      return { inode = -1, name = dirfd.iterator() }
+      return { inode = -1, name = name }
     end
   end
 
