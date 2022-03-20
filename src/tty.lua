@@ -62,6 +62,7 @@ do
     self.gpu.setForeground(7, true)
     self.gpu.setBackground(0, true)
     self.gpu.fill(1, 1, self.w, self.h, " ")
+    self.cx, self.cy = 1, 1
   end
 
   -- IND - linefeed
@@ -82,10 +83,12 @@ do
 
   -- DECID: returns ESC [ ? 6 c, for VT102
   function nocsi:Z()
-    self.rbuf = self.rbuf .. "\27[?6c"
+    if self.discipline then
+      self.discipline:processInput("\27[?6c")
+    end
   end
 
-  local save = {"fg", "bg", "echo", "line", "raw", "cx", "cy"}
+  local save = {"fg", "bg", "echo", "cx", "cy"}
   -- DECSC - save state
   nocsi["7"] = function(self)
     self.saved = {}
@@ -222,7 +225,9 @@ do
 
   -- DA - same as ESC Z
   function commands:c()
-    self.rbuf = self.rbuf .. "\27[?6c"
+    if self.discipline then
+      self.discipline:processInput("\27[?6c")
+    end
   end
 
   -- VPA - move cursor to indicated row in current column
@@ -324,10 +329,13 @@ do
   -- DSR - status report
   function commands:n(args)
     local n = args[1] or 0
-    if n == 5 then
-      self.rbuf = self.rbuf .. "\27[0n"
-    elseif n == 6 then
-      self.rbuf = self.rbuf .. string.format("\27[%d;%dR", self.cy, self.cx)
+    if self.discipline then
+      if n == 5 then
+        self.discipline:processInput("\27[0n")
+      elseif n == 6 then
+        self.discipline:processInput(string.format("\27[%d;%dR",
+          self.cy, self.cx))
+      end
     end
   end
 
@@ -388,6 +396,7 @@ do
   -- write some text
   local function textwrite(self, line)
     corral(self)
+    if not self.echo then line = (" "):rep(line) end
     while #line > 0 do
       local chunk = line:sub(1, self.w - self.cx + 1)
       line = line:sub(#chunk + 1)
@@ -397,11 +406,21 @@ do
     end
   end
 
-  -- write a single line to the output
-  -- most of the time a single line is probably under 500 characters,
-  -- which OC's string.* wrapper considers to be "short" - so, doing
-  -- things this way should in theory be faster (or at least no slower).
-  local function internalwrite(self, line)
+  local function togglecursor(self)
+    if not self.cursor then return end
+    corral(self)
+    local cc, cf, cb, pf, pb = self.gpu.get(self.cx, self.cy)
+    self.gpu.setForeground(pb or cb, not not pb)
+    self.gpu.setBackground(pf or cf, not not pf)
+    self.gpu.set(self.cx, self.cy, cc)
+  end
+
+  -- write some text to the output
+  function _tty:write(line)
+    if #line == 0 then return end
+
+    if self.cursor then togglecursor(self) end
+
     line = line:gsub("\x9b", "\27[")
     if self.autocr then
       line = line:gsub("[\n\v\f]", "%1\r")
@@ -457,60 +476,11 @@ do
         end
       end
     end
-  end
 
-  local function togglecursor(self)
-    if not self.cursor then return end
-    corral(self)
-    local cc, cf, cb, pf, pb = self.gpu.get(self.cx, self.cy)
-    self.gpu.setForeground(pb or cb, not not pb)
-    self.gpu.setBackground(pf or cf, not not pf)
-    self.gpu.set(self.cx, self.cy, cc)
-  end
-
-  function _tty:write(str)
-    checkArg(1, str, "string")
-    self.wbuf = self.wbuf .. str
-    local dc = (not not self.wbuf:find("\n", nil, true)) or #self.wbuf > 512
-    if dc then togglecursor(self) end
-
-    repeat
-      local idx = self.wbuf:find("\n")
-      if not idx then if #self.wbuf > 512 then idx = #self.wbuf end end
-      if idx then
-        local chunk = self.wbuf:sub(1, idx)
-        self.wbuf = self.wbuf:sub(#chunk + 1)
-        internalwrite(self, chunk)
-      end
-    until not idx
-
-    if dc then togglecursor(self) end
-
-    return self
-  end
-
-  function _tty:read(n)
-    checkArg(1, n, "number")
-
-    self:flush()
-    if self.raw then
-      while #self.rbuf < n do coroutine.yield() end
-    else
-      while (self.rbuf:find("\n$") or -1) < n do coroutine.yield() end
-    end
-
-    local data = self.rbuf:sub(1, n)
-    self.rbuf = self.rbuf:sub(n + 1)
-
-    return data
+    if self.cursor then togglecursor(self) end
   end
 
   function _tty:flush()
-    local dc = #self.wbuf > 0
-    if dc then togglecursor(self) end
-    internalwrite(self, self.wbuf)
-    self.wbuf = ""
-    if dc then togglecursor(self) end
   end
 
   local scancode_lookups = {
@@ -519,17 +489,6 @@ do
     [205] = "C",
     [203] = "D"
   }
-
-  local sub32_lookups = {
-    [0] = " ",
-    [27] = "[",
-    [28] = "\\",
-    [29] = "]",
-    [30] = "~",
-    [31] = "?"
-  }
-
-  for i=1, 26, 1 do sub32_lookups[i] = string.char(96 + i) end
 
   function k.open_tty(gpu, screen)
     checkArg(1, gpu, "string", "table")
@@ -543,13 +502,11 @@ do
       gpu = gpu,
       w = w, h = h, cx = 1, cy = 1,
       scrolltop = 1, scrollbot = h,
-      rbuf = "", wbuf = "",
       fg = 7, bg = 0,
       -- attributes
-      altcursor = false, showctrl = false,
-      mousereport = 0, autocr = true,
-      cursor = true, echo = true, line = true,
-      raw = false
+      altcursor = false, mousereport = 0,
+      autocr = true, cursor = true,
+      echo = true,
     }
 
     for i=1, #colors, 1 do
@@ -568,40 +525,18 @@ do
     -- handlers
     new.khid = k.add_signal_handler("key_down", function(_, kbd, char, code)
       if not keyboards[kbd] then return end
+      if not new.discipline then return end
 
-      local to_screen, to_buffer
+      local to_buffer
       if scancode_lookups[code] then
         local c = scancode_lookups[code]
         local interim = new.altcursor and "O" or "["
-        to_screen = "^" .. interim .. c
         to_buffer = "\27" .. interim .. c
-      elseif char < 32 then
-        if char == 0 then return end
-        to_buffer = string.char(char)
-        to_screen = "^"..sub32_lookups[char]:upper()
       else
         to_buffer = string.char(char)
-        to_screen = string.char(char)
       end
 
-      if not new.raw then
-        if char == 13 then
-          to_buffer, to_screen = "\n", "\n"
-        elseif char == 8 then
-          to_buffer = ""
-          if #new.rbuf > 0 then
-            to_screen = "\27[D \27[D"
-            new.rbuf = new.rbuf:sub(1, -2)
-          else
-            to_screen = ""
-          end
-        end
-      end
-
-      if new.echo then
-        new:write(to_screen or ""):flush()
-      end
-      new.rbuf = new.rbuf .. (to_buffer or "")
+      new.discipline:processInput(to_buffer)
     end)
 
     setmetatable(new, {__index = _tty})
