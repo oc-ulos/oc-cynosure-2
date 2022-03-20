@@ -39,6 +39,9 @@
 
         proc.queue[#proc.queue+1] = table.pack(a, ...)
         return true
+
+      else
+        return nil, k.errno.ENOTTY
       end
     end
   }
