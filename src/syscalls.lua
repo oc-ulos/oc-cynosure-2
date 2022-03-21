@@ -66,6 +66,10 @@ do
     checkArg(2, operation, "string")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -78,6 +82,10 @@ do
     checkArg(2, fmt, "string", "number")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -90,6 +98,10 @@ do
     checkArg(2, data, "string")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -104,6 +116,10 @@ do
     checkArg(3, offset, "number", "nil")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -115,6 +131,10 @@ do
     checkArg(1, fd, "number")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -139,6 +159,10 @@ do
     checkArg(1, fd, "number")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -167,6 +191,10 @@ do
     checkArg(1, fd, "number")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
@@ -183,6 +211,10 @@ do
     checkArg(2, nfd, "number")
 
     local current = k.current_process()
+    if current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
     if not current.fds[fd] then
       return nil, k.errno.EBADF
     end
