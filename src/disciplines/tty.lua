@@ -167,6 +167,19 @@ do
 
       return true
 
+    elseif method == "getattrs" then
+      return {
+        eol = self.eol,
+        erase = self.erase,
+        intr = self.intr,
+        kill = self.kill,
+        quit = self.quit,
+        start = self.start,
+        stop = self.stop,
+        susp = self.susp,
+        echo = self.echo,
+        raw = self.raw
+      }
     elseif method == "setpg" then
       local current = k.current_process()
       if self.pgroup and current.pgid ~= self.pgroup then
