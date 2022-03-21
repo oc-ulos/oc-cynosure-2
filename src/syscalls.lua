@@ -163,6 +163,40 @@ do
     return true
   end
 
+  function k.syscalls.dup(fd)
+    checkArg(1, fd, "number")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    local nfd = #current.fds + 1
+    current.fds[nfd] = current.fds[fd]
+    current.fds[fd].refs = current.fds[fd].refs + 1
+
+    return nfd
+  end
+
+  function k.syscalls.dup2(fd, nfd)
+    checkArg(1, fd, "number")
+    checkArg(2, nfd, "number")
+
+    local current = k.current_process()
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    if current.fds[nfd] then
+      k.close(current.fds[nfd])
+    end
+
+    current.fds[nfd] = current.fds[fd]
+    current.fds[fd].refs = current.fds[fd].refs + 1
+
+    return true
+  end
+
   k.syscalls.mkdir = k.mkdir
 
   k.syscalls.stat = k.stat
