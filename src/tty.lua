@@ -396,7 +396,7 @@ do
   -- write some text
   local function textwrite(self, line)
     corral(self)
-    if not self.echo then line = (" "):rep(line) end
+    if not self.echo then line = (" "):rep(#line) end
     while #line > 0 do
       local chunk = line:sub(1, self.w - self.cx + 1)
       line = line:sub(#chunk + 1)
