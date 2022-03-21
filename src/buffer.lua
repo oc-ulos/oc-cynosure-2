@@ -252,7 +252,6 @@ do
   local modes = { full = true, line = true, none = true }
   function buffer:ioctl(op, mode, ...)
     checkArg(1, op, "string")
-    checkArg(2, mode, "string")
     if op ~= "setvbuf" then
       if self.stream.proxy and self.stream.proxy.ioctl then
         return self.stream.proxy.ioctl(self.stream.fd, op, mode, ...)
@@ -260,6 +259,7 @@ do
         return nil, k.errno.ENOSYS
       end
     end
+    checkArg(2, mode, "string")
     if not modes[mode] then return nil, k.errno.EINVAL end
     self.bufmode = mode
     return true
