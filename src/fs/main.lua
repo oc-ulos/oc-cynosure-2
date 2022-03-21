@@ -397,6 +397,10 @@ do
       fd.refs = 1
       k.close(fd)
     end
+
+    for path in pairs(mounts) do
+      k.unmount(path)
+    end
   end)
 end
 
