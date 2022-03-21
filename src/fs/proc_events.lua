@@ -33,7 +33,8 @@
           return nil, k.errno.EINVAL
         end
 
-        if current.euid ~= proc.uid and current.egid ~= proc.gid then
+        if current.euid ~= proc.uid and current.egid ~= proc.gid
+            and current.euid ~= 0 then
           return nil, k.errno.EPERM
         end
 
