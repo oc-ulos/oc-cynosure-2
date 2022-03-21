@@ -221,6 +221,9 @@ do
 
     if current.fds[nfd] then
       k.close(current.fds[nfd])
+      if current.fds[nfd].refs <= 0 then
+        current.fds[nfd] = nil
+      end
     end
 
     current.fds[nfd] = current.fds[fd]
