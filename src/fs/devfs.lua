@@ -121,8 +121,14 @@ do
   end
 
   setmetatable(provider, {__index = function(_, k)
-    return function(_, ...)
-      return autocall(k, ...)
+    if k ~= "ioctl" then
+      return function(_, ...)
+        return autocall(k, ...)
+      end
+    else
+      return function(...)
+        return autocall(k, ...)
+      end
     end
   end})
 
