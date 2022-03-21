@@ -541,6 +541,29 @@ do
       end
     end)
 
+    new.thid = k.add_signal_handler("touch", function(_, addr, x, y, button)
+      if addr ~= screen then return end
+      if not new.discipline then return end
+
+      if new.mousereport > 0 then
+        new.discipline:processInput(string.format("\27[M%s%s%s",
+          string.char(button),
+          string.char(x + 32),
+          string.char(y + 32)))
+      end
+    end)
+
+    new.dhid = k.add_signal_handler("drop", function(_, addr, x, y, button)
+      if addr ~= screen then return end
+      if not new.discipline then return end
+
+      if new.mousereport == 2 then
+        new.discipline:processInput(string.format("\27[M\3%s%s",
+          string.char(x + 32),
+          string.char(y + 32)))
+      end
+    end)
+
     setmetatable(new, {__index = _tty})
     return new
   end
