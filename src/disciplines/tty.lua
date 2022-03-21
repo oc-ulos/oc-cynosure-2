@@ -180,6 +180,7 @@ do
         echo = self.echo,
         raw = self.raw
       }
+
     elseif method == "setpg" then
       local current = k.current_process()
       if self.pgroup and current.pgid ~= self.pgroup then
