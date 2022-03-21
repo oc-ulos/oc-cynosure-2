@@ -78,9 +78,7 @@ do
     end
   end
 
-  local function wchar(self, c)
-    if (not self.raw) and c == "\r" then c = "\n" end
-    self.rbuf = self.rbuf .. c
+  local function pchar(self, c)
     if self.echo then
       local byte = string.byte(c)
       if (not self.raw) and sub32_lookups_notraw[byte] then
@@ -93,48 +91,60 @@ do
     end
   end
 
+  local function wchar(self, c)
+    if (not self.raw) and c == "\r" then c = "\n" end
+    self.rbuf = self.rbuf .. c
+    pchar(self, c)
+  end
+
   -- process new input from the stream - this is keyboard input
   function discipline:processInput(inp)
     self:flush()
     for c in inp:gmatch(".") do
-      if c == self.erase and not self.raw then
-        if #self.rbuf > 0 then
-          local last = self.rbuf:sub(-1)
-          if self.echo then
-            if last:byte() < 32 then
-              self.obj:write("\27[2D  \27[2D")
-            else
-              self.obj:write("\27[D \27[D")
+      if not self.raw then
+        if c == self.erase then
+          if #self.rbuf > 0 then
+            local last = self.rbuf:sub(-1)
+            if self.echo then
+              if last:byte() < 32 then
+                self.obj:write("\27[2D  \27[2D")
+              else
+                self.obj:write("\27[D \27[D")
+              end
+            end
+            if last ~= self.eol and last ~= self.eof then
+              self.rbuf = self.rbuf:sub(1, -2)
             end
           end
-          if last ~= self.eol and last ~= self.eof then
-            self.rbuf = self.rbuf:sub(1, -2)
+        elseif c == self.eof then
+          if self.rbuf:sub(-1) == self.eol then
+            wchar(self, c)
           end
-        end
-      elseif c == self.eof then
-        if self.rbuf:sub(-1) == self.eol then
+
+        elseif c == self.intr then
+          send(self, "SIGINT")
+          pchar(self, self.intr)
+
+        -- kill (erase current line) not implemented; this
+        -- implementation does not provide line editing
+
+        elseif c == self.quit then
+          send(self, "SIGQUIT")
+          pchar(self, self.quit)
+
+        elseif c == self.start then
+          self.stopped = false
+
+        elseif c == self.stop then
+          self.stopped = true
+
+        elseif c == self.susp then
+          send(self, "SIGSTOP")
+          pchar(self, self.susp)
+
+        else
           wchar(self, c)
         end
-
-      elseif c == self.intr then
-        send(self, "SIGINT")
-
-      -- kill (erase current line) not implemented; this
-      -- implementation does not provide line editing
-
-      elseif c == self.quit then
-        send(self, "SIGQUIT")
-        self.obj:write("^\\")
-
-      elseif c == self.start then
-        self.stopped = false
-
-      elseif c == self.stop then
-        self.stopped = true
-
-      elseif c == self.susp then
-        send(self, "SIGSTOP")
-
       else
         wchar(self, c)
       end
