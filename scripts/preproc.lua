@@ -60,6 +60,8 @@ _G.proc = function(f)
   if not handle then
     io.write("\27[101;97m ERROR \27[39;49m Cannot open file \27[93m"..f
       .."\27[39m\n")
+    _G.env = nil
+    _G.proc = nil
     os.exit(1)
   end
   for line in handle:lines("l") do
@@ -84,6 +86,8 @@ Much more primitive than LuaComp.
 
 Copyright (C) 2021 Ocawesome101 under the GPLv3.
 ]])
+  _G.env = nil
+  _G.proc = nil
   os.exit(1)
 end
 
