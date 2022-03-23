@@ -43,7 +43,7 @@ do
   ---@overload fun(proxy: table, fd: userdata, mode: string): table
   function k.fd_from_node(proxy, fd, mode)
     checkArg(1, proxy, "table")
-    -- ocvm returns userdata rather than a number
+    -- ocvm returns userdata rather than a table
     checkArg(2, fd, "table", "userdata")
     checkArg(3, mode, "string")
     local new = k.buffer_from_stream({
