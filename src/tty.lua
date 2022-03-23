@@ -395,14 +395,47 @@ do
 
   -- write some text
   local function textwrite(self, line)
-    corral(self)
     if not self.echo then line = (" "):rep(#line) end
     while #line > 0 do
+      corral(self)
       local chunk = line:sub(1, self.w - self.cx + 1)
       line = line:sub(#chunk + 1)
       self.gpu.set(self.cx, self.cy, chunk)
       self.cx = self.cx + #chunk
-      corral(self)
+    end
+  end
+
+  local function writelines(self, chunk)
+    while #chunk > 0 do
+      local fnrtv = chunk:find("[\f\n\r\t\v]")
+
+      if fnrtv then
+        local ln = chunk:sub(1, fnrtv - 1)
+        local char = chunk:sub(fnrtv, fnrtv)
+        chunk = chunk:sub(#ln + 2)
+
+        if #ln > 0 then textwrite(self, ln) end
+
+        if char == "\r" then
+          self.cx = 1
+        elseif char == "\t" then
+          self.cx = 8 * ((self.cx + 8) % 8)
+          if self.cx > self.w then self.cx = 1 self.cy = self.cy + 1 end
+          corral(self)
+        else
+          if self.just_wrapped then
+            self.just_wrapped = false
+          else
+            self.cy = self.cy + 1
+            corral(self)
+          end
+        end
+      else
+        textwrite(self, chunk)
+        self.just_wrapped = self.cx == 81
+        corral(self)
+        break
+      end
     end
   end
 
@@ -419,25 +452,25 @@ do
   function _tty:write(line)
     if #line == 0 then return end
 
-    if self.cursor then togglecursor(self) end
+    togglecursor(self)
 
     line = line:gsub("\x9b", "\27[")
     if self.autocr then
       line = line:gsub("[\n\v\f]", "%1\r")
     end
 
-    -- i can't believe i haven't just done this in the past
+    --[[
     line = line:gsub("[\n\v\f]", "\27[B")
       :gsub("\r", "\27[G")
       -- TODO: perhaps custom escape for tab?
-      :gsub("\t", "  ")
+      :gsub("\t", "  ")]]
 
     while #line > 0 do
       local nesc = line:find("\27", nil, true)
       local e = (nesc and nesc - 1) or #line
       local chunk = line:sub(1, e)
       line = line:sub(#chunk + 1)
-      if #chunk > 0 then textwrite(self, chunk) end
+      if #chunk > 0 then writelines(self, chunk) end
 
       if nesc then
         local css, params, csc, len
@@ -477,7 +510,7 @@ do
       end
     end
 
-    if self.cursor then togglecursor(self) end
+    togglecursor(self)
   end
 
   function _tty:flush()
