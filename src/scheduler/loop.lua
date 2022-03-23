@@ -84,10 +84,11 @@ do
         if computer.uptime() >= process:deadline() or #signal > 0 then
           process:resume(table.unpack(signal, 1, signal.n))
           if not next(process.threads) then
-            k.pushSignal("process_exit", cpid, process.status or 0)
+            k.pushSignal("process_exit", cpid, process.reason,
+              process.status or 0)
             if k.cmdline.log_process_deaths then
-              printk(k.L_DEBUG, "process died: %d, %d", cpid,
-                process.status or 0)
+              printk(k.L_DEBUG, "process died: %d, %s, %d", cpid,
+                process.reason, process.status or 0)
             end
 
             -- close all open files

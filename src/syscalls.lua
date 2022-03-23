@@ -485,12 +485,15 @@ do
   -- Handlers of signals whose value here is 'false' can't be
   -- overwritten, but those signals can still be sent by kill(2).
   local valid_signals = {
-    SIGKILL = false,
+    SIGHUP  = true,
     SIGINT  = true,
     SIGQUIT = true,
+    SIGKILL = false,
+    SIGPIPE = true,
+    SIGTERM = true,
+    SIGCONT = false,
     SIGTSTP = true,
     SIGSTOP = false,
-    SIGCONT = false,
     SIGTTIN = true,
     SIGTTOU = true
   }

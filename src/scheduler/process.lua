@@ -19,21 +19,28 @@
 printk(k.L_INFO, "scheduler/process")
 
 do
+  local sigtonum = {
+    SIGEXIST  = 0,
+    SIGHUP    = 1,
+    SIGINT    = 2,
+    SIGQUIT   = 3,
+    SIGKILL   = 9,
+    SIGPIPE   = 13,
+    SIGTERM   = 15,
+    SIGCHLD   = 17,
+    SIGCONT   = 18,
+    SIGSTOP   = 19,
+    SIGTSTP   = 20,
+    SIGTTIN   = 21,
+    SIGTTOU   = 22
+  }
+  k.sigtonum = {}
+  for k,v in pairs(sigtonum) do
+    k.sigtonum[k] = v
+    k.sigtonum[v] = k
+  end
   -- Default signal handlers
-  k.default_signal_handlers = {
-    SIGINT  = function(p)
-      p.threads = {}
-      p.thread_count = 0
-    end,
-    SIGKILL = function(p)
-      p.threads = {}
-      p.thread_count = 0
-    end,
-    SIGQUIT = function(p)
-      p.threads = {}
-      p.thread_count = 0
-    end,
-    SIGTSTP = function(p)
+  k.default_signal_handlers = setmetatable({    SIGTSTP = function(p)
       p.stopped = true
     end,
     SIGSTOP = function(p)
@@ -47,8 +54,13 @@ do
     end,
     SIGTTOU = function(p)
       p.stopped = true
-    end
-  }
+    end}, {__index = function(t, sig)
+      t[sig] = function(p)
+        p.threads = {}
+        p.thread_count = 0
+      end
+      return t[sig]
+    end})
 
 
   -- Much of the heavy lifting is done in scheduler/thread.lua in
@@ -63,7 +75,10 @@ do
     -- otherwise processes wouldn't respond to SIGCONT.
     while #self.sigqueue > 0 do
       local psig = table.remove(self.sigqueue, 1)
-      self:signal(psig)
+      if sigtonum[psig] then
+        self.status = sigtonum[psig]
+        self:signal(psig)
+      end
     end
 
     if self.stopped then return end
@@ -124,6 +139,9 @@ do
     else
       pcall(k.default_signal_handlers[sig], self)
     end
+    if self.thread_count == 0 then
+      self.reason = "signal"
+    end
   end
 
   local process_mt = { __index = process }
@@ -152,6 +170,9 @@ do
 
       -- exit status
       status = 0,
+
+      -- exit reason
+      reason = "exit",
 
       -- process ID
       pid = pid,
