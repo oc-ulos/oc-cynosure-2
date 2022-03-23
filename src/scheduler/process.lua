@@ -35,9 +35,9 @@ do
     SIGTTOU   = 22
   }
   k.sigtonum = {}
-  for k,v in pairs(sigtonum) do
-    k.sigtonum[k] = v
-    k.sigtonum[v] = k
+  for key,v in pairs(sigtonum) do
+    k.sigtonum[key] = v
+    k.sigtonum[v] = key
   end
   -- Default signal handlers
   k.default_signal_handlers = setmetatable({    SIGTSTP = function(p)
