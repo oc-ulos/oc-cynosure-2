@@ -30,10 +30,11 @@ do
       printk(k.L_DEBUG, "load failed - %s", tostring(err))
       return nil, k.errno.ENOEXEC
     end
-    return function(...)
+    return function(args, env)
       assert(xpcall(chunk, function(err)
         printk(k.L_NOTICE, "Lua error: %s", tostring(err))
-      end, ...))
+        return debug.traceback()
+      end, args, env))
       k.syscalls.exit(0)
     end
   end)

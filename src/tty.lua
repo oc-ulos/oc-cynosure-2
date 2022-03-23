@@ -377,7 +377,7 @@ do
       self.cy = self.cy - 1
     end
 
-    while self.cx > self.w + 1 do
+    while self.cx > self.w do
       self.cx = self.cx - self.w
       self.cy = self.cy + 1
     end

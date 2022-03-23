@@ -97,6 +97,9 @@ do
     end
 
     if coroutine.status(self.coro) == "dead" then
+      if k.cmdline.log_process_deaths then
+        printk(k.L_DEBUG, "thread died: %s", result[1])
+      end
       return 1
     end
 

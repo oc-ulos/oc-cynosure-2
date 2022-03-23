@@ -259,6 +259,8 @@ do
     checkArg(2, args, "table")
     checkArg(3, env, "table", "nil")
 
+    args[0] = args[0] or path
+
     local current = k.current_process()
 
     local func, err = k.load_executable(path, current.env)
@@ -277,11 +279,14 @@ do
     end
 
     current.threads = {}
+    current.thread_count = 0
     current:add_thread(k.thread_from_function(function()
       return func(args, env)
     end))
 
     coroutine.yield()
+
+    return true
   end
 
   function k.syscalls.wait(pid)
