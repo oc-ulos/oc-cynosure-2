@@ -546,6 +546,42 @@ do
     return k.current_process().environ
   end
 
+  function k.syscalls.pipe()
+    local buf = ""
+    local closed = false
+
+    local instream = k.fd_from_rwf(function(_, n)
+      while #buf < n and not closed do coroutine.yield() end
+      local data = buf:sub(1, n)
+      buf = buf:sub(#data + 1)
+
+      if #data == 0 and closed then
+        k.syscalls.kill(0, "SIGPIPE")
+        return nil, k.errno.EBADF
+      end
+
+      return data
+    end, nil, function() closed = true end)
+
+    local outstream = k.fd_from_rwf(nil, function(_, data)
+      if closed then
+        k.syscalls.kill(0, "SIGPIPE")
+        return nil, k.errno.EBADF
+      end
+      buf = buf .. data
+      return true
+    end, function() closed = true end)
+
+    local current = k.current_process()
+    local infd = #current.fds + 1
+    current.fds[infd] = instream
+
+    local outfd = #current.fds + 1
+    current.fds[outfd] = outstream
+
+    return infd, outfd
+  end
+
   function k.syscalls.reboot(cmd)
     checkArg(1, cmd, "string")
 
