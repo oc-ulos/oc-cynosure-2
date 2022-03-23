@@ -28,9 +28,10 @@ do
     for i=1, 10, 1 do avgfree = avgfree + computer.freeMemory() end
     avgfree = avgfree / 10
     local total, free = computer.totalMemory() // 1024, avgfree // 1024
+    local used = total - free
     return string.format(
-      "MemTotal: %d kB\nMemFree: %d kB\nMemAvailable: %d kB\n",
-      total, free, free)
+      "MemTotal: %d kB\nMemUsed: %d kB\nMemAvailable: %d kB\n",
+      total, used, free)
   end }
 
   files.filesystems = { data = function()
@@ -183,7 +184,7 @@ do
     dirfd.i = dirfd.i + 1
 
     if dirfd.files[dirfd.i] then
-      return { inode = -1, name = dirfd.files[dirfd.i] }
+      return { inode = -1, name = tostring(dirfd.files[dirfd.i]) }
     end
   end
 

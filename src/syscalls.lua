@@ -280,8 +280,9 @@ do
 
     current.threads = {}
     current.thread_count = 0
+    current.environ = env or current.environ
     current:add_thread(k.thread_from_function(function()
-      return func(args, env)
+      return func(args)
     end))
 
     coroutine.yield()
@@ -537,6 +538,10 @@ do
   --------------------------------
   -- Miscellaneous system calls --
   --------------------------------
+
+  function k.syscalls.environ()
+    return k.current_process().environ
+  end
 
   function k.syscalls.reboot(cmd)
     checkArg(1, cmd, "string")

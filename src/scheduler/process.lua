@@ -128,7 +128,8 @@ do
 
   local process_mt = { __index = process }
 
-  local default_parent = {handles = {}, _G = {}, pid = 0}
+  local default_parent = {handles = {}, _G = {}, pid = 0,
+    environ = {TERM = "cynosure-2"}}
 
   function k.create_process(pid, parent)
     parent = parent or default_parent
@@ -196,6 +197,19 @@ do
 
       -- environment
       env = k.create_env(parent.env),
+
+      -- environment variables (e.g. $TERM)
+      environ = setmetatable({}, {__index=parent.environ,
+        __pairs = function(tab)
+          local t = {}
+          for k, v in pairs(parent.environ) do
+            t[k] = v
+          end
+          for k,v in next, tab, nil do
+            t[k] = v
+          end
+          return next, t, nil
+        end, __metatable = {}})
     }, process_mt)
   end
 end

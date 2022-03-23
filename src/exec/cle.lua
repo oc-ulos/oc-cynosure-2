@@ -71,14 +71,14 @@ do
     local interpreter, err = k.load_executable(name)
     if not interpreter then return nil, err end
 
-    return function(args, proc_env)
+    return function(args)
       local current = k.current_process()
       local fds = current.fds
       local id = #fds + 1
       fds[id] = fd
       table.insert(args, 1, ldcache)
       table.insert(args, 1, id)
-      return interpreter(args, proc_env)
+      return interpreter(args)
     end
   end
 

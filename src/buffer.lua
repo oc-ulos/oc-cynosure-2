@@ -60,6 +60,8 @@ do
         self.rbuf = self.rbuf .. chunk
       end
 
+      if #self.rbuf == 0 then return nil end
+
       -- find the first newline in the read buffer;  if there is none, then
       -- return the whole buffer
       local n = self.rbuf:find("\n") or #self.rbuf
@@ -161,6 +163,7 @@ do
         return self:readn(math.huge)
       elseif fmt == "l" then -- read a line without the trailing newline
         local line = self:readline()
+        if not line then return nil end
         return line:gsub("\n$", "")
       elseif fmt == "L" then -- read a line WITH the trailing newline
         return self:readline()

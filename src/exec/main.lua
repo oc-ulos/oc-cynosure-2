@@ -65,7 +65,7 @@ do
 
     for _, format in pairs(formats) do
       if format.recognizer(header, extension) then
-        return format.loader(fd, env)
+        return format.loader(fd, env, path)
       end
     end
 

@@ -1,6 +1,6 @@
 --[[
-  Lua loader
-  Copyright (C) 2022 Ocawesome101, Atirut
+  Support for scripts starting with #!/path/to/interpreter
+  Copyright (C) 2022 Ocawesome101
 
   This program is free software: you can redistribute it and/or modify
   it under the terms of the GNU General Public License as published by
@@ -16,26 +16,34 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "exec/lua")
+printk(k.L_INFO, "exec/shebang")
 
 do
-  k.register_executable_format("lua", function(header, extension)
-    return header:sub(1, 6) == "--!lua" or extension == "lua"
-  end, function(fd, env)
-    local data = k.read(fd, math.huge)
+  k.register_executable_format("shebang", function(header)
+    return header:sub(1, 2) == "#!"
+  end, function(fd, env, path)
+    local shebang = k.read(fd, "l")
     k.close(fd)
 
-    local chunk, err = k.load(data, "=lua", "t", env)
-    if not chunk then
-      printk(k.L_DEBUG, "load failed - %s", tostring(err))
-      return nil, k.errno.ENOEXEC
+    local words = {}
+    for word in shebang:sub(2):gmatch("[^ ]+") do
+      words[#words+1] = word
     end
+
+    local interp = words[1]
+    words[0] = interp
+    words[1] = path
+
+    local func, err = k.load_executable(interp, env)
+    if not func then
+      return nil, err
+    end
+
     return function(args)
-      assert(xpcall(chunk, function(err)
-        printk(k.L_NOTICE, "Lua error: %s", tostring(err))
-        return debug.traceback()
-      end, args))
-      k.syscalls.exit(0)
+      for i=1, #args, 1 do
+        words[#words+1] = args[i]
+      end
+      return func(words)
     end
   end)
 end

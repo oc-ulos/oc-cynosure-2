@@ -419,7 +419,7 @@ do
         if char == "\r" then
           self.cx = 1
         elseif char == "\t" then
-          self.cx = 8 * ((self.cx + 8) % 8)
+          self.cx = 8 * ((self.cx + 9) // 8) - 1
           if self.cx > self.w then self.cx = 1 self.cy = self.cy + 1 end
           corral(self)
         else
