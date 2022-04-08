@@ -59,6 +59,8 @@ do
   function nocsi:c()
     self.fg = 7
     self.bg = 0
+    self.fgpal = true
+    self.bgpal = true
     self.gpu.setForeground(7, true)
     self.gpu.setBackground(0, true)
     self.gpu.fill(1, 1, self.w, self.h, " ")
@@ -88,7 +90,7 @@ do
     end
   end
 
-  local save = {"fg", "bg", "echo", "cx", "cy"}
+  local save = {"fg", "bg", "fgpal", "bgpal", "echo", "cx", "cy"}
   -- DECSC - save state
   nocsi["7"] = function(self)
     self.saved = {}
@@ -103,8 +105,8 @@ do
       for i=1, #save, 1 do
         self[save[i]] = self.saved[save[i]]
       end
-      self.gpu.setForeground(self.fg, true)
-      self.gpu.setBackground(self.bg, true)
+      self.gpu.setForeground(self.fg, self.fgpal)
+      self.gpu.setBackground(self.bg, self.bgpal)
     end
   end
 
@@ -280,14 +282,38 @@ do
     hl(self, false, args)
   end
 
+  -- split into a separate function to avoid code duplication
+  local function processFancyColor(self, field, setter, args, i)
+    if i + 2 > #args then return math.huge end
+
+    i = i + 1
+    if args[i] == 2 then -- 24-bit color mode
+      if i + 3 > #args then return math.huge end
+      local r, g, b = args[i+1], args[i+2], args[i+3]
+      i = i + 3
+      local rgb = r*0x10000 + g*0x100 + b
+      self[field] = rgb
+      setter(rgb)
+    elseif args[i] == 5 then
+      -- 256-color mode is not implemented
+    end
+
+    return i
+  end
+
   -- SGR - set attributes
   function commands:m(args)
     args[1] = args[1] or 0
-    for i=1, #args, 1 do
+    local i = 0
+    while i < #args do
+      i = i + 1
+
       local n = args[i]
       if n == 0 then
         self.fg = 7
         self.bg = 0
+        self.fgpal = true
+        self.bgpal = true
         self.gpu.setForeground(self.fg, true)
         self.gpu.setBackground(self.bg, true)
         self.echo = true
@@ -299,28 +325,40 @@ do
       elseif (n == 7 and not self.reversed) or (n == 27 and self.reversed) then
         self.reversed = true
         self.fg, self.bg = self.bg, self.fg
-        self.gpu.setForeground(self.fg, true)
-        self.gpu.setBackground(self.bg, true)
+        self.gpu.setForeground(self.fg, self.fgpal)
+        self.gpu.setBackground(self.bg, self.bgpal)
       elseif n == 8 or n == 28 then
         self.echo = n == 28
       -- 10, 11, 12, 21, 22, 25 not implemented
       elseif n > 29 and n < 38 then
         self.fg = n - 30
+        self.fgpal = true
         self.gpu.setForeground(self.fg, true)
       elseif n > 89 and n < 98 then
         self.fg = n - 82
+        self.fgpal = true
         self.gpu.setForeground(self.fg, true)
       elseif n > 39 and n < 48 then
         self.bg = n - 40
+        self.bgpal = true
         self.gpu.setBackground(self.bg, true)
       elseif n > 99 and n < 108 then
         self.bg = n - 92
+        self.bgpal = true
         self.gpu.setBackground(self.bg, true)
+      elseif n == 38 then
+        self.fgpal = false
+        i = processFancyColor(self, "fg", self.gpu.setForeground, args, i)
+      elseif n == 48 then
+        self.bgpal = false
+        i = processFancyColor(self, "bg", self.gpu.setBackground, args, i)
       elseif n == 39 then
         self.fg = 7
+        self.fgpal = true
         self.gpu.setForeground(self.fg, true)
       elseif n == 49 then
         self.bg = 0
+        self.bgpal = true
         self.gpu.setBackground(self.bg, true)
       end
     end
@@ -540,6 +578,8 @@ do
       altcursor = false, mousereport = 0,
       autocr = true, cursor = true,
       echo = true,
+      -- whether or not foreground and background are palette colors
+      fgpal = true, bgpal = true
     }
 
     for i=1, #colors, 1 do
