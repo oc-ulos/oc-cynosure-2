@@ -395,7 +395,9 @@ do
   k.add_signal_handler("shutdown", function()
     for fd in pairs(opened) do
       fd.refs = 1
-      k.close(fd)
+      if fd.fd then
+        k.close(fd)
+      end
     end
 
     for path in pairs(mounts) do
