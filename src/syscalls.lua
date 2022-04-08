@@ -293,12 +293,16 @@ do
   function k.syscalls.wait(pid)
     checkArg(1, pid, "number")
 
+    if not k.get_process(pid) then
+      return nil, k.errno.ESRCH
+    end
+
     local sig, id, status
     repeat
-      sig, id, status = coroutine.yield(0)
+      sig, id, reason, status = coroutine.yield(0)
     until sig == "process_exit" and id == pid
 
-    return status
+    return reason, status
   end
 
   function k.syscalls.exit(status)
