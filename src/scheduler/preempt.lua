@@ -67,9 +67,10 @@ do
           if not pch then -- syntax error
             return wrapped .. chunk .. quote .. code
           end
-          prefix = prefix .. pch:sub(1, -2) .. "%]"
-          code = code:sub(#pch+1)
-          wrapped = wrapped .. gsub(chunk) .. "[" .. pch
+          prefix = prefix .. code:sub(1, pch) .. "%]"
+          code = code:sub(pch)
+          wrapped = wrapped .. gsub(chunk) .. "[" .. prefix:sub(3, -3)
+            .. "["
         else
           wrapped = wrapped .. gsub(chunk) .. quote
         end

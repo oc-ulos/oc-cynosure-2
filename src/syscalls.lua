@@ -576,6 +576,11 @@ do
       return true
     end, function() closed = true end)
 
+    instream.fd = instream
+    instream.refs = 1
+    outstream.fd = outstream
+    outstream.refs = 1
+
     local current = k.current_process()
     local infd = #current.fds + 1
     current.fds[infd] = instream
