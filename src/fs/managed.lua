@@ -285,4 +285,8 @@ do
       return setmetatable({fs = component.proxy(comp)}, fs_mt)
     end
   end)
+
+  k.register_fstype("tmpfs", function(t)
+    return t == "tmpfs" and k.fstypes.managed(computer.tmpAddress())
+  end)
 end
