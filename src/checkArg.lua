@@ -42,7 +42,7 @@ do
         msg = string.format("bad argument %s (%s expected, got %s)", n,
           table.concat(table.pack(...), " or "), have)
       end
-      error(msg, 2)
+      error(debug.traceback(msg, 2), 2)
     end
   end
 end

@@ -80,27 +80,23 @@ do
       end
 
       for cpid, process in pairs(processes) do
-        current = cpid
-        if computer.uptime() >= process:deadline() or #signal > 0 then
-          process:resume(table.unpack(signal, 1, signal.n))
-          if not next(process.threads) then
-            k.pushSignal("process_exit", cpid, process.reason,
-              process.status or 0)
-            if k.cmdline.log_process_deaths then
-              printk(k.L_DEBUG, "process died: %d, %s, %d", cpid,
-                process.reason, process.status or 0)
-            end
+        if not process.is_dead then
+          current = cpid
+          if computer.uptime() >= process:deadline() or #signal > 0 then
+            process:resume(table.unpack(signal, 1, signal.n))
+            if not next(process.threads) then
+              process.is_dead = true
 
-            -- close all open files
-            for _, fd in pairs(process.fds) do
-              k.close(fd)
-            end
+              -- close all open files
+              for _, fd in pairs(process.fds) do
+                k.close(fd)
+              end
 
-            -- remove all signal handlers
-            for id in pairs(process.handlers) do
-              k.remove_signal_handler(id)
+              -- remove all signal handlers
+              for id in pairs(process.handlers) do
+                k.remove_signal_handler(id)
+              end
             end
-            processes[cpid] = nil
           end
         end
       end
@@ -126,6 +122,12 @@ do
   function k.get_process(rpid)
     checkArg(1, rpid, "number")
     return processes[rpid]
+  end
+
+  function k.remove_process(pid)
+    checkArg(1, pid, "number")
+    processes[pid] = nil
+    return true
   end
 
   function k.get_pids()

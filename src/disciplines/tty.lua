@@ -105,14 +105,14 @@ do
         if c == self.erase then
           if #self.rbuf > 0 then
             local last = self.rbuf:sub(-1)
-            if self.echo then
-              if last:byte() < 32 then
-                self.obj:write("\27[2D  \27[2D")
-              else
-                self.obj:write("\27[D \27[D")
-              end
-            end
             if last ~= self.eol and last ~= self.eof then
+              if self.echo then
+                if last:byte() < 32 then
+                  self.obj:write("\27[2D  \27[2D")
+                else
+                  self.obj:write("\27[D \27[D")
+                end
+              end
               self.rbuf = self.rbuf:sub(1, -2)
             end
           end

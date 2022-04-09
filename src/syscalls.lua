@@ -34,9 +34,9 @@ do
       result.n = result.n - 1
     end
 
-    -- Uncomment for debugging purposes.
-    --printk(k.L_DEBUG, "syscall %s => %s, %s", name, tostring(result[1]),
-    --  tostring(result[2]))
+    --[[ Uncomment for debugging purposes.
+    printk(k.L_DEBUG, "syscall %s => %s, %s", name, tostring(result[1]),
+      tostring(result[2]))--]]
 
     return table.unpack(result, 1, result.n)
   end
@@ -221,9 +221,6 @@ do
 
     if current.fds[nfd] then
       k.close(current.fds[nfd])
-      if current.fds[nfd].refs <= 0 then
-        current.fds[nfd] = nil
-      end
     end
 
     current.fds[nfd] = current.fds[fd]
@@ -297,10 +294,18 @@ do
       return nil, k.errno.ESRCH
     end
 
-    local sig, id, status
-    repeat
-      sig, id, reason, status = coroutine.yield(0)
-    until sig == "process_exit" and id == pid
+    while not k.get_process(pid).is_dead do
+      coroutine.yield(0)
+    end
+
+    local process = k.get_process(pid)
+    local reason, status = process.reason, process.status or 0
+
+    if k.cmdline.log_process_deaths then
+      printk(k.L_DEBUG, "process died: %d, %s, %d", pid, reason, status or 0)
+    end
+
+    k.remove_process(pid)
 
     return reason, status
   end
@@ -554,9 +559,9 @@ do
     local buf = ""
     local closed = false
 
-    local instream = k.fd_from_rwf(function(_, n)
-      while #buf < n and not closed do coroutine.yield() end
-      local data = buf:sub(1, n)
+    local instream = k.fd_from_rwf(function(_, _, n)
+      while #buf < n and not closed do coroutine.yield(0) end
+      local data = buf:sub(1, math.min(n, #buf))
       buf = buf:sub(#data + 1)
 
       if #data == 0 and closed then
@@ -565,28 +570,30 @@ do
       end
 
       return data
-    end, nil, function() closed = true end)
+    end, nil, function()printk(k.L_INFO, "closing") closed = true end)
 
     local outstream = k.fd_from_rwf(nil, function(_, data)
+      printk(k.L_INFO, "writing %s", tostring(data))
       if closed then
         k.syscalls.kill(0, "SIGPIPE")
         return nil, k.errno.EBADF
       end
       buf = buf .. data
       return true
-    end, function() closed = true end)
+    end, function() printk(k.L_INFO, "closing") closed = true end)
 
-    instream.fd = instream
-    instream.refs = 1
-    outstream.fd = outstream
-    outstream.refs = 1
+    local into, outof = k.fd_from_node(instream, instream, "r"),
+      k.fd_from_node(outstream, outstream, "w")
+
+    into:ioctl("setvbuf", "none")
+    outof:ioctl("setvbuf", "none")
 
     local current = k.current_process()
     local infd = #current.fds + 1
-    current.fds[infd] = instream
+    current.fds[infd] = { fd = into, node = into, refs = 1 }
 
     local outfd = #current.fds + 1
-    current.fds[outfd] = outstream
+    current.fds[outfd] = { fd = outof, node = outof, refs = 1 }
 
     return infd, outfd
   end
