@@ -211,7 +211,7 @@ do
     checkArg(2, nfd, "number")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
@@ -278,9 +278,18 @@ do
     current.threads = {}
     current.thread_count = 0
     current.environ = env or current.environ
+    current.cmdline = args
     current:add_thread(k.thread_from_function(function()
       return func(args)
     end))
+
+    for f, v in pairs(current.fds) do
+      if f > 2 and not v.cloexec then
+        k.close(v)
+        v.refs = v.refs - 1
+        current.fds[k] = nil
+      end
+    end
 
     coroutine.yield()
 
@@ -570,17 +579,17 @@ do
       end
 
       return data
-    end, nil, function()printk(k.L_INFO, "closing") closed = true end)
+    end, nil, function() closed = true end)
 
-    local outstream = k.fd_from_rwf(nil, function(_, data)
-      printk(k.L_INFO, "writing %s", tostring(data))
+    local outstream = k.fd_from_rwf(nil, function(_, _, data)
       if closed then
         k.syscalls.kill(0, "SIGPIPE")
         return nil, k.errno.EBADF
       end
+
       buf = buf .. data
       return true
-    end, function() printk(k.L_INFO, "closing") closed = true end)
+    end, function() closed = true end)
 
     local into, outof = k.fd_from_node(instream, instream, "r"),
       k.fd_from_node(outstream, outstream, "w")
@@ -590,10 +599,10 @@ do
 
     local current = k.current_process()
     local infd = #current.fds + 1
-    current.fds[infd] = { fd = into, node = into, refs = 1 }
+    current.fds[infd] = { fd = into, node = into, refs = 1, pipe = true }
 
     local outfd = #current.fds + 1
-    current.fds[outfd] = { fd = outof, node = outof, refs = 1 }
+    current.fds[outfd] = { fd = outof, node = outof, refs = 1, pipe = true }
 
     return infd, outfd
   end

@@ -226,6 +226,10 @@ do
   function k.ioctl(fd, op, ...)
     verify_fd(fd)
     checkArg(2, op, "string")
+    if op == "setcloexec" then
+      fd.cloexec = not not ...
+      return true
+    end
     if not fd.node.ioctl then return nil, k.errno.ENOSYS end
     return fd.node.ioctl(fd.fd, op, ...)
   end

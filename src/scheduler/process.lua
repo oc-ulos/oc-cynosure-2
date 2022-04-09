@@ -151,12 +151,8 @@ do
 
   function k.create_process(pid, parent)
     parent = parent or default_parent
-    if parent.fds then
-      if parent.fds[0] then parent.fds[0].refs = parent.fds[0].refs + 1 end
-      if parent.fds[1] then parent.fds[1].refs = parent.fds[1].refs + 1 end
-      if parent.fds[2] then parent.fds[2].refs = parent.fds[2].refs + 1 end
-    end
-    return setmetatable({
+
+    local new = setmetatable({
       -- local event queue
       queue = {},
       -- whether this process is stopped
@@ -201,11 +197,7 @@ do
       root = parent.root or "/",
 
       -- file descriptors
-      fds = {
-        [0] = parent.fds and parent.fds[0],
-        [1] = parent.fds and parent.fds[1],
-        [2] = parent.fds and parent.fds[2]
-      },
+      fds = {},
 
       -- event handler IDs
       handlers = {},
@@ -232,5 +224,17 @@ do
           return next, t, nil
         end, __metatable = {}})
     }, process_mt)
+
+    -- file descriptors are shared across fork(2), but not across execve(2)
+    -- (except file descriptors 0, 1, and 2, or if a file descriptor's cloexec
+    -- flag is set through the ioctl(2) call "setcloexec")
+    if parent.fds then
+      for k, v in pairs(parent.fds) do
+        new.fds[k] = v
+        v.refs = v.refs + 1
+      end
+    end
+
+    return new
   end
 end
