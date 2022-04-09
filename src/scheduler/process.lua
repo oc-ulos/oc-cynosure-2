@@ -164,6 +164,9 @@ do
       -- which thread?
       current_thread = 0,
 
+      -- command line
+      cmdline = {[0]=parent.cmdline and parent.cmdline[0] or "nil"},
+
       -- exit status
       status = 0,
 

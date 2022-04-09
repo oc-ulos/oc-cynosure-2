@@ -35,7 +35,18 @@ do
     end
 
     --[[ Uncomment for debugging purposes.
-    printk(k.L_DEBUG, "syscall %s => %s, %s", name, tostring(result[1]),
+    local args = {}
+    for _, arg in ipairs(table.pack(...)) do
+      if type(arg) == "string" then
+        args[#args+1] = string.format("%q",
+          arg:gsub("\n", "\\n"):gsub("\t", "\\t"))
+      else
+        args[#args+1] = tostring(arg)
+      end
+    end
+    local current = k.current_process()
+    printk(k.L_DEBUG, "%s[%d]: syscall %s(%s) => %s, %s", current.cmdline[0],
+      current.pid, name, table.concat(args, ", "), tostring(result[1]),
       tostring(result[2]))--]]
 
     return table.unpack(result, 1, result.n)
@@ -82,7 +93,7 @@ do
     checkArg(2, fmt, "string", "number")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd].refs <= 0 and not current.fds[fd].pipe then
       current.fds[fd] = nil
     end
 
