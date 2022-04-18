@@ -120,6 +120,8 @@ do
     end
   end
 
+  provider.default_mode = "none"
+
   setmetatable(provider, {__index = function(_, k)
     if k ~= "ioctl" then
       return function(_, ...)

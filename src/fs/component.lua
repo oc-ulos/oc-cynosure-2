@@ -26,6 +26,7 @@ do
   -- Takes the first few characters of a component address and returns the
   -- full address.
   local function resolve_address(addr, ctype)
+    if not addr then return end
     for check in component.list(ctype, true) do
       if check:sub(1, #addr) == addr then
         return check
