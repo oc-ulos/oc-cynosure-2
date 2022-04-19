@@ -291,6 +291,7 @@ do
   function k.close(fd)
     verify_fd(fd, fd.dir) -- close closes either type of fd
     fd.refs = fd.refs - 1
+    if fd.node.flush then fd.node:flush(fd.fd) end
     if fd.refs == 0 then
       opened[fd] = false
       if not fd.node.close then return nil, k.errno.ENOSYS end
@@ -306,8 +307,9 @@ do
     return node:stat(remain)
   end
 
-  function k.mkdir(path)
+  function k.mkdir(path, mode)
     checkArg(1, path, "string")
+    checkArg(2, mode, "number", "nil")
     local node, remain = path_to_node(path)
     if not node.mkdir then return nil, k.errno.ENOSYS end
     if node:exists(remain) then return nil, k.errno.EEXIST end
@@ -321,7 +323,10 @@ do
       return nil, k.errno.EACCES
     end
 
-    return node:mkdir(remain)
+    local done, failed = node:mkdir(remain)
+    if not done then return nil, failed end
+    if node.chmod then node:chmod(remain, mode or stat.mode) end
+    return done, failed
   end
 
   function k.link(source, dest)
