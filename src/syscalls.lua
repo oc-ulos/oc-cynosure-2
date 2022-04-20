@@ -575,6 +575,15 @@ do
     return k.current_process().environ
   end
 
+  function k.syscalls.umask(num)
+    local cur = k.current_process()
+    local old = cur.umask
+    if tonumber(num) then
+      cur.umask = bit32.band(math.floor(num), 511)
+    end
+    return old
+  end
+
   function k.syscalls.pipe()
     local buf = ""
     local closed = false

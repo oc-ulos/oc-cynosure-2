@@ -214,6 +214,8 @@ do
       -- environment
       env = k.create_env(parent.env),
 
+      umask = parent.umask or 0,
+
       -- environment variables (e.g. $TERM)
       environ = setmetatable({}, {__index=parent.environ,
         __pairs = function(tab)

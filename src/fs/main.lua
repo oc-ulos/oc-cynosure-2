@@ -189,7 +189,10 @@ do
     end
 
     if mode ~= "w" then
-      local stat = node:stat(remain)
+      local stat, err = node:stat(remain)
+      if not stat then
+        return nil, err
+      end
 
       if not k.process_has_permission(cur_proc(), stat, mode) then
         return nil, k.errno.EACCES
@@ -338,9 +341,12 @@ do
       return nil, k.errno.EACCES
     end
 
+    local umask = bit32.bxor(cur_proc().umask or 0, 511)
+
     local done, failed = node:mkdir(remain)
     if not done then return nil, failed end
-    if node.chmod then node:chmod(remain, mode or stat.mode) end
+    if node.chmod then node:chmod(remain,
+        bit32.band(mode or stat.mode, umask)) end
     return done, failed
   end
 
