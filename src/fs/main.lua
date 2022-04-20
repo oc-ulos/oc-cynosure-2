@@ -300,11 +300,26 @@ do
     end
   end
 
+  local stat_defaults = {
+    dev = -1, ino = -1, mode = 0x81FF, nlink = 1,
+    uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048,
+    atime = 0, ctime = 0, mtime = 0
+  }
+
   function k.stat(path)
     checkArg(1, path, "string")
+
     local node, remain = path_to_node(path)
     if not node.stat then return nil, k.errno.ENOSYS end
-    return node:stat(remain)
+
+    local statx, errno = node:stat(remain)
+    if not statx then return nil, errno end
+
+    for key, val in pairs(stat_defaults) do
+      statx[key] = statx[key] or val
+    end
+
+    return statx
   end
 
   function k.mkdir(path, mode)

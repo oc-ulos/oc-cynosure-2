@@ -87,8 +87,8 @@ do
     if not fd then
       -- default to root/root, rwxrwxrwx permissions
       return {
-        uid = 0,
-        gid = 0,
+        uid = k.syscalls and k.syscalls.geteuid() or 0,
+        gid = k.syscalls and k.syscalls.getegid() or 0,
         mode = self.fs.isDirectory(file) and 0x41FF or 0x81FF,
         created = self.fs.lastModified(file)
       }
@@ -148,8 +148,11 @@ do
       uid = attributes.uid,
       gid = attributes.gid,
       rdev = -1,
-      size = self.fs.size(path),
+      size = self.fs.isDirectory(path) and 512 or self.fs.size(path),
       blksize = 2048,
+      ctime = attributes.created,
+      atime = math.floor(computer.uptime() * 1000),
+      mtime = self.fs.lastModified(path)*1000
     }
 
     stat.blocks = math.ceil(stat.size / 512)

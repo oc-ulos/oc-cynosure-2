@@ -56,7 +56,8 @@ do
     end,
     stat = function()
       return { dev = -1, ino = -1, mode = 0x41FF, nlink = 1,
-        uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048 }
+        uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048,
+        atime = 0, ctime = 0, mtime = 0 }
     end
   })
 
