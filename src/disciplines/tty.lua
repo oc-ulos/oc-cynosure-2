@@ -37,7 +37,8 @@ do
         erase = "\8", intr = "\3", kill = "\21",
         quit = "\28", start = "\19", stop = "\17",
         susp = "\26", eof = "\4", raw = false,
-        stopped = false, echo = true
+        stopped = false, echo = true,
+        override_setvbuf = true
       }, {__index=discipline})
       obj.discipline = new
       new.eofpat = string.format("%%%s[^%%%s]-$", new.eof, new.eof)
@@ -200,6 +201,13 @@ do
 
     elseif method == "getpg" then
       return self.pgroup or math.huge
+
+    elseif method == "setvbuf" then
+      if args == "line" or args == "none" then
+        self.mode = args
+      else
+        return nil, k.errno.EINVAL
+      end
 
     else
       return nil, k.errno.ENOSYS

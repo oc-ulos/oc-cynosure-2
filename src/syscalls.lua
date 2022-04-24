@@ -77,7 +77,7 @@ do
     checkArg(2, operation, "string")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
@@ -93,7 +93,7 @@ do
     checkArg(2, fmt, "string", "number")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 and not current.fds[fd].pipe then
+    if current.fds[fd] and current.fds[fd].refs <= 0 and not current.fds[fd].pipe then
       current.fds[fd] = nil
     end
 
@@ -109,7 +109,7 @@ do
     checkArg(2, data, "string")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
@@ -127,7 +127,7 @@ do
     checkArg(3, offset, "number", "nil")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
@@ -142,7 +142,7 @@ do
     checkArg(1, fd, "number")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
@@ -170,7 +170,7 @@ do
     checkArg(1, fd, "number")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
@@ -191,18 +191,38 @@ do
 
     k.close(current.fds[fd])
 
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 
     return true
   end
 
+  function k.syscalls.isatty(fd)
+    checkArg(1, fd, "number")
+
+    local current = k.current_process()
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
+      current.fds[fd] = nil
+    end
+
+    if not current.fds[fd] then
+      return nil, k.errno.EBADF
+    end
+
+    local fdt = current.fds[fd]
+    return not not (
+      fdt.fd.stream and
+      fdt.fd.stream.proxy and
+      fdt.fd.stream.proxy.eofpat
+    )
+  end
+
   function k.syscalls.dup(fd)
     checkArg(1, fd, "number")
 
     local current = k.current_process()
-    if current.fds[fd].refs <= 0 then
+    if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
     end
 

@@ -255,7 +255,8 @@ do
   local modes = { full = true, line = true, none = true }
   function buffer:ioctl(op, mode, ...)
     checkArg(1, op, "string")
-    if op ~= "setvbuf" then
+    if op ~= "setvbuf" or (self.stream.proxy
+        and self.stream.proxy.override_setvbuf) then
       if self.stream.proxy and self.stream.proxy.ioctl then
         return self.stream.proxy.ioctl(self.stream.fd, op, mode, ...)
       else
@@ -282,7 +283,8 @@ do
       mode = split_chars(mode),
       rbuf = "",
       wbuf = "",
-      bufmode = "full"
+      bufmode = stream.proxy and stream.proxy.override_setvbuf
+        and "none" or "full"
     }, {__index = buffer})
   end
 end

@@ -50,8 +50,6 @@ do
       data = data .. string.format("%s:%d\n", key, val)
     end
 
-    printk(k.L_INFO, data)
-
     return data
   end
 
