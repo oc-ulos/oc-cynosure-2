@@ -76,9 +76,6 @@ do
       end
     end
 
-    printk(k.L_DEBUG, "check perms for '%s' (%d) from '%d'", perm, val_check,
-      mode)
-    printk(k.L_DEBUG, "result: %d", bit32.band(mode, val_check))
     return bit32.band(mode, val_check) == val_check
   end
 
