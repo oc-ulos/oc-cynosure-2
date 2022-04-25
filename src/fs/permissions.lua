@@ -68,14 +68,17 @@ do
     local base_index = ogo * 3
     for c in perm:gmatch(".") do
       if c == "r" then
-        val_check = bit32.bor(val_check, order[base_index - 2])
+        val_check = bit32.bor(val_check, order[base_index])
       elseif c == "w" then
         val_check = bit32.bor(val_check, order[base_index - 1])
       elseif c == "x" then
-        val_check = bit32.bor(val_check, order[base_index])
+        val_check = bit32.bor(val_check, order[base_index - 2])
       end
     end
 
+    printk(k.L_DEBUG, "check perms for '%s' (%d) from '%d'", perm, val_check,
+      mode)
+    printk(k.L_DEBUG, "result: %d", bit32.band(mode, val_check))
     return bit32.band(mode, val_check) == val_check
   end
 
