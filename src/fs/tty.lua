@@ -30,8 +30,9 @@ do
           screens[screen] = true
           printk(k.L_DEBUG, "registering tty%d on %s,%s", ttyn,
             gpu:sub(1,6), screen:sub(1,6))
-          k.devfs.register_device(string.format("tty%d", ttyn),
-            k.chardev.new(k.open_tty(gpu, screen), "tty"))
+          local cdev = k.chardev.new(k.open_tty(gpu, screen), "tty")
+          cdev.stream.name = string.format("tty%d", ttyn)
+          k.devfs.register_device(string.format("tty%d", ttyn), cdev)
           ttyn = ttyn + 1
         end
       end

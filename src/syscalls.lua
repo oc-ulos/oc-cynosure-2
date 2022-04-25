@@ -241,6 +241,7 @@ do
     checkArg(1, fd, "number")
     checkArg(2, nfd, "number")
 
+
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
       current.fds[fd] = nil
@@ -250,6 +251,8 @@ do
       return nil, k.errno.EBADF
     end
 
+    if fd == nfd then return nfd end
+
     if current.fds[nfd] then
       k.close(current.fds[nfd])
     end
@@ -257,7 +260,7 @@ do
     current.fds[nfd] = current.fds[fd]
     current.fds[fd].refs = current.fds[fd].refs + 1
 
-    return true
+    return nfd
   end
 
   k.syscalls.mkdir = k.mkdir
@@ -456,6 +459,14 @@ do
     return k.current_process().egid
   end
 
+  function k.syscalls.getpid()
+    return k.current_process().pid
+  end
+
+  function k.syscalls.getppid()
+    return k.current_process().ppid
+  end
+
   function k.syscalls.setsid()
     local current = k.current_process()
     if current.pgid == current.pid then
@@ -530,6 +541,9 @@ do
 
     return proc.pgid
   end
+
+  k.syscalls.setpgid = k.syscalls.setpgrp
+  k.syscalls.getpgid = k.syscalls.getpgrp
 
   -- Handlers of signals whose value here is 'false' can't be
   -- overwritten, but those signals can still be sent by kill(2).

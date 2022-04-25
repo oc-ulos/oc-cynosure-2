@@ -199,8 +199,13 @@ do
         return true
       end
 
+      self.pgroup = args
+
     elseif method == "getpg" then
       return self.pgroup or math.huge
+
+    elseif method == "ttyname" then
+      return self.name
 
     elseif method == "setvbuf" then
       if args == "line" or args == "none" then
