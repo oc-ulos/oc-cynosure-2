@@ -46,8 +46,9 @@ do
     end
     local current = k.current_process()
     printk(k.L_DEBUG, "%s[%d]: syscall %s(%s) => %s, %s", current.cmdline[0],
-      current.pid, name, table.concat(args, ", "), tostring(result[1]),
-      tostring(result[2]))--]]
+      current.pid, name, table.concat(args, ", "),
+      (type(result[1]) == "string" and string.format("%q", result[1]) or tostring(result[1])):gsub("\n", "n"),
+      (type(result[2]) == "string" and string.format("%q", result[2]) or tostring(result[2])):gsub("\n", "n"))--]]
 
     return table.unpack(result, 1, result.n)
   end
@@ -78,6 +79,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -94,6 +96,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 and not current.fds[fd].pipe then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -110,6 +113,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -128,6 +132,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -143,6 +148,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -171,6 +177,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -192,6 +199,7 @@ do
     k.close(current.fds[fd])
 
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -203,6 +211,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -223,6 +232,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -244,6 +254,7 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
+      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -254,7 +265,7 @@ do
     if fd == nfd then return nfd end
 
     if current.fds[nfd] then
-      k.close(current.fds[nfd])
+      k.syscalls.close(nfd)
     end
 
     current.fds[nfd] = current.fds[fd]
@@ -318,7 +329,7 @@ do
     end))
 
     for f, v in pairs(current.fds) do
-      if f > 2 and not v.cloexec then
+      if f > 2 and v.cloexec then
         k.close(v)
         v.refs = v.refs - 1
         current.fds[k] = nil
@@ -637,6 +648,7 @@ do
 
     local outstream = k.fd_from_rwf(nil, function(_, _, data)
       if closed then
+        printk(k.L_DEBUG, "NOT WRITING DATA")
         k.syscalls.kill(0, "SIGPIPE")
         return nil, k.errno.EBADF
       end

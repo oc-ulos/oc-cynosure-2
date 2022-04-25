@@ -26,7 +26,7 @@ do
     k.close(fd)
 
     local words = {}
-    for word in shebang:sub(2):gmatch("[^ ]+") do
+    for word in shebang:sub(3):gmatch("[^ ]+") do
       words[#words+1] = word
     end
 
@@ -34,11 +34,12 @@ do
     words[0] = interp
     words[1] = path
 
+    printk(k.L_DEBUG, "interp load==============")
+
     local func, err = k.load_executable(interp, env)
     if not func then
       return nil, err
     end
-
     return function(args)
       for i=1, #args, 1 do
         words[#words+1] = args[i]
