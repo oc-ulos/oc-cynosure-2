@@ -27,7 +27,8 @@ do
     local avgfree = 0
     for i=1, 10, 1 do avgfree = avgfree + computer.freeMemory() end
     avgfree = avgfree / 10
-    local total, free = computer.totalMemory() // 1024, avgfree // 1024
+    local total, free = math.floor(computer.totalMemory() / 1024),
+      math.floor(avgfree / 1024)
     local used = total - free
     return string.format(
       "MemTotal: %d kB\nMemUsed: %d kB\nMemAvailable: %d kB\n",

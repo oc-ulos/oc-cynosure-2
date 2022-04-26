@@ -35,11 +35,24 @@ do
     return s
   end
 
+  local last_yield = computer.uptime()
+  local function proc_yield()
+    if computer.uptime() - last_yield > 4 then
+      last_yield = computer.uptime()
+      k.pullSignal(0)
+    end
+  end
+
   local function wrap(code)
     local wrapped = ""
     local in_str = false
 
     while #code > 0 do
+      if not (code:find('"', nil, true) or code:find("'", nil, true) or code:find("[", nil, true)) then
+        wrapped = wrapped .. gsub(code)
+        break
+      end
+      proc_yield()
       local chunk, quote = code:match("(.-)([%[\"'])()")
       if not quote then
         wrapped = wrapped .. gsub(code)

@@ -79,7 +79,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -96,7 +95,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 and not current.fds[fd].pipe then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -113,7 +111,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -132,7 +129,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -148,7 +144,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -177,7 +172,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -199,7 +193,6 @@ do
     k.close(current.fds[fd])
 
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -211,7 +204,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -232,7 +224,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -254,7 +245,6 @@ do
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
-      printk(k.L_DEBUG, "file descriptor %d: refcount <= 0", fd)
       current.fds[fd] = nil
     end
 
@@ -610,6 +600,16 @@ do
     else
       return nil, k.errno.EPERM
     end
+  end
+  -----------------------------
+  -- Networking system calls --
+  -----------------------------
+
+  function k.syscalls.gethostname()
+  end
+
+  function k.syscalls.sethostname(name)
+    checkArg(1, name, "string")
   end
 
   --------------------------------

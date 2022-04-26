@@ -6,8 +6,9 @@
 # These options enable certain special functionality for some components,
 # and enable verifying the methods callable on those components from
 # within the kernel itself.  Components not enabled here are still
-# accessible through the component: scheme if that is enabled, just
+# accessible through /dev/components if that is enabled, just
 # without the special features these options may provide.
+# * these do not actually do anything at this time.
 COMPONENT_3DPRINTER=n
 COMPONENT_ACCESSPOINT=n
 COMPONENT_CHUNKLOADER=n
@@ -15,17 +16,22 @@ COMPONENT_CRAFTING=n
 COMPONENT_DATACARD=y
 COMPONENT_DATABASE=n
 COMPONENT_DEBUG=n
+# For unmanaged filesystem support?
 COMPONENT_DRIVE=y
+# For EEPROM support?
 COMPONENT_EEPROM=y
 COMPONENT_EXPERIENCE=n
+# For managed filesystem support?
 COMPONENT_FILESYSTEM=y
 COMPONENT_GENERATOR=n
 COMPONENT_GEOLYZER=n
 COMPONENT_HOLOGRAM=n
+# For http/https/tcp support?
 COMPONENT_INTERNET=y
 COMPONENT_INVENTORYCONTROLLER=n
 COMPONENT_LEASH=n
 COMPONENT_MICROCONTROLLER=n
+# For in-game networking support?
 COMPONENT_MODEM=y
 COMPONENT_MOTIONSENSOR=n
 COMPONENT_NAVIGATION=n
@@ -37,8 +43,10 @@ COMPONENT_SIGN=n
 COMPONENT_TANKCONTROLLER=n
 COMPONENT_TRACTORBEAM=n
 COMPONENT_TRANSPOSER=n
+# See COMPONENT_MDOEM
 COMPONENT_TUNNEL=y
 COMPONENT_WORLDSENSOR=n
+# For Computronics Card Dock support
 COMPONENT_CARDDOCK=y
 # Pre-emption mode.
 # * none: disabled (fastest)
@@ -49,7 +57,7 @@ PREEMPT_MODE=fast
 # * CLE: the Cynosure Lua Executable
 # * Shebang: scripts starting with #!/path/to/interpreter
 # * Lua: scripts starting with --!lua or whose extension is .lua
-EXEC_CLE=y
+EXEC_CLE=n
 EXEC_SHEBANG=y
 EXEC_LUA=y
 # File systems
@@ -65,14 +73,17 @@ PROCFS_CONFIG=y
 PROCFS_BINFMT=n
 PROCFS_EVENT=y
 # networking protocols
-PROTOCOL_HTTP=n
-PROTOCOL_TCP=n
-PROTOCOL_CFTP=n
-PROTOCOL_MTEL=n
-PROTOCOL_GERT=n
+NET_ENABLE=n
+NET_HTTP=n
+NET_TCP=n
+NET_CFTP=n
+NET_MTEL=n
+NET_GERT=n
 # miscellaneous options
 TTY_ENABLE_GPU=y
-BIT32=n
+# Whether to enable the bit32 compatibility layer.  The resulting kernel
+# requires Lua 5.3.
+BIT32=y
 BUFFER_SIZE=1024
 # When available free memory goes below this threshold, the kernel's
 # automated garbage collection code will fire.

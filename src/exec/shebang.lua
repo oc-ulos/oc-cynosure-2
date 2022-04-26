@@ -32,9 +32,7 @@ do
 
     local interp = words[1]
     words[0] = interp
-    words[1] = path
-
-    printk(k.L_DEBUG, "interp load==============")
+    words[1], words[2] = words[2], path
 
     local func, err = k.load_executable(interp, env)
     if not func then
