@@ -54,14 +54,14 @@ do
     local ctype, caddr = table.unpack(k.split_path(path))
     if (not caddr) and component.list(ctype, true)() or not ctype then
       return {
-        dev=-1, ino=-1, mode=0x41FF, nlink=1, uid=0, gid=0,
+        dev=-1, ino=-1, mode=0x41A4, nlink=1, uid=0, gid=0,
         rdev=-1, size=0, blksize=2048, mtime=0, atime=0, ctime=0,
       }
     end
 
     if component.list(ctype, true)[resolve_address(caddr) or caddr] then
       return {
-        dev=-1, ino=-1, mode=0x61FF, nlink=1, uid=0, gid=0,
+        dev=-1, ino=-1, mode=0x61A4, nlink=1, uid=0, gid=0,
         rdev=-1, size=0, blksize=2048, mtime=0, atime=0, ctime=0
       }
     end

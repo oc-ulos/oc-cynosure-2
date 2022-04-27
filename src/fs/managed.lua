@@ -87,7 +87,7 @@ do
       return {
         uid = k.syscalls and k.syscalls.geteuid() or 0,
         gid = k.syscalls and k.syscalls.getegid() or 0,
-        mode = self.fs.isDirectory(file) and 0x41FF or 0x81FF,
+        mode = self.fs.isDirectory(file) and 0x41A4 or 0x81A4,
         created = self.fs.lastModified(file)
       }
     end
@@ -100,7 +100,7 @@ do
     attributes.gid = attributes.gid or 0
     -- default to root/root, rwxrwxrwx permissions
     attributes.mode = attributes.mode or (self.fs.isDirectory(file)
-      and 0x41FF or 0x81FF)
+      and 0x4000 or 0x8000) + bit32.bxor(0x1FF, k.current_process().umask)
     attributes.created = attributes.created or self.fs.lastModified(file)
 
     return attributes

@@ -484,6 +484,8 @@ do
     self.gpu.setForeground(pb or cb, not not pb)
     self.gpu.setBackground(pf or cf, not not pf)
     self.gpu.set(self.cx, self.cy, cc)
+    self.gpu.setForeground(self.fg, self.fgpal)
+    self.gpu.setBackground(self.bg, self.bgpal)
   end
 
   -- write some text to the output
