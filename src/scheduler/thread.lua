@@ -27,7 +27,7 @@ do
   -- effort required to do so.
   local sysyield_string = ""
 
-  for i=1, math.random(10, 20), 1 do
+  for i=1, math.random(3, 5), 1 do
     sysyield_string = sysyield_string .. string.format("%02x",
       math.random(0, 255))
   end
@@ -44,7 +44,7 @@ do
   end
 
   -- Add some alphanumeric characters
-  for i=1, math.random(15, 25), 1 do
+  for i=1, math.random(3, 5), 1 do
     sysyield_string = sysyield_string .. rand_char()
   end
 

@@ -19,7 +19,7 @@
 printk(k.L_INFO, "disciplines/tty")
 
 do
-  local discipline = {}
+  local discipline = { default_mode = "line" }
 
   local eolpat = "\n[^\n]-$"
 

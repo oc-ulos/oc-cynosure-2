@@ -1,5 +1,5 @@
 --[[
-  Includes all line disciplines
+  null line discipline; just pass data straight through
   Copyright (C) 2022 Ocawesome101
 
   This program is free software: you can redistribute it and/or modify
@@ -16,19 +16,32 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "disciplines/main")
+printk(k.L_INFO, "disciplines/null")
 
 do
-  k.disciplines = {}
+  local discipline = {}
 
-  -- Line disciplines are a middle layer between the raw stream
-  -- and the character device, and provide certain services -
-  -- for instance, the TTY line discipline is what makes ctrl-C,
-  -- ctrl-\, and ctrl-Z work.  This line discipline can be put
-  -- over a network socket, a serial connection, or a virtual
-  -- TTY provided by the kernel - and the application (ideally
-  -- the user, too) will see no difference in behavior.
+  function discipline.wrap(obj)
+    return setmetatable({obj=obj}, {__index=discipline})
+  end
+
+  function discipline:read(n)
+    checkArg(1, n, "number")
+
+    if self.obj.read then return self.obj:read(n) end
+    return nil, k.errno.ENOSYS
+  end
+
+  function discipline:write(data)
+    checkArg(1, data, "string")
+
+    if self.obj.write then return self.obj:write(data) end
+    return nil, k.errno.ENOSYS
+  end
+
+  function discipline:flush() end
+
+  function discipline:close() end
+
+  k.disciplines.null = discipline
 end
-
---#include "src/disciplines/null.lua"
---#include "src/disciplines/tty.lua"

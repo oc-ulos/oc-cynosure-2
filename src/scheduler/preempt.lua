@@ -36,7 +36,7 @@ do
   end
 
   local last_yield = computer.uptime()
-  local function proc_yield()
+  function k._yield()
     if computer.uptime() - last_yield > 4 then
       last_yield = computer.uptime()
       k.pullSignal(0)
@@ -48,12 +48,17 @@ do
     local in_str = false
 
     while #code > 0 do
-      if not (code:find('"', nil, true) or code:find("'", nil, true) or code:find("[", nil, true)) then
+      local next_quote = math.min(code:find('"', nil, true) or math.huge,
+        code:find("'", nil, true) or math.huge,
+        code:find("[", nil, true) or math.huge)
+      if next_quote == math.huge then
         wrapped = wrapped .. gsub(code)
         break
       end
-      proc_yield()
-      local chunk, quote = code:match("(.-)([%[\"'])()")
+
+      k._yield()
+      local chunk, quote = code:sub(1, next_quote-1),
+        code:sub(next_quote, next_quote)
       if not quote then
         wrapped = wrapped .. gsub(code)
         break
@@ -104,6 +109,15 @@ do
   function k.load(chunk, name, mode, env)
     chunk = wrap(chunk)
     env[sys] = sysyield
+
+    if k.cmdline.debug_load then
+      local fd = k.open("/load.txt", "a")
+      if fd then
+        k.write(fd, "== LOAD ==\n" .. chunk)
+        k.close(fd)
+      end
+    end
+
     return load(chunk, name, mode, env)
   end
 end

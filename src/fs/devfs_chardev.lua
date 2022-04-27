@@ -40,12 +40,12 @@ do
   function chardev:open(path)
     if #path > 0 then return nil, k.errno.ENOTDIR end
     return { fd = k.disciplines[self.discipline].wrap(self.stream),
-      default_mode = "none" }
+      default_mode = k.disciplines[self.discipline].default_mode or "none" }
   end
 
   function chardev:stat()
-    return { dev = -1, ino = -1, mode = 0x21FF, nlink = 1,
-      uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048,
+    return { dev = -1, ino = -1, mode = 0x2000 + (self.stream.perms or 0x1A4),
+      nlink = 1, uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048,
       atime = 0, ctime = 0, mtime = 0 }
   end
 
@@ -63,10 +63,12 @@ do
 
   function chardev:flush(fd)
     if fd.fd.flush then fd.fd:flush() end
+    return true
   end
 
   function chardev.ioctl(fd, ...)
-    return fd.fd:ioctl(...)
+    if fd.fd.ioctl then return fd.fd:ioctl(...) end
+    return nil, k.errno.ENOSYS
   end
 
   function chardev:close(fd)
@@ -74,4 +76,18 @@ do
   end
 
   k.chardev = chardev
+
+  -- now register some default chardevs
+  k.devfs.register_device("random", k.chardev.new({read=function(_,n)
+    local dat = ""
+    for _=1, math.min(n,2048), 1 do
+      dat = dat .. string.char(math.random(0, 255))
+    end
+    return dat
+  end, write = function() end, perms = 0x1B6}, "null"))
+  k.devfs.register_device("null", k.chardev.new({read=function()return nil end,
+    write=function()end, perms=0x1B6}, "null"))
+  k.devfs.register_device("zero", k.chardev.new({read=function(_,n)
+    return ("\0"):rep(math.min(n,2048))
+  end, write = function() end, perms = 0x1B6}, "null"))
 end

@@ -87,42 +87,44 @@ do
       if narrow == 1 then return nil, k.errno.ENOTDIR end
 
       if #segments > 1 then return nil, k.errno.ENOENT end
-      return files[segments[1]]
+      return files[segments[1]], nil, true
 
-    else
+    elseif tonumber(segments[1]) then
       local proc = k.get_process(tonumber(segments[1]))
       local field = proc
 
       for i=2, #segments, 1 do
         field = field[tonumber(segments[i]) or segments[i]]
           or field[segments[i]]
-        if not field then return nil, k.errno.ENOENT end
+        if field == nil then return nil, k.errno.ENOENT end
       end
 
       return field, proc
     end
+
+    return nil, k.errno.ENOENT
   end
 
   function provider:exists(path)
     checkArg(1, path, "string")
-    return not not path_to_node(path)
+    return path_to_node(path) ~= nil
   end
 
   function provider:stat(path)
     checkArg(1, path, "string")
 
-    local node, proc = path_to_node(path)
-    if not node then return nil, proc end
+    local node, proc, isf = path_to_node(path)
+    if node == nil then return nil, proc end
 
-    if type(node) == "table" then
+    if type(node) == "table" and not isf then
       return {
-        dev = -1, ino = -1, mode = 0x41FF, nlink = 1, uid = 0, gid = 0,
+        dev = -1, ino = -1, mode = 0x41A4, nlink = 1, uid = 0, gid = 0,
         rdev = -1, size = 0, blksize = 2048
       }
     end
 
     return {
-      dev = -1, ino = -1, mode = 0x61FF, nlink = 1,
+      dev = -1, ino = -1, mode = 0x61A4, nlink = 1,
       uid = proc and proc.uid or 0, gid = proc and proc.gid or 0,
       rdev = -1, size = 0, blksize = 2048
     }
@@ -143,9 +145,9 @@ do
     checkArg(1, path, "string")
 
     local node, proc = path_to_node(path, 0)
-    if not node then return nil, proc end
+    if node == nil then return nil, proc end
 
-    if (not proc) and node.data then
+    if (not proc) and type(node) == "table" and node.data then
       local data = type(node.data) == "function" and node.data() or node.data
       return { file = to_fd(data), ioctl = node.ioctl }
     elseif type(node) ~= "table" then
@@ -159,7 +161,7 @@ do
     checkArg(1, path, "string")
 
     local node, proc = path_to_node(path, 1)
-    if not node then return nil, proc end
+    if node == nil then return nil, proc end
 
     if type(node) == "table" then
       if not proc then return { i = 0, files = node } end

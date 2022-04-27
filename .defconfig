@@ -74,6 +74,7 @@ PROCFS_BINFMT=n
 PROCFS_EVENT=y
 # networking protocols
 NET_ENABLE=n
+DEFAULT_HOSTNAME=localhost
 NET_HTTP=n
 NET_TCP=n
 NET_CFTP=n

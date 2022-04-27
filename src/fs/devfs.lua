@@ -98,7 +98,8 @@ do
       if not result then return nil, err end
 
       if result and (calling == "open" or calling == "opendir") then
-        return { node = device, fd = result }
+        return { node = device, fd = result,
+          default_mode = result.default_mode }
       else
         return result, err
       end

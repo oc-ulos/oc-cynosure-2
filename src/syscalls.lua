@@ -606,6 +606,8 @@ do
   -----------------------------
 
   function k.syscalls.gethostname()
+    return k.gethostname and k.gethostname() or
+      "@[{bconf.DEFAULT_HOSTNAME or 'localhost'}]"
   end
 
   function k.syscalls.sethostname(name)
@@ -697,5 +699,19 @@ do
     end
 
     return nil, k.errno.EINVAL
+  end
+
+  function k.syscalls.uname()
+    return {
+      sysname = "Cynosure",
+      nodename = k.syscalls.gethostname() or "localhost",
+      release = "$[{lua scripts/version.lua}]",
+      version = "@[{os.date('%Y-%m-%d')}]",
+      machine = "oc-".._VERSION:match("Lua (.+)")
+    }
+  end
+
+  function k.syscalls.uptime()
+    return computer.uptime()
   end
 end
