@@ -184,19 +184,30 @@ do
 
     local node, remain = path_to_node(file)
     if not node.open then return nil, k.errno.ENOSYS end
-    if mode ~= "w" and mode ~= "a" and not node:exists(remain) then
+
+    local exists = node:exists(remain)
+
+    if mode ~= "w" and mode ~= "a" and not exists then
       return nil, k.errno.ENOENT
     end
 
-    if mode ~= "w" and mode ~= "a" then
-      local stat, err = node:stat(remain)
-      if not stat then
-        return nil, err
-      end
+    local segs = k.split_path(remain)
+    local dir = "/" .. table.concat(segs, "/", 1, #segs - 1)
+    local base = segs[#segs]
 
-      if not k.process_has_permission(cur_proc(), stat, mode) then
-        return nil, k.errno.EACCES
-      end
+    local stat, err
+    if not exists then
+      stat, err = node:stat(dir)
+    else
+      stat, err = node:stat(remain)
+    end
+
+    if not stat then
+      return nil, err
+    end
+
+    if not k.process_has_permission(cur_proc(), stat, mode) then
+      return nil, k.errno.EACCES
     end
 
     local fd, err = node:open(remain, mode)
