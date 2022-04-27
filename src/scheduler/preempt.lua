@@ -21,9 +21,9 @@ printk(k.L_INFO, "scheduler/preempt")
 do
   local sys = "a"..k.sysyield_string
   local patterns = {
-    { "if([ %(])(.-)([ %)])then([ \n])", "if%1%2%3then%4"..sys.."() " },
-    { "elseif([ %(])(.-)([ %)])then([ \n])", "elseif%1%2%3then%4"..sys.."() " },
-    { "([ \n])else([ \n])", "%1else%2"..sys.."() " },
+  --  { "if([ %(])(.-)([ %)])then([ \n])", "if%1%2%3then%4"..sys.."() " },
+  --  { "elseif([ %(])(.-)([ %)])then([ \n])", "elseif%1%2%3then%4"..sys.."() " },
+  --  { "([ \n])else([ \n])", "%1else%2"..sys.."() " },
     { "([%);\n ])do([ \n%(])", "%1do%2"..sys.."() "},
     { "([%);\n ])repeat([ \n%(])", "%1repeat%2"..sys.."() " },
   }
