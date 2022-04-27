@@ -19,8 +19,8 @@
 printk(k.L_INFO, "exec/lua")
 
 do
-  k.register_executable_format("lua", function(header, extension)
-    return header:sub(1, 6) == "--!lua" or extension == "lua"
+  k.register_executable_format("lua", function(header)--, extension)
+    return header:sub(1, 6) == "--!lua"-- or extension == "lua"
   end, function(fd, env)
     local data = k.read(fd, math.huge)
     k.close(fd)

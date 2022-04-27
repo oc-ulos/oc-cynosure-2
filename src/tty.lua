@@ -213,6 +213,23 @@ do
     self.gpu.fill(self.w - n, self.cy, n, 1, " ")
   end
 
+  -- not documented in console_codes(4), but expected by programs
+  -- so these names are made-up
+
+  -- SCD - scroll down
+  function commands:S(args)
+    local n = args[1] or 1
+    self.gpu.copy(1, n, self.w, self.h, 0, -n)
+    self.gpu.fill(1, self.h - n, self.w, n, " ")
+  end
+
+  -- SCU - scroll up
+  function commands:T(args)
+    local n = args[1] or 1
+    self.gpu.copy(1, 1, self.w, self.h-n, 0, n)
+    self.gpu.fill(1, 1, self.w, n, " ")
+  end
+
   -- ECH - erase characters
   function commands:X(args)
     local n = args[1] or 1
@@ -536,7 +553,8 @@ do
 
           if css == "[" then
             local func = commands[csc]
-            if func then func(self, args) end
+            if func then func(self, args)
+              else printk(k.L_DEBUG, "unknown terminal escape: %q", csc) end
           elseif css == "]" or css == "?" then
             local func = controllers[csc]
             if func then func(self, args) end
