@@ -83,6 +83,7 @@ do
     if last > 9999999999 then
       return math.floor(last / 1000)
     end
+    return last
   end
 
   -- get the attributes of a specific file
@@ -98,7 +99,7 @@ do
         uid = k.syscalls and k.syscalls.geteuid() or 0,
         gid = k.syscalls and k.syscalls.getegid() or 0,
         mode = self.fs.isDirectory(file) and 0x41A4 or 0x81A4,
-        created = self.fs.lastModified(file)
+        created = self:lastModified(file)
       }
     end
 
@@ -111,7 +112,7 @@ do
     -- default to root/root, rwxrwxrwx permissions
     attributes.mode = attributes.mode or (self.fs.isDirectory(file)
       and 0x4000 or 0x8000) + bit32.bxor(0x1FF, k.current_process().umask)
-    attributes.created = attributes.created or self.fs.lastModified(file)
+    attributes.created = attributes.created or self:lastModified(file)
 
     return attributes
   end
@@ -160,7 +161,7 @@ do
       blksize = 2048,
       ctime = attributes.created,
       atime = math.floor(computer.uptime() * 1000),
-      mtime = self.fs.lastModified(path)*1000
+      mtime = self:lastModified(path)*1000
     }
 
     stat.blocks = math.ceil(stat.size / 512)
