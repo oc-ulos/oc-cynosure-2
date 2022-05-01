@@ -650,7 +650,6 @@ do
 
     local outstream = k.fd_from_rwf(nil, function(_, _, data)
       if closed then
-        printk(k.L_DEBUG, "NOT WRITING DATA")
         k.syscalls.kill(0, "SIGPIPE")
         return nil, k.errno.EBADF
       end

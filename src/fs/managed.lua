@@ -75,6 +75,16 @@ do
       segments[#segments] .. ".attr"
   end
 
+  -- This is an ugly hack that will only work for about 250 years
+  -- (specifically, until 2286-11020 at 12:46:39).  I leave it up
+  -- to my successors to fix this, if anybody cares at that point.
+  function _node:lastModified(file)
+    local last = self.fs.lastModified(file)
+    if last > 9999999999 then
+      return math.floor(last / 1000)
+    end
+  end
+
   -- get the attributes of a specific file
   function _node:get_attributes(file)
     checkArg(1, file, "string")
