@@ -118,9 +118,7 @@ do
             end
           end
         elseif c == self.eof then
-          if self.rbuf:sub(-1) == self.eol then
-            wchar(self, c)
-          end
+          wchar(self, c)
 
         elseif c == self.intr then
           send(self, "SIGINT")
@@ -230,29 +228,30 @@ do
       return true
     end
 
-    if self.last_eof then
-      self.last_eof = false
-      return nil
-    end
-
     while #self.rbuf < n do
       coroutine.yield()
-      if self.rbuf:find("%"..self.eof) then break end
+      if self.rbuf:find(self.eof, nil, true) and not self.raw then break end
     end
-    if self.mode == "line" then
+
+    if self.mode == "line" and not has_eof then
       while (self.rbuf:find(eolpat) or 0) < n do
         coroutine.yield()
-        if self.rbuf:find("%"..self.eof) then break end
+        if self.rbuf:find(self.eof, nil, true) and not self.raw then break end
       end
     end
 
-    local eof = self.rbuf:find("%"..self.eof)
-    n = math.min(n, eof or math.huge)
-
-    self.last_eof = not not eof
+    if not self.raw then
+      local eof = self.rbuf:find(self.eof, nil, true)
+      n = math.min(n, eof or math.huge)
+    end
 
     local data = self.rbuf:sub(1, n)
     self.rbuf = self.rbuf:sub(#data + 1)
+
+    if not self.raw then
+      if data == self.eof then return nil end
+      if data:sub(-1) == self.eof then return data:sub(1, -2) end
+    end
     return data
   end
 

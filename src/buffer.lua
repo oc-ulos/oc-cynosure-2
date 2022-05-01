@@ -47,6 +47,7 @@ do
           dat = dat .. (n or "")
         until n == "\n" or not n
 
+        if #dat == 0 then return nil end
         return dat
       end
 

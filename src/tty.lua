@@ -498,8 +498,8 @@ do
     if not self.cursor then return end
     corral(self)
     local cc, cf, cb, pf, pb = self.gpu.get(self.cx, self.cy)
-    self.gpu.setForeground(pb or cb, not not pb)
-    self.gpu.setBackground(pf or cf, not not pf)
+    self.gpu.setForeground(pb or cb, not not pb, true)
+    self.gpu.setBackground(pf or cf, not not pf, true)
     self.gpu.set(self.cx, self.cy, cc)
     self.gpu.setForeground(self.fg, self.fgpal)
     self.gpu.setBackground(self.bg, self.bgpal)
@@ -601,6 +601,18 @@ do
       -- whether or not foreground and background are palette colors
       fgpal = true, bgpal = true
     }
+
+    -- Tier 1 GPUs suck, frankly, but we have to support them.
+    if gpu.maxDepth() == 1 then
+      local fg, bg = gpu.setForeground, gpu.setBackground
+      function gpu.setPaletteColor() end
+      function gpu.setForeground(a,_,t)
+        if t and a == 0 then fg(0) else fg(0xFFFFFF) end
+      end
+      function gpu.setBackground(a,_,t)
+        if t and a > 0 then bg(0xFFFFFF) else bg(0) end
+      end
+    end
 
     for i=1, #colors, 1 do
       gpu.setPaletteColor(i-1, colors[i])

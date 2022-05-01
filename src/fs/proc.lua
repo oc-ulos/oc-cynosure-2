@@ -95,7 +95,6 @@ do
 
       for i=2, #segments, 1 do
         field = field[tonumber(segments[i]) or segments[i]]
-          or field[segments[i]]
         if field == nil then return nil, k.errno.ENOENT end
       end
 

@@ -28,6 +28,12 @@ do
     { "([%);\n ])repeat([ \n%(])", "%1repeat%2"..sys.."() " },
   }
 
+  local template = ([[
+    local %s = %s
+    if _G then _G.%s = nil end
+]])
+    :format(sys, sys, sys)
+
   local function gsub(s)
     for i=1, #patterns, 1 do
       s = s:gsub(patterns[i][1], patterns[i][2])
@@ -44,7 +50,7 @@ do
   end
 
   local function wrap(code)
-    local wrapped = ""
+    local wrapped = template
     local in_str = false
 
     while #code > 0 do
