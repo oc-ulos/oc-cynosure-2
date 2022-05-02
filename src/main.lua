@@ -28,6 +28,7 @@ local k = {}
 --#include "src/shutdown.lua"
 --#include "src/scheduler/main.lua"
 --#include "src/fs/main.lua"
+--#include "src/components/main.lua"
 --@[{bconf.NET_ENABLE == 'y' and '#include "src/net/main.lua"' or ''}]
 --#include "src/tty.lua"
 --#include "src/ttyprintk.lua"

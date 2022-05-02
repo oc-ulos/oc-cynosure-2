@@ -446,7 +446,9 @@ do
 end
 
 --#include "src/fs/devfs.lua"
+--@[{bconf.FS_MANAGED == 'y' and bconf.COMPONENT_FILESYSTEM == 'n' and (function() io.stderr:write("===> Managed filesystem support depends on COMPONENT_FILESYSTEM=y <===\n") os.exit(1) end)()}]
 --@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
+--@[{bconf.FS_SFS == 'y' and bconf.COMPONENT_DRIVE == 'n' and (function() io.stderr:write("===> SimpleFS support depends on COMPONENT_DRIVE=y <===\n") os.exit(1) end)()}]
 --@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
 --#include "src/fs/rootfs.lua"
 --#include "src/fs/tty.lua"
