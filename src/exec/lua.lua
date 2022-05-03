@@ -32,8 +32,7 @@ do
     end
     return function(args)
       assert(xpcall(chunk, function(err)
-        printk(k.L_NOTICE, "Lua error: %s", tostring(err))
-        return debug.traceback()
+        printk(k.L_NOTICE, "Lua error: %s", debug.traceback(err))
       end, args))
       k.syscalls.exit(0)
     end

@@ -171,7 +171,7 @@ do
       status = 0,
 
       -- exit reason
-      reason = "exit",
+      reason = "exited",
 
       -- process ID
       pid = pid,
