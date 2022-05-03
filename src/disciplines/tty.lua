@@ -48,6 +48,7 @@ do
     if proc and not new.session and not proc.tty then
       proc.tty = new
       new.session = proc.sid
+      new.pgroup = proc.pgroup
     end
 
     return new
