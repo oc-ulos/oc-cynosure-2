@@ -34,7 +34,7 @@ do
       result.n = result.n - 1
     end
 
-    -- [[ Uncomment for debugging purposes.
+    --[[ Uncomment for debugging purposes.
     local args = {}
     for _, arg in ipairs(table.pack(...)) do
       if type(arg) == "string" then
