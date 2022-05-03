@@ -668,13 +668,14 @@ do
     outof:ioctl("setvbuf", "none")
 
     local current = k.current_process()
-    local outfd = #current.fds + 1
-    current.fds[outfd] = { fd = outof, node = outof, refs = 1, pipe = true }
 
     local infd = #current.fds + 1
     current.fds[infd] = { fd = into, node = into, refs = 1, pipe = true }
 
-    return outfd, infd--, outfd
+    local outfd = #current.fds + 1
+    current.fds[outfd] = { fd = outof, node = outof, refs = 1, pipe = true }
+
+    return infd, outfd
   end
 
   function k.syscalls.reboot(cmd)
