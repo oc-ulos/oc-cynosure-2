@@ -34,7 +34,7 @@ do
       result.n = result.n - 1
     end
 
-    --[[ Uncomment for debugging purposes.
+    -- [[ Uncomment for debugging purposes.
     local args = {}
     for _, arg in ipairs(table.pack(...)) do
       if type(arg) == "string" then
@@ -636,6 +636,8 @@ do
     local closed = false
 
     local instream = k.fd_from_rwf(function(_, _, n)
+      printk(k.L_DEBUG, "READ(%d)", n)
+      printk(k.L_DEBUG, "BL(%d)", #buf)
       while #buf < n and not closed do coroutine.yield(0) end
       local data = buf:sub(1, math.min(n, #buf))
       buf = buf:sub(#data + 1)
@@ -655,6 +657,7 @@ do
       end
 
       buf = buf .. data
+      printk(k.L_DEBUG, "BL(%d)", #buf)
       return true
     end, function() closed = true end)
 
@@ -665,13 +668,13 @@ do
     outof:ioctl("setvbuf", "none")
 
     local current = k.current_process()
-    local infd = #current.fds + 1
-    current.fds[infd] = { fd = into, node = into, refs = 1, pipe = true }
-
     local outfd = #current.fds + 1
     current.fds[outfd] = { fd = outof, node = outof, refs = 1, pipe = true }
 
-    return infd, outfd
+    local infd = #current.fds + 1
+    current.fds[infd] = { fd = into, node = into, refs = 1, pipe = true }
+
+    return outfd, infd--, outfd
   end
 
   function k.syscalls.reboot(cmd)
