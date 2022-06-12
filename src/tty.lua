@@ -423,7 +423,7 @@ do
     self.cx = math.max(1, math.min(self.w, n))
   end
 
---@[{bconf.TTY_ENABLE_GPU == 'y' and '#include "src/tty_gpu.lua"' or ''}]
+--@[{includeif("TTY_ENABLE_GPU", "src/tty_gpu.lua")}]
 
   -- cursor bounds checking
   local function corral(self)

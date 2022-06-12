@@ -18,5 +18,5 @@
 
 printk(k.L_INFO, "components/main")
 
---@[{bconf.COMPONENT_CARDDOCK == 'y' and '#include "src/components/carddock.lua"' or ''}]
+--@[{includeif("COMPONENT_CARDDOCK", "src/components/carddock.lua")}]
 

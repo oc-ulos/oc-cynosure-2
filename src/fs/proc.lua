@@ -49,9 +49,9 @@ do
     return tostring(computer.uptime()) .. "\n"
   end }
 
-  --@[{bconf.PROCFS_CONFIG == 'y' and '--#include "src/fs/proc_config.lua"' or ''}]
-  --@[{bconf.PROCFS_EVENT == 'y' and '--#include "src/fs/proc_events.lua"' or ''}]
-  --@[{bconf.PROCFS_BINFMT == 'y' and '--#include "src/fs/proc_binfmt.lua"' or ''}]
+  --@[{includeif("PROCFS_CONFIG", "src/fs/proc_config.lua")}]
+  --@[{includeif("PROCFS_EVENT", "src/fs/proc_events.lua")}]
+  --@[{includeif("PROCFS_BINFMT", "src/fs/proc_binfmt.lua")}]
 
   local function path_to_node(path, narrow)
     local segments = k.split_path(path)

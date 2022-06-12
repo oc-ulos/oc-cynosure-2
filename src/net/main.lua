@@ -20,6 +20,7 @@ printk(k.L_INFO, "net/main")
 
 do
   local hostname = "localhost"
+  k.protocols = {}
 
   function k.gethostname()
     return hostname
@@ -30,4 +31,31 @@ do
     hostname = name
     return hostname
   end
+
+  local function separate(path)
+    local bangs = {}
+    for part in path:gmatch("[^!]+") do
+      bangs[#bangs+1] = part
+    end
+    return bangs
+  end
+
+  -- Takes a bang path and returns a file descriptor.
+  -- e.g. request("https!ulos!dev!packages!list.upl")
+  function k.request(path)
+    checkArg(1, path, "string")
+
+    local parts = separate(path)
+    local protocol = k.protocols[parts[1]]
+    if not protocol then
+      return nil, k.errno.ENOPROTOOPT
+    end
+
+    return protocol(parts)
+  end
 end
+
+--@[{depend("HTTP/TCP support", "COMPONENT_INTERNET", "NET_TCP", "NET_HTTP")}]
+--@[{depend("Minitel/GERTi support", "COMPONENT_MODEM", "NET_MTEL", "NET_GERT")}]
+--@[{includeif("NET_HTTP", "src/net/http.lua"}]
+--@[{includeif("NET_TCP", "src/net/tcp.lua")}]

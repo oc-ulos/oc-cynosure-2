@@ -37,6 +37,7 @@ do
     ENOSYS = 38,
     EUNATCH = 49,
     ELIBEXEC = 83,
+    ENOPROTOOPT = 92,
     ENOTSUP = 95,
   }
 end

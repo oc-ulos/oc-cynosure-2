@@ -446,11 +446,11 @@ do
 end
 
 --#include "src/fs/devfs.lua"
---@[{bconf.FS_MANAGED == 'y' and bconf.COMPONENT_FILESYSTEM == 'n' and (function() io.stderr:write("===> Managed filesystem support depends on COMPONENT_FILESYSTEM=y <===\n") os.exit(1) end)()}]
---@[{bconf.FS_MANAGED == 'y' and '#include "src/fs/managed.lua"' or ''}]
---@[{bconf.FS_SFS == 'y' and bconf.COMPONENT_DRIVE == 'n' and (function() io.stderr:write("===> SimpleFS support depends on COMPONENT_DRIVE=y <===\n") os.exit(1) end)()}]
---@[{bconf.FS_SFS == 'y' and '#include "src/fs/simplefs.lua"' or ''}]
+--@[{depend("Managed filesystem support", "COMPONENT_FILESYSTEM", "FS_MANAGED")}]
+--@[{includeif("FS_MANAGED", "src/fs/managed.lua")}]
+--@[{depend("SimpleFS support", "COMPONENT_DRIVE", "FS_SFS")}]
+--@[{includeif("FS_SFS", "src/fs/simplefs.lua")}]
 --#include "src/fs/rootfs.lua"
 --#include "src/fs/tty.lua"
---@[{bconf.FS_COMPONENT == 'y' and '#include "src/fs/component.lua"' or ''}]
---@[{bconf.FS_PROC == 'y' and '#include "src/fs/proc.lua"' or ''}]
+--@[{includeif("FS_COMPONENT", "src/fs/component.lua")}]
+--@[{includeif("FS_PROC", "src/fs/proc.lua")}]

@@ -612,6 +612,7 @@ do
 
   function k.syscalls.sethostname(name)
     checkArg(1, name, "string")
+    return k.sethostname and k.sethostname(name)
   end
 
   --------------------------------

@@ -21,7 +21,7 @@ local k = {}
 --#include "src/printk.lua"
 --#include "src/checkArg.lua"
 --#include "src/errno.lua"
---@[{bconf.BIT32 == 'y' and '#include "src/bit32.lua"' or ''}]
+--@[{includeif("BIT32", "src/bit32.lua")}]
 --#include "src/buffer.lua"
 --#include "src/filedesc.lua"
 --#include "src/signals.lua"
@@ -29,7 +29,7 @@ local k = {}
 --#include "src/scheduler/main.lua"
 --#include "src/fs/main.lua"
 --#include "src/components/main.lua"
---@[{bconf.NET_ENABLE == 'y' and '#include "src/net/main.lua"' or ''}]
+--@[{includeif("NET_ENABLE", "src/net/main.lua")}]
 --#include "src/tty.lua"
 --#include "src/ttyprintk.lua"
 --#include "src/user/sandbox.lua"
