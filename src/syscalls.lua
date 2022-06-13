@@ -57,9 +57,8 @@ do
     return table.unpack(result, 1, result.n)
   end
 
-  -------------------------------
-  -- File-related system calls --
-  -------------------------------
+  ------
+  -- This page contains all the system calls available under Cynosure 2.
 
   --- Open a file with the given mode.
   -- Returns a file descriptor.
@@ -130,6 +129,7 @@ do
 
   --- Read some data from a file descriptor.
   -- Returns the data that was read.  Any format valid for `io` is valid when passed to this function.
+  -- @function read
   -- @tparam number fd The file descriptor
   -- @tparam string|number fmt The format to use when reading
   -- @treturn string The data that was read
@@ -150,6 +150,7 @@ do
   end
 
   --- Write some data to a file descriptor.
+  -- @function write
   -- @tparam number fd The file descriptor
   -- @tparam string data The data to write
   -- @treturn boolean Whether the operation succeeded
@@ -251,7 +252,6 @@ do
   end
 
   ------
-  -- dirent
   -- Returned by @{readdir}.
   -- @tfield number inode The inode on which the file is stored
   -- @tfield string name The name of the file
@@ -423,10 +423,13 @@ do
   k.syscalls.unmount = k.unmount
 
 
-  ----------------------------------
   -- Process-related system calls --
-  ----------------------------------
 
+  --- Create a new process.
+  -- This function creates a new process from the given function.  Its behavior is nonstandard due to Lua limitations.
+  -- @function fork
+  -- @tparam function func The function to use
+  -- @treturn number The PID of the new process
   function k.syscalls.fork(func)
     checkArg(1, func, "function")
 
@@ -436,6 +439,12 @@ do
     return proc.pid
   end
 
+  --- Replace the current process.
+  -- Takes the path to an executable file and loads it as a replacement for the current process.
+  -- @function execve
+  -- @tparam string path The executable to load
+  -- @tparam table args Any arguments to pass
+  -- @tparam[opt] table env Environment variables, if any
   function k.syscalls.execve(path, args, env)
     checkArg(1, path, "string")
     checkArg(2, args, "table")
@@ -481,6 +490,10 @@ do
     return true
   end
 
+  --- Wait for a process.
+  -- If a process has exited, it will not be removed until @{wait} is called on it.
+  -- @function wait
+  -- @tparam number pid The process ID for which to wait
   function k.syscalls.wait(pid)
     checkArg(1, pid, "number")
 
@@ -504,6 +517,10 @@ do
     return reason, status
   end
 
+  --- Terminate the current process.
+  -- Takes an exit status, which is returned to the parent from a call to @{wait}.
+  -- @function exit
+  -- @tparam number status The exit status to use
   function k.syscalls.exit(status)
     checkArg(1, status, "number")
 
@@ -515,10 +532,17 @@ do
     coroutine.yield()
   end
 
+  --- Get the current working directory.
+  -- @function getcwd
+  -- @treturn string The current process's working directory
   function k.syscalls.getcwd()
     return k.current_process().cwd
   end
 
+  --- Set the current process's working directory.
+  -- Does nothing if the given path does not exist.  The given path may be relative.
+  -- @function chdir
+  -- @tparam string path The new working directory
   function k.syscalls.chdir(path)
     checkArg(1, path, "string")
     path = k.check_absolute(path)
@@ -538,6 +562,10 @@ do
     return true
   end
 
+  --- Modify the current process's identity.
+  -- @see setuid(2)
+  -- @function setuid
+  -- @tparam number uid The new user ID
   function k.syscalls.setuid(uid)
     checkArg(1, uid, "number")
     local current = k.current_process()
@@ -554,6 +582,10 @@ do
     end
   end
 
+  --- Modify the current process's identity.
+  -- @see seteuid(2)
+  -- @function seteuid
+  -- @tparam number uid The new user ID
   function k.syscalls.seteuid(uid)
     checkArg(1, uid, "number")
     local current = k.current_process()
@@ -567,14 +599,24 @@ do
     end
   end
 
+  --- Get the current process's user ID.
+  -- @function getuid
+  -- @treturn number The user ID
   function k.syscalls.getuid()
     return k.current_process().uid
   end
 
+  --- Get the current process's effective user ID.
+  -- @function geteuid
+  -- @treturn number The effective user ID
   function k.syscalls.geteuid()
     return k.current_process().euid
   end
 
+  --- Modify the current process's identity.
+  -- @see setgid(2)
+  -- @function setgid
+  -- @tparam number uid The new group ID
   function k.syscalls.setgid(gid)
     checkArg(1, gid, "number")
     local current = k.current_process()
@@ -589,6 +631,10 @@ do
     end
   end
 
+  --- Modify the current process's identity.
+  -- @see setegid(2)
+  -- @function setegid
+  -- @tparam number uid The new group ID
   function k.syscalls.setegid(gid)
     checkArg(1, gid, "number")
     local current = k.current_process()
@@ -602,22 +648,38 @@ do
     end
   end
 
+  --- Get the current process's group ID.
+  -- @function getgid
+  -- @treturn number The group ID
   function k.syscalls.getgid()
     return k.current_process().gid
   end
 
+  --- Get the current process's effective group ID.
+  -- @function getegid
+  -- @treturn number The effective group ID
   function k.syscalls.getegid()
     return k.current_process().egid
   end
 
+  --- Get the ID of the current process.
+  -- @function getpid
+  -- @treturn number The process's ID
   function k.syscalls.getpid()
     return k.current_process().pid
   end
 
+  --- Get the parent PID of the current process.
+  -- @function getpid
+  -- @treturn number The parent PID
   function k.syscalls.getppid()
     return k.current_process().ppid
   end
 
+  --- Set the session ID of the current process.
+  -- Does not work if the current process is the leader of its process group.
+  -- @function setsid
+  -- @treturn number The new session ID
   function k.syscalls.setsid()
     local current = k.current_process()
     if current.pgid == current.pid then
@@ -637,6 +699,10 @@ do
     return current.sid
   end
 
+  --- Get the session ID of a process.
+  -- @function getsid
+  -- @tparam[opt] number pid The process to query
+  -- @treturn number The session ID of the process
   function k.syscalls.getsid(pid)
     checkArg(1, pid, "number", "nil")
 
@@ -652,6 +718,10 @@ do
     return proc.sid
   end
 
+  --- Set a process's process group.
+  -- @function setpgrp
+  -- @tparam number pid The process to modify
+  -- @tparam number pg The process group ID
   function k.syscalls.setpgrp(pid, pg)
     checkArg(1, pid, "number")
     checkArg(2, pg, "number")
@@ -678,6 +748,10 @@ do
     return true
   end
 
+  --- Get the process group of a process.
+  -- @function getpgrp
+  -- @tparam[opt] number pid The process ID to query
+  -- @treturn number The process group ID of that process
   function k.syscalls.getpgrp(pid)
     checkArg(1, pid, "number", "nil")
 
@@ -712,6 +786,11 @@ do
     SIGTTOU = true
   }
 
+  --- Set a handler for some POSIX signal.
+  -- Signals are represented by their constant names rather than by numbers.
+  -- @function sigaction
+  -- @tparam string name The signal name
+  -- @tparam handler function The handler function to set
   function k.syscalls.sigaction(name, handler)
     checkArg(1, name, "string")
     checkArg(2, handler, "function")
@@ -724,9 +803,11 @@ do
     return true
   end
 
-  -- Differs from the standard slightly: SIGEXIST, rather than 0,
-  -- is used to check if a process exists - since signals don't
-  -- have numeric IDs under Cynosure 2.
+  --- Signal a process.
+  -- Differs from the standard slightly: SIGEXIST, rather than 0, is used to check if a process exists - since signals don't have numeric IDs under Cynosure 2.
+  -- @function kill
+  -- @tparam number pid The process to kill
+  -- @tparam string name The signal to send
   function k.syscalls.kill(pid, name)
     checkArg(1, pid, "number")
     checkArg(2, name, "string")
@@ -751,29 +832,44 @@ do
       return nil, k.errno.EPERM
     end
   end
-  -----------------------------
-  -- Networking system calls --
-  -----------------------------
 
+
+  -- Networking system calls --
+
+  --- Get the system hostname.
+  -- @function gethostname
+  -- @treturn string The hostname
   function k.syscalls.gethostname()
     return k.gethostname and k.gethostname() or
       "@[{bconf.DEFAULT_HOSTNAME or 'localhost'}]"
   end
 
+  --- Set the system hostname.
+  -- @function sethostname
+  -- @tparam string name The new hostname
   function k.syscalls.sethostname(name)
     checkArg(1, name, "string")
     return k.sethostname and k.sethostname(name)
   end
 
-  --------------------------------
-  -- Miscellaneous system calls --
-  --------------------------------
 
+  -- Miscellaneous system calls --
+
+  --- Get the process environment.
+  -- Returns the current process's environment table.
+  -- @function environ
+  -- @treturn table The environment
   function k.syscalls.environ()
     return k.current_process().environ
   end
 
+  --- Set the umask.
+  -- Only uses the permissions bits.  Returns the previous umask.
+  -- @function umask
+  -- @tparam number num The new umask
+  -- @treturn number The old umask
   function k.syscalls.umask(num)
+    checkArg(1, num, "number")
     local cur = k.current_process()
     local old = cur.umask
     if tonumber(num) then
@@ -782,6 +878,11 @@ do
     return old
   end
 
+  --- Create a pipe.
+  -- Returns a pair of file descriptors.
+  -- @function pipe
+  -- @treturn number The read end
+  -- @treturn number The write end
   function k.syscalls.pipe()
     local buf = ""
     local closed = false
@@ -829,6 +930,11 @@ do
     return infd, outfd
   end
 
+  --- Restart the system.
+  -- Does not function unless the effective user ID is 0 (root).
+  -- The given action must be one of: `halt`, `poweroff`, `reboot`
+  -- @function reboot
+  -- @tparam string cmd The action to perform
   function k.syscalls.reboot(cmd)
     checkArg(1, cmd, "string")
 
@@ -855,6 +961,9 @@ do
     return nil, k.errno.EINVAL
   end
 
+  --- Return some system information.
+  -- @function uname
+  -- @treturn @{unamex} The system information
   function k.syscalls.uname()
     return {
       sysname = "Cynosure",
@@ -865,6 +974,18 @@ do
     }
   end
 
+  ------
+  -- Table containing system information.
+  -- @tfield string sysname The system name
+  -- @tfield string nodename The nodename (hostname)
+  -- @tfield string release The kernel release
+  -- @tfield string version The day this kernel was built
+  -- @tfield string machine The machine the kernel is running on
+  -- @table unamex
+
+  --- Return the system uptime.
+  -- @function uptime
+  -- @treturn number The uptime
   function k.syscalls.uptime()
     return computer.uptime()
   end
