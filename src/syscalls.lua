@@ -395,11 +395,33 @@ do
   -- @tparam string path The file to unlink
   k.syscalls.unlink = k.unlink
 
+  --- Change file permissions.
+  -- Takes a standard POSIX file mode and applies the permissions to the given file.
+  -- @function chmod
+  -- @tparam string path The file to modify
+  -- @tparam number mode The mode to set
+  k.syscalls.chmod = k.chmod
+
+  --- Change a file's owner.
+  -- Changes the `uid` and `gid` fields for the given file.
+  -- @function chown
+  -- @tparam string path The file to modify
+  -- @tparam number uid The new owning UID
+  -- @tparam number gid The new owning GID
+  k.syscalls.chown = k.chown
+
   --- Mount a filesystem.
+  -- The given directory must exist or the operation will fail.
+  -- @function mount
+  -- @tparam table|string node The filesystem node
+  -- @tparam string path The path at which to mount it
   k.syscalls.mount = k.mount
 
   -- Unmount a filesystem.
+  -- @function unmount
+  -- @tparam string path The path to unmount
   k.syscalls.unmount = k.unmount
+
 
   ----------------------------------
   -- Process-related system calls --
