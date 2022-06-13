@@ -199,7 +199,7 @@ do
   --- Flush read and write buffers.
   -- Only does something on some file descriptors, and then only if the file descriptor is buffered.
   -- @function flush
-  -- @tparam fd The file descriptor
+  -- @tparam number fd The file descriptor
   function k.syscalls.flush(fd)
     checkArg(1, fd, "number")
 
