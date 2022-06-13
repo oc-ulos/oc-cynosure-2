@@ -15,6 +15,10 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
+--- System calls
+-- All system calls return `nil` and an errno value on failure.
+-- @module syscalls
+-- @alias k.syscalls
 
 printk(k.L_INFO, "syscalls")
 
@@ -57,6 +61,12 @@ do
   -- File-related system calls --
   -------------------------------
 
+  --- Open a file with the given mode.
+  -- Returns a file descriptor.
+  -- @function open
+  -- @tparam string file The file to open
+  -- @tparam string mode The mode, similar to those given to `io`
+  -- @treturn number The file descriptor
   function k.syscalls.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
@@ -74,6 +84,12 @@ do
   end
 
   if k.request then
+    --- Request a given network path.
+    -- Uses any protocol supported by the kernel.  Returns a file descriptor.
+    -- Paths must be bang paths, i.e. `https!example!com!404.html` or `mtel!upm!packages!list`
+    -- @function request
+    -- @tparam string path The bang path to request
+    -- @treturn number The file descriptor
     function k.syscalls.request(path)
       checkArg(1, path, "string")
 
@@ -90,6 +106,12 @@ do
     end
   end
 
+  --- Perform some operation on a file descriptor.
+  -- Not all file descriptors support all ioctls.
+  -- @function ioctl
+  -- @tparam number fd The file descriptor
+  -- @tparam string operation The operation to perform
+  -- @tparam any ... Any remaining arguments
   function k.syscalls.ioctl(fd, operation, ...)
     checkArg(1, fd, "number")
     checkArg(2, operation, "string")
@@ -106,6 +128,11 @@ do
     return k.ioctl(current.fds[fd], operation, ...)
   end
 
+  --- Read some data from a file descriptor.
+  -- Returns the data that was read.  Any format valid for `io` is valid when passed to this function.
+  -- @tparam number fd The file descriptor
+  -- @tparam string|number fmt The format to use when reading
+  -- @treturn string The data that was read
   function k.syscalls.read(fd, fmt)
     checkArg(1, fd, "number")
     checkArg(2, fmt, "string", "number")
@@ -122,6 +149,10 @@ do
     return k.read(current.fds[fd], fmt)
   end
 
+  --- Write some data to a file descriptor.
+  -- @tparam number fd The file descriptor
+  -- @tparam string data The data to write
+  -- @treturn boolean Whether the operation succeeded
   function k.syscalls.write(fd, data)
     checkArg(1, fd, "number")
     checkArg(2, data, "string")
@@ -139,6 +170,13 @@ do
     return not not ok, err
   end
 
+  --- Seek to some position in a given file relative to the start position.
+  -- Returns the new position.  Not all file descriptors support this.
+  -- @function seek
+  -- @tparam number fd The file descriptor
+  -- @tparam string whence Where to start
+  -- @tparam offset number|nil The offset to seek
+  -- @treturn number The new position
   function k.syscalls.seek(fd, whence, offset)
     checkArg(1, fd, "number")
     checkArg(2, whence, "string")
@@ -156,6 +194,10 @@ do
     return k.seek(current.fds[fd], whence, offset or 0)
   end
 
+  --- Flush read and write buffers.
+  -- Only does something on some file descriptors, and then only if the file descriptor is buffered.
+  -- @function flush
+  -- @tparam fd The file descriptor
   function k.syscalls.flush(fd)
     checkArg(1, fd, "number")
 
@@ -171,6 +213,11 @@ do
     return k.flush(current.fds[fd])
   end
 
+  --- Open a directory.
+  -- Opens the given directory for reading and returns a directory descriptor.
+  -- @function opendir
+  -- @tparam string file The directory to open
+  -- @treturn number The resulting directory descriptor
   function k.syscalls.opendir(file)
     checkArg(1, file, "string")
 
@@ -184,6 +231,10 @@ do
     return n
   end
 
+  --- Read from a directory.
+  -- @function readdir
+  -- @tparam number fd The directory descriptor
+  -- @treturn table @{dirent}
   function k.syscalls.readdir(fd)
     checkArg(1, fd, "number")
 
@@ -199,6 +250,16 @@ do
     return k.readdir(current.fds[fd])
   end
 
+  ------
+  -- dirent
+  -- Returned by @{readdir}.
+  -- @tfield number inode The inode on which the file is stored
+  -- @tfield string name The name of the file
+  -- @table dirent
+
+  --- Close a file or directory descriptor.
+  -- @function close
+  -- @tparam number fd The file descriptor
   function k.syscalls.close(fd)
     checkArg(1, fd, "number")
 
@@ -216,6 +277,10 @@ do
     return true
   end
 
+  --- Check if a file descriptor refers to a TTY.
+  -- @function isatty
+  -- @tparam number fd The file descriptor
+  -- @treturn boolean Whether the file descriptor is a TTY
   function k.syscalls.isatty(fd)
     checkArg(1, fd, "number")
 
@@ -236,6 +301,11 @@ do
     )
   end
 
+  --- Duplicate a file descriptor.
+  -- Returns the new file descriptor.
+  -- @function dup
+  -- @tparam number fd The descriptor to duplicate
+  -- @treturn number The new file descriptor
   function k.syscalls.dup(fd)
     checkArg(1, fd, "number")
 
@@ -255,10 +325,15 @@ do
     return nfd
   end
 
+  --- Duplicate a file descriptor to the given new one.
+  -- Returns the new file descriptor.  If the provided new file descriptor exists and is open, it will be silently closed.
+  -- @function dup2
+  -- @tparam number fd The file descriptor to duplicate
+  -- @tparam number nfd The new file descriptor
+  -- @treturn number The new file descriptor
   function k.syscalls.dup2(fd, nfd)
     checkArg(1, fd, "number")
     checkArg(2, nfd, "number")
-
 
     local current = k.current_process()
     if current.fds[fd] and current.fds[fd].refs <= 0 then
@@ -281,13 +356,49 @@ do
     return nfd
   end
 
+  --- Create a directory.
+  -- @function mkdir
+  -- @tparam string path The directory to create
+  -- @tparam number mode The permissions to set on it
   k.syscalls.mkdir = k.mkdir
 
+  --- Returns some information about a file.
+  -- @function stat
+  -- @tparam string path The file to query
+  -- @treturn @{statx} The information
   k.syscalls.stat = k.stat
 
+  ------
+  -- The information returned by @{stat}.
+  -- @tfield number ino The inode on which the file is located
+  -- @tfield number mode The POSIX file mode (type and permissions)
+  -- @tfield number nlink How many times the file's inode is referenced (hard linked)
+  -- @tfield number uid The user ID of the file's owner
+  -- @tfield number gid The group ID of the file's owner
+  -- @tfield number size The file size in bytes
+  -- @tfield number blksize The block size used for file I/O
+  -- @tfield number atime File access time
+  -- @tfield number ctime File creation time
+  -- @tfield number mtime File modification time
+  -- @table statx
+
+  --- Create a hard link.
+  -- Not supported by any filesystems at this time.
+  -- @function link
+  -- @tparam string source The source file
+  -- @tparam string dest The location of the new link
   k.syscalls.link = k.link
+
+  --- Remove a link.
+  -- Removes the file when its link count reaches 0.
+  -- @function unlink
+  -- @tparam string path The file to unlink
   k.syscalls.unlink = k.unlink
+
+  --- Mount a filesystem.
   k.syscalls.mount = k.mount
+
+  -- Unmount a filesystem.
   k.syscalls.unmount = k.unmount
 
   ----------------------------------
