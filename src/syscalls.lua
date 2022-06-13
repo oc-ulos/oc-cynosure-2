@@ -59,6 +59,7 @@ do
 
   ------
   -- This page contains all the system calls available under Cynosure 2.
+  -- System calls are made like this: `coroutine.yield("syscall", "isatty", 2)` instead of `isatty(2)`
 
   --- Open a file with the given mode.
   -- Returns a file descriptor.
@@ -963,7 +964,7 @@ do
 
   --- Return some system information.
   -- @function uname
-  -- @treturn @{unamex} The system information
+  -- @treturn @{unameinfo} The system information
   function k.syscalls.uname()
     return {
       sysname = "Cynosure",
@@ -981,7 +982,7 @@ do
   -- @tfield string release The kernel release
   -- @tfield string version The day this kernel was built
   -- @tfield string machine The machine the kernel is running on
-  -- @table unamex
+  -- @table unameinfo
 
   --- Return the system uptime.
   -- @function uptime

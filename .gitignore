@@ -1,3 +1,4 @@
 .config
 kernel.lua
 .nvim_globals.lua
+doc/*
