@@ -73,6 +73,23 @@ do
     return n
   end
 
+  if k.request then
+    function k.syscalls.request(path)
+      checkArg(1, path, "string")
+
+      local fd, err = k.request(path)
+      if not fd then
+        return nil, err
+      end
+
+      local current = k.current_process()
+      local n = #current.fds + 1
+      current.fds[n] = fd
+
+      return n
+    end
+  end
+
   function k.syscalls.ioctl(fd, operation, ...)
     checkArg(1, fd, "number")
     checkArg(2, operation, "string")
