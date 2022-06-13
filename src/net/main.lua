@@ -51,7 +51,9 @@ do
       return nil, k.errno.ENOPROTOOPT
     end
 
-    return protocol(parts)
+    local request = protocol(parts)
+    local stream = k.buffer_from_stream(request, "rw")
+    return { fd = stream, node = stream, refs = 1 }
   end
 end
 
@@ -59,3 +61,5 @@ end
 --@[{depend("Minitel/GERTi support", "COMPONENT_MODEM", "NET_MTEL", "NET_GERT")}]
 --@[{includeif("NET_HTTP", "src/net/http.lua"}]
 --@[{includeif("NET_TCP", "src/net/tcp.lua")}]
+--@[{includeif("NET_MTEL", "src/net/minitel.lua")}]
+--@[{includeif("NET_GERT", "src/net/gerti.lua")}]

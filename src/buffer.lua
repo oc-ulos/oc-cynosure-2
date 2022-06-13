@@ -260,6 +260,8 @@ do
         and self.stream.proxy.override_setvbuf) then
       if self.stream.proxy and self.stream.proxy.ioctl then
         return self.stream.proxy.ioctl(self.stream.fd, op, mode, ...)
+      elseif self.stream.ioctl then
+        return self.stream.ioctl(self.stream, op, mode, ...)
       else
         return nil, k.errno.ENOSYS
       end
