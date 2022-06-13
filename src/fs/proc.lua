@@ -150,7 +150,7 @@ do
       local data = type(node.data) == "function" and node.data() or node.data
       return { file = to_fd(data), ioctl = node.ioctl }
     elseif type(node) ~= "table" then
-      return { file = to_fd(node), ioctl = node.ioctl }
+      return { file = to_fd(node), ioctl = function()end }
     else
       return nil, k.errno.EISDIR
     end

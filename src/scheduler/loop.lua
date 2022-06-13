@@ -98,6 +98,10 @@ do
               end
             end
           end
+        else
+          if not processes[process.ppid] then
+            process.ppid = 1
+          end
         end
       end
 
