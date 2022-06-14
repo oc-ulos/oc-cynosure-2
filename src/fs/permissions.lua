@@ -46,7 +46,7 @@ do
     for i=#order, 1, -1 do
       local index = #order - i + 1
       if permstr:sub(index, index) ~= "-" then
-        bitmap = bit32.bor(bitmap, order[i])
+        bitmap = (bitmap | order[i])
       end
     end
 
@@ -68,15 +68,15 @@ do
     local base_index = ogo * 3
     for c in perm:gmatch(".") do
       if c == "r" then
-        val_check = bit32.bor(val_check, order[base_index])
+        val_check = (val_check | order[base_index])
       elseif c == "w" then
-        val_check = bit32.bor(val_check, order[base_index - 1])
+        val_check = (val_check | order[base_index - 1])
       elseif c == "x" then
-        val_check = bit32.bor(val_check, order[base_index - 2])
+        val_check = (val_check | order[base_index - 2])
       end
     end
 
-    return bit32.band(mode, val_check) == val_check
+    return (mode & val_check) == val_check
   end
 
   function k.process_has_permission(proc, stat, perm)
@@ -86,10 +86,10 @@ do
 
     -- TODO: more fine-grained rules for precisely when root can do certain
     -- TODO: things
-    if perm ~= "x" and proc.euid == 0 then return true end
+    if proc.euid == 0 and perm ~= "x" then return true end
 
-    local ogo = (proc.euid == stat.uid and 1) or (proc.egid == stat.gid and 2)
-      or 3
+    local ogo = (proc.euid == stat.uid and 3) or (proc.egid == stat.gid and 2)
+      or 1
     return k.has_permission(ogo, stat.mode, perm)
   end
 end
