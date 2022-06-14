@@ -581,7 +581,7 @@ do
       return nil, err
     end
 
-    if bit32.band(stat.mode, 0xF000) ~= k.FS_DIR then
+    if (stat.mode & 0xF000) ~= k.FS_DIR then
       return nil, k.errno.ENOTDIR
     end
 
@@ -902,7 +902,7 @@ do
     local cur = k.current_process()
     local old = cur.umask
     if tonumber(num) then
-      cur.umask = bit32.band(math.floor(num), 511)
+      cur.umask = (math.floor(num) & 511)
     end
     return old
   end

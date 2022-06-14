@@ -43,15 +43,15 @@ do
     local nlink = k.read(fd, 1)
     if nlink then nlink = nlink:byte() else return nil, k.errno.ENOEXEC end
 
-    if bit32.band(flags, cle_flags.lua53) and _VERSION ~= "Lua 5.3" then
+    if (flags & cle_flags.lua53) and _VERSION ~= "Lua 5.3" then
       return nil, k.errno.ENOEXEC
     end
 
-    if bit32.band(flags, cle_flags.exec) == 0 then
+    if (flags & cle_flags.exec) == 0 then
       return nil, k.errno.ELIBEXEC
     end
 
-    if bit32.band(flags, cle_flags.static) == cle_flags.static then
+    if (flags & cle_flags.static) == cle_flags.static then
       if nlink > 0 then
         -- nlink must not be above 0 if the exec is statically linked
         return nil, k.errno.ENOEXEC

@@ -130,7 +130,7 @@ do
       local stat = k.stat(path)
       if (not stat) then
         return nil, k.errno.ENOENT
-      elseif bit32.band(stat.mode, 0xF000) ~= 0x4000 then
+      elseif (stat.mode & 0xF000) ~= 0x4000 then
         return nil, k.errno.ENOTDIR
       end
     end
@@ -352,12 +352,12 @@ do
       return nil, k.errno.EACCES
     end
 
-    local umask = bit32.bxor(cur_proc().umask or 0, 511)
+    local umask = (cur_proc().umask or 0) ~ 511
 
     local done, failed = node:mkdir(remain)
     if not done then return nil, failed end
     if node.chmod then node:chmod(remain,
-        bit32.band(mode or stat.mode, umask)) end
+        ((mode or stat.mode) & umask)) end
     return done, failed
   end
 
@@ -413,7 +413,7 @@ do
     end
 
     -- only preserve the lower 12 bits
-    mode = bit32.band(mode, 0x1FF)
+    mode = (mode & 0x1FF)
     return node:chmod(remain, mode)
   end
 

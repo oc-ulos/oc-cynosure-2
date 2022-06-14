@@ -111,7 +111,7 @@ do
     attributes.gid = attributes.gid or 0
     -- default to root/root, rwxrwxrwx permissions
     attributes.mode = attributes.mode or (self.fs.isDirectory(file)
-      and 0x4000 or 0x8000) + bit32.bxor(0x1FF, k.current_process().umask)
+      and 0x4000 or 0x8000) + (0x1FF ~ k.current_process().umask)
     attributes.created = attributes.created or self:lastModified(file)
 
     return attributes
@@ -178,7 +178,7 @@ do
 
     local attributes = self:get_attributes(path)
     -- userspace can't change the file type of a file
-    attributes.mode = bit32.bor(bit32.band(attributes.mode, 0xF000), mode)
+    attributes.mode = ((attributes.mode & 0xF000) | mode)
     return self:set_attributes(path, attributes)
   end
 
