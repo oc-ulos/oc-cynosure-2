@@ -243,6 +243,9 @@ do
       self.stream:write(self.wbuf)
       self.wbuf = ""
     end
+    if self.stream.flush then
+      self.stream:flush()
+    end
     return true
   end
 
