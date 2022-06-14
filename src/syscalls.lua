@@ -15,8 +15,7 @@
     You should have received a copy of the GNU General Public License
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
---- System calls
--- This page contains all the system calls available under Cynosure 2.
+--- System calls.
 -- @module syscalls
 -- @alias k.syscalls
 
@@ -58,7 +57,7 @@ do
   end
 
   ------
-  -- This page contains all the system calls available under Cynosure 2.
+  -- This page contains all the system calls available under Cynosure 2.  Wrapper functions with identical functionality are provided by the `syscalls` library.
   -- All system calls return `nil` and an errno value on failure.
   -- System calls are made using `coroutine.yield` like this: `coroutine.yield("syscall", "isatty", 2)`.
 
