@@ -16,7 +16,7 @@
     along with this program.  If not, see <https://www.gnu.org/licenses/>.
   ]]--
 --- System calls
--- All system calls return `nil` and an errno value on failure.
+-- This page contains all the system calls available under Cynosure 2.
 -- @module syscalls
 -- @alias k.syscalls
 
@@ -59,7 +59,8 @@ do
 
   ------
   -- This page contains all the system calls available under Cynosure 2.
-  -- System calls are made like this: `coroutine.yield("syscall", "isatty", 2)` instead of `isatty(2)`
+  -- All system calls return `nil` and an errno value on failure.
+  -- System calls are made using `coroutine.yield` like this: `coroutine.yield("syscall", "isatty", 2)`.
 
   --- Open a file with the given mode.
   -- Returns a file descriptor.
