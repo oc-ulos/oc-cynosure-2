@@ -21,20 +21,23 @@ printk(k.L_INFO, "exec/lua")
 do
   k.register_executable_format("lua", function(header)--, extension)
     return header:sub(1, 6) == "--!lua"-- or extension == "lua"
-  end, function(fd, env)
+  end, function(fd, env, name)
     local data = k.read(fd, math.huge)
     k.close(fd)
 
-    local chunk, err = k.load(data, "=lua", "t", env)
+    local chunk, err = k.load(data, "="..name, "t", env)
     if not chunk then
       printk(k.L_DEBUG, "load failed - %s", tostring(err))
       return nil, k.errno.ENOEXEC
     end
     return function(args)
-      assert(xpcall(chunk, function(err)
-        printk(k.L_NOTICE, "Lua error: %s", debug.traceback(err))
-      end, args))
-      k.syscalls.exit(0)
+      local result = table.pack(xpcall(chunk, debug.traceback, args))
+      if not result[1] then
+        printk(k.L_NOTICE, "Lua error: %s", result[2])
+        k.syscalls.exit(1)
+      else
+        k.syscalls.exit(0)
+      end
     end
   end)
 end

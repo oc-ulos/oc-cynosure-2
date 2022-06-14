@@ -25,6 +25,7 @@ do
     ESRCH = 3,
     ENOEXEC = 8,
     EBADF = 9,
+    ECHILD = 10,
     EACCES = 13,
     EBUSY = 16,
     EEXIST = 17,

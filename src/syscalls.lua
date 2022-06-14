@@ -502,6 +502,10 @@ do
       return nil, k.errno.ESRCH
     end
 
+    if k.get_process(pid).ppid ~= k.current_process().pid then
+      return nil, k.errno.ECHILD
+    end
+
     while not k.get_process(pid).is_dead do
       coroutine.yield(0)
     end
@@ -529,6 +533,7 @@ do
     current.status = status
     current.threads = {}
     current.thread_count = 0
+    current.is_dead = true
 
     coroutine.yield()
   end
