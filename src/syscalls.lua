@@ -459,12 +459,12 @@ do
     if not func then return nil, err end
 
     local stat = k.stat(path)
-    if bit32.band(stat.mode, k.FS_SETUID) ~= 0 then
+    if (stat.mode & k.FS_SETUID) ~= 0 then
       current.uid = stat.uid
       current.euid = stat.uid
       current.suid = stat.uid
     end
-    if bit32.band(stat.mode, k.FS_SETGID) ~= 0 then
+    if (stat.mode & k.FS_SETGID) ~= 0 then
       current.gid = stat.gid
       current.egid = stat.egid
       current.sgid = stat.egid

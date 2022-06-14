@@ -213,6 +213,13 @@ do
         return nil, k.errno.EINVAL
       end
 
+    elseif method == "setlogin" then
+      checkArg(3, args, "number")
+      self.login = args
+
+    elseif method == "getlogin" then
+      return self.login
+
     else
       return nil, k.errno.ENOSYS
     end
