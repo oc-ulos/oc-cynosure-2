@@ -87,6 +87,11 @@ do
 
   local ioctls = {}
 
+  function ioctls.doc(fd, method)
+    checkArg(3, method, "string")
+    return component.doc(fd.proxy.address, method)
+  end
+
   function ioctls.invoke(fd, call, ...)
     checkArg(3, call, "string")
 
@@ -97,16 +102,24 @@ do
     return fd.proxy[call](...)
   end
 
-  function ioctls.address(fd)
-    return fd.proxy.address
+  function ioctls.methods(fd)
+    return component.methods(fd.proxy.address)
+  end
+
+  function ioctls.type(fd)
+    return fd.proxy.type
   end
 
   function ioctls.slot(fd)
     return fd.proxy.slot
   end
 
-  function ioctls.type(fd)
-    return fd.proxy.type
+  function ioctls.fields(fd)
+    return component.fields(fd.proxy.address)
+  end
+
+  function ioctls.address(fd)
+    return fd.proxy.address
   end
 
   function provider.ioctl(fd, method, ...)
