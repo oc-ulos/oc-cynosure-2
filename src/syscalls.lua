@@ -522,6 +522,29 @@ do
     return reason, status
   end
 
+  --- Wait for any child process.
+  -- Optionally blocks.  Otherwise returns immediately if there are no child processes that have not been waited for.
+  -- @tparam boolean block Whether to block indefinitely while waiting
+  -- @treturn number The PID of the process that was waited for
+  -- @treturn string The exit reason
+  -- @treturn number The exit status
+  function k.syscalls.waitany(block)
+    checkArg(1, block, "boolean", "nil")
+
+    local cur = k.current_process().pid
+    repeat
+      for _, pid in ipairs(k.get_pids()) do
+        local process = k.get_process(pid)
+        if process.is_dead and process.ppid == cur then
+          return pid, k.syscalls.wait(pid)
+        end
+      end
+      if block then coroutine.yield(0.5) end
+    until not block
+
+    return nil
+  end
+
   --- Terminate the current process.
   -- Takes an exit status, which is returned to the parent from a call to @{wait}.
   -- @function exit
