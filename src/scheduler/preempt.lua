@@ -117,7 +117,7 @@ do
     env[sys] = sysyield
 
     if k.cmdline.debug_load then
-      local fd = k.open("/load.txt", "a")
+      local fd = k.open("/load.txt", "a") or k.open("/load.txt", "w")
       if fd then
         k.write(fd, "== LOAD ==\n" .. chunk)
         k.close(fd)

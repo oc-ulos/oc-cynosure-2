@@ -84,6 +84,15 @@ TTY_ENABLE_GPU=y
 # Whether to enable the bit32 compatibility layer.  If this is disabled, the
 # resulting kernel cannot run Lua 5.2 programs.
 BIT32=y
+# How big stream buffers are allowed to get.
+# This impacts how much memory a buffer can use, but can also determine
+# performance while doing file I/O in small chunks.  Ideally this is
+# identical to the managed filesystem's maximum read chunk size (if
+# you're not sure what it's set to, check your OpenComputers configuration).
+# 1024 seems like a fair tradeoff between memory and speed, so it's the
+# default.  If performance is lacking and you think your code is IO-bound,
+# you can try increasing this number.  If you're running into out-of-memory
+# errors related to file IO, try decreasing it.
 BUFFER_SIZE=1024
 # When available free memory goes below this threshold, the kernel's
 # automated garbage collection code will fire.

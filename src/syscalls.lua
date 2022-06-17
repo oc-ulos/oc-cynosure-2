@@ -632,14 +632,16 @@ do
   -- @function getuid
   -- @treturn number The user ID
   function k.syscalls.getuid()
-    return k.current_process().uid
+    local cur = k.current_process()
+    return cur and cur.uid or 0
   end
 
   --- Get the current process's effective user ID.
   -- @function geteuid
   -- @treturn number The effective user ID
   function k.syscalls.geteuid()
-    return k.current_process().euid
+    local cur = k.current_process()
+    return cur and cur.euid or 0
   end
 
   --- Modify the current process's identity.
@@ -681,14 +683,16 @@ do
   -- @function getgid
   -- @treturn number The group ID
   function k.syscalls.getgid()
-    return k.current_process().gid
+    local cur = k.current_process()
+    return cur and cur.gid or 0
   end
 
   --- Get the current process's effective group ID.
   -- @function getegid
   -- @treturn number The effective group ID
   function k.syscalls.getegid()
-    return k.current_process().egid
+    local cur = k.current_process()
+    return cur and cur.egid or 0
   end
 
   --- Get the ID of the current process.

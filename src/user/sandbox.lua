@@ -78,6 +78,20 @@ do
       return yield(request, ...)
     end
 
+    if new.coroutine.resume == coroutine.resume then
+      local resume = new.coroutine.resume
+      function new.coroutine.resume(co, ...)
+        local result
+        repeat
+          result = table.pack(resume(co, ...))
+          if result[2] == k.sysyield_string then
+            yield(k.sysyield_string)
+          end
+        until result[2] ~= k.sysyield_string or not result[1]
+        return table.unpack(result, 1, result.n)
+      end
+    end
+
     return new
   end
 end

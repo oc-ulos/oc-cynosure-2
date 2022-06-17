@@ -241,7 +241,7 @@ do
       if self.rbuf:find(self.eof, nil, true) and not self.raw then break end
     end
 
-    if self.mode == "line" and not has_eof then
+    if self.mode == "line" then
       while (self.rbuf:find(eolpat) or 0) < n do
         coroutine.yield()
         if self.rbuf:find(self.eof, nil, true) and not self.raw then break end
