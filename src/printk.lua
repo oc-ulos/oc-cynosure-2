@@ -62,6 +62,7 @@ do
 
   -- the maximum log buffer size is (total memory / 1024)
   local log_buffer = {}
+  k.log_buffer = log_buffer
   local sandbox = component.list("sandbox")()
   local function log_to_buffer(message)
     log_buffer[#log_buffer + 1] = message

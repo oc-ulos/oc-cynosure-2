@@ -204,7 +204,7 @@ do
       return self.pgroup or math.huge
 
     elseif method == "ttyname" then
-      return self.name
+      return self.obj.name
 
     elseif method == "setvbuf" then
       if args == "line" or args == "none" then

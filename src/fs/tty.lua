@@ -34,6 +34,7 @@ do
           cdev.stream.name = string.format("tty%d", ttyn)
           k.devfs.register_device(string.format("tty%d", ttyn), cdev)
           ttyn = ttyn + 1
+          break
         end
       end
     end

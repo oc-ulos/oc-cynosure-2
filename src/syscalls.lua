@@ -1046,4 +1046,14 @@ do
   function k.syscalls.uptime()
     return computer.uptime()
   end
+
+  --- Return the last `totalMemory() / 1024` log messages.
+  -- @treturn table The log messages
+  function k.syscalls.syslog()
+    local ret = {}
+    for i=1, #k.log_buffer, 1 do
+      ret[i] = k.log_buffer[i]
+    end
+    return ret
+  end
 end

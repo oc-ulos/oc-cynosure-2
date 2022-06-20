@@ -586,6 +586,7 @@ do
     checkArg(2, screen, "string", "nil")
     if type(gpu) == "string" then gpu = component.proxy(gpu) end
     screen = screen or gpu.getScreen()
+    gpu.bind(screen)
 
     local w, h = gpu.getResolution()
 
