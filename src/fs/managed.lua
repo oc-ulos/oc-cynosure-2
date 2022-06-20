@@ -292,13 +292,19 @@ do
   -- register the filesystem type with the kernel
   k.register_fstype("managed", function(comp)
     if type(comp) == "table" and comp.type == "filesystem" then
-      return setmetatable({fs = comp}, fs_mt)
+      return setmetatable({fs = comp,
+        address = comp.address:sub(1,8)}, fs_mt)
+
     elseif type(comp) == "string" and component.type(comp) == "filesystem" then
-      return setmetatable({fs = component.proxy(comp)}, fs_mt)
+      return setmetatable({fs = component.proxy(comp),
+        address = comp:sub(1,8)}, fs_mt)
     end
   end)
 
   k.register_fstype("tmpfs", function(t)
-    return t == "tmpfs" and k.fstypes.managed(computer.tmpAddress())
+    if t == "tmpfs" then
+      local node = k.fstypes.managed(computer.tmpAddress())
+      node.address = "tmpfs"
+    end
   end)
 end

@@ -75,6 +75,8 @@ do
     end
   end
 
+  k.devfs.lookup = path_to_node
+
   function provider:exists(path)
     checkArg(1, path, "string")
     return not not path_to_node(path)
@@ -135,6 +137,8 @@ do
       end
     end
   end})
+
+  provider.address = "devfs"
 
   k.register_fstype("devfs", function(x)
     return x == "devfs" and provider

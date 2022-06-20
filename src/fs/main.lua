@@ -52,9 +52,9 @@ do
   end
 
   local function recognize_filesystem(component)
-    for _, recognizer in pairs(k.fstypes) do
+    for fstype, recognizer in pairs(k.fstypes) do
       local fs = recognizer(component)
-      if fs then return fs end
+      if fs then fs.mountType = fstype return fs end
     end
     return nil
   end
@@ -97,6 +97,11 @@ do
   local function path_to_node(path)
     path = k.check_absolute(path)
 
+    local current = k.current_process()
+    if current then
+      path = k.clean_path(current.root .. "/" .. path)
+    end
+
     local mnt, rem = "/", path
     for m in pairs(mounts) do
       if path:sub(1, #m) == m and #m > #mnt then
@@ -112,13 +117,17 @@ do
     return mounts[mnt], rem or "/"
   end
 
+  k.lookup_file = path_to_node
+
   local default_proc = {euid = 0, gid = 0}
   local function cur_proc()
     return k.current_process and k.current_process() or default_proc
   end
 
+  local empty = {}
+
   --- Mounts a drive or filesystem at the given path.
-  ---@param node table|string The component proxy or address
+  ---@param node table|string The component proxy or address to mount
   ---@param path string The path at which to mount it
   function k.mount(node, path)
     checkArg(1, node, "table", "string")
@@ -135,18 +144,45 @@ do
       end
     end
 
-    path = k.clean_path(path)
+    path = k.check_absolute(path)
     if mounts[path] then
       return nil, k.errno.EBUSY
     end
 
     local proxy = node
     if type(node) == "string" then
+      --[[TODO: support mounting file paths?
+      if node:find("/", nil, true) then
+        local absolute = k.check_absolute(node)
+        local node, rem = k.lookup_file(node)
+        if (not node) then
+          return nil, k.errno.ENOENT
+        elseif (node.address ~= "devfs") then
+          return nil, k.errno.ENODEV
+        end
+
+        local dentry, drem = k.devfs.lookup(rem)
+
+        if (not dentry) then
+          return nil, drem
+        end
+
+        if dentry.type ~= "blkdev" then
+          return nil, k.errno.ENOTBLK
+        end
+
+        proxy = dentry.fs
+        if not proxy then return nil, k.errno.EUNATCH end
+
+      else]]
       node = component.proxy(node) or node
       proxy = recognize_filesystem(node)
       if not proxy then return nil, k.errno.EUNATCH end
+      --end
     end
     if not node then return nil, k.errno.ENODEV end
+
+    proxy.mountType = proxy.mountType or "managed"
 
     mounts[path] = proxy
 
@@ -431,6 +467,10 @@ do
     end
 
     return node:chown(remain, uid, gid)
+  end
+
+  function k.mounts()
+    return mounts
   end
 
   k.add_signal_handler("shutdown", function()

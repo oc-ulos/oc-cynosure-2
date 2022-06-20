@@ -49,6 +49,16 @@ do
     return tostring(computer.uptime()) .. "\n"
   end }
 
+  files.mounts = { data = function()
+    local result = {}
+    for path, node in pairs(k.mounts()) do
+      result[#result+1] = string.format("%s %s %s", node.address, path,
+        node.mountType)
+    end
+
+    return table.concat(result, "\n") .. "\n"
+  end }
+
   --@[{includeif("PROCFS_CONFIG", "src/fs/proc_config.lua")}]
   --@[{includeif("PROCFS_EVENT", "src/fs/proc_events.lua")}]
   --@[{includeif("PROCFS_BINFMT", "src/fs/proc_binfmt.lua")}]
@@ -215,6 +225,8 @@ do
 
     return fd.ioctl(method, ...)
   end
+
+  provider.address = "procfs"
 
   k.register_fstype("procfs", function(x)
     return x == "procfs" and provider

@@ -411,6 +411,30 @@ do
   -- @tparam number gid The new owning GID
   k.syscalls.chown = k.chown
 
+  --- Change the process's root directory.
+  -- This behaves very similarly to chroot(2).  Only root may do this.
+  -- @function chroot
+  -- @tparam string path The new root path.
+  function k.syscalls.chroot(path)
+    checkArg(1, path, "string")
+
+    if k.current_process().euid ~= 0 then
+      return nil, k.errno.EPERM
+    end
+
+    local clean = k.check_absolute(path)
+    local stat, err = k.stat(clean)
+    if not stat then
+      return nil, err
+    elseif (stat.mode & 0xF000) ~= 0x4000 then
+      return nil, k.errno.ENOTDIR
+    end
+
+    k.current_process().root = path
+
+    return true
+  end
+
   --- Mount a filesystem.
   -- The given directory must exist or the operation will fail.
   -- @function mount

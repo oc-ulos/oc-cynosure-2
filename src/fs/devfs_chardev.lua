@@ -85,8 +85,10 @@ do
     end
     return dat
   end, write = function() end, perms = 0x1B6}, "null"))
+
   k.devfs.register_device("null", k.chardev.new({read=function()return nil end,
     write=function()end, perms=0x1B6}, "null"))
+
   k.devfs.register_device("zero", k.chardev.new({read=function(_,n)
     return ("\0"):rep(math.min(n,2048))
   end, write = function() end, perms = 0x1B6}, "null"))

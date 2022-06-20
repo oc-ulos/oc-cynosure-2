@@ -27,6 +27,7 @@ do
     EBADF = 9,
     ECHILD = 10,
     EACCES = 13,
+    ENOTBLK = 15,
     EBUSY = 16,
     EEXIST = 17,
     EXDEV = 18,
