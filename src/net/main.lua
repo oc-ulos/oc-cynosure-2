@@ -59,7 +59,7 @@ end
 
 --@[{depend("HTTP/TCP support", "COMPONENT_INTERNET", "NET_TCP", "NET_HTTP")}]
 --@[{depend("Minitel/GERTi support", "COMPONENT_MODEM", "NET_MTEL", "NET_GERT")}]
---@[{includeif("NET_HTTP", "src/net/http.lua"}]
+--@[{includeif("NET_HTTP", "src/net/http.lua")}]
 --@[{includeif("NET_TCP", "src/net/tcp.lua")}]
 --@[{includeif("NET_MTEL", "src/net/minitel.lua")}]
 --@[{includeif("NET_GERT", "src/net/gerti.lua")}]
