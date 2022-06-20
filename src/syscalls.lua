@@ -1047,13 +1047,65 @@ do
     return computer.uptime()
   end
 
-  --- Return the last `totalMemory() / 1024` log messages.
-  -- @treturn table The log messages
-  function k.syscalls.syslog()
+  local saved_loglevel
+  --- Perform some action on the system log.
+  -- All actions except `read_all` require root.  Valid `action`s are:
+  --
+  -- - `read`: Wait until there are messages in the kernel log buffer, then read up to `second` of them and clear the read ones.
+  -- - `read_all`: Read all messages currently in the log buffer.
+  -- - `read_clear`: Read and clear all messages currently in the log buffer.
+  -- - `clear`: Clear all messages currently in the log buffer.
+  -- - `console_off`: Saves the current loglevel, then sets the loglevel to 1.
+  -- - `console_on`: Either restores the saved loglevel, or sets the loglevel to 7.
+  -- - `console_level`: Sets the console loglevel to anywhere between 1 and 8, inclusive.  `second` will be silently constrained to this range.
+  -- @tparam string action What to do
+  -- @tparam string|number second The second argument
+  -- @treturn table The read log messages in an array
+  function k.syscalls.syslog(action, second)
+    checkArg(1, action, "string")
     local ret = {}
-    for i=1, #k.log_buffer, 1 do
-      ret[i] = k.log_buffer[i]
+
+    if k.current_process().euid ~= 0 and action ~= "read_all" then
+      return nil, k.errno.EPERM
     end
+
+    if action == "read" then
+      checkArg(2, second, "number")
+      while #k.log_buffer == 0 do coroutine.yield() end
+
+      for i=1, second, 1 do
+        ret[i] = table.remove(k.log_buffer, i)
+      end
+
+    elseif action == "read_all" then
+      for i=1, #k.log_buffer, 1 do
+        ret[i] = k.log_buffer[i]
+      end
+
+    elseif action == "read_clear" then
+      for i=1, #k.log_buffer, 1 do
+        ret[i] = k.log_buffer[i]
+        k.log_buffer[i] = nil
+      end
+
+    elseif action == "clear" then
+      for i=1, #k.log_buffer, 1 do
+        k.log_buffer[i] = nil
+      end
+
+    elseif action == "console_off" then
+      saved_loglevel = saved_loglevel or k.cmdline.loglevel
+      k.cmdline.loglevel = 1
+
+    elseif action == "console_on" then
+      k.cmdline.loglevel = saved_loglevel or 7
+      saved_loglevel = nil
+
+    elseif action == "console_level" then
+      checkArg(2, second, "number")
+      k.cmdline.loglevel = math.max(1, math.min(8, second))
+    end
+
     return ret
   end
 end
