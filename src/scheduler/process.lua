@@ -149,6 +149,15 @@ do
   local default_parent = {handles = {}, _G = {}, pid = 0,
     environ = {TERM = "cynosure-2"}}
 
+  local function t(T) return type(T) == "table" end
+
+  -- check for fds[n].fd.stream.fd.fd.fd)
+  -- no, i can't be bothered to figure out why it goes that deep
+  local function istty(T)
+    return T and T.fd and t(T.fd.stream) and T.fd.stream.fd and
+      T.fd.stream.fd.fd and T.fd.stream.fd.fd.fd
+  end
+
   function k.create_process(pid, parent)
     parent = parent or default_parent
 
@@ -239,6 +248,9 @@ do
         v.refs = v.refs + 1
       end
     end
+
+    local e, o, i = new.fds[0], new.fds[1], new.fds[2]
+    new.tty = istty(i) or istty(o) or istty(e)
 
     return new
   end

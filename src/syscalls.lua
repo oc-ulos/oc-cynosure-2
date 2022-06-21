@@ -776,6 +776,7 @@ do
   end
 
   --- Set a process's process group.
+  -- A PID of 0 will affect the current process.  A process group ID of 0 will use the current process's ID.
   -- @function setpgrp
   -- @tparam number pid The process to modify
   -- @tparam number pg The process group ID
@@ -1049,7 +1050,7 @@ do
 
   local saved_loglevel
   --- Perform some action on the system log.
-  -- All actions except `read_all` require root.  Valid `action`s are:
+  -- All actions except `read_all` and `log` require root.  Valid `action`s are:
   --
   -- - `read`: Wait until there are messages in the kernel log buffer, then read up to `second` of them and clear the read ones.
   -- - `read_all`: Read all messages currently in the log buffer.
@@ -1058,10 +1059,14 @@ do
   -- - `console_off`: Saves the current loglevel, then sets the loglevel to 1.
   -- - `console_on`: Either restores the saved loglevel, or sets the loglevel to 7.
   -- - `console_level`: Sets the console loglevel to anywhere between 1 and 8, inclusive.  `second` will be silently constrained to this range.
+  -- - `log`: Write a message to the system log using `second` as the loglevel and `format` + any remaining arguments as arguments to `printk`
+  -- @function klogctl
   -- @tparam string action What to do
   -- @tparam string|number second The second argument
-  -- @treturn table The read log messages in an array
-  function k.syscalls.syslog(action, second)
+  -- @tparam[opt] string format Format to use for `log`
+  -- @treturn[1] table The read log messages in an array
+  -- @treturn[2] boolean If the write operation succeeded
+  function k.syscalls.klogctl(action, second, format, ...)
     checkArg(1, action, "string")
     local ret = {}
 
@@ -1104,6 +1109,17 @@ do
     elseif action == "console_level" then
       checkArg(2, second, "number")
       k.cmdline.loglevel = math.max(1, math.min(8, second))
+
+    elseif action == "log" then
+      checkArg(2, second, "number")
+      checkArg(3, format, "string")
+
+      printk(math.max(1, math.min(8, second)), format, ...)
+
+      return true
+
+    else
+      return nil, k.errno.EINVAL
     end
 
     return ret

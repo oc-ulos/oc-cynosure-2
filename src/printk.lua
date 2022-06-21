@@ -81,14 +81,20 @@ do
   k.L_INFO    = 6
   k.L_DEBUG   = 7
   k.cmdline.loglevel = tonumber(k.cmdline.loglevel) or 8
-  -- XXX globals XXX
+
+  local reverse = {}
+  for name,v in pairs(k) do
+    if name:sub(1,2) == "L_" then
+      reverse[v] = name:sub(3)
+    end
+  end
 
   --- Print a message to the system logs
   ---@param level number
   ---@param fmt string
   function _G.printk(level, fmt, ...)
-    local message = string.format("[%08.02f] ", computer.uptime()) ..
-      string.format(fmt, ...)
+    local message = string.format("[%08.02f] %s: ", computer.uptime(),
+      reverse[level]) .. string.format(fmt, ...)
     if level <= k.cmdline.loglevel then
       k.log_to_screen(message)
     end

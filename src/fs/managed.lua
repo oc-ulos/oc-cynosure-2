@@ -305,6 +305,7 @@ do
     if t == "tmpfs" then
       local node = k.fstypes.managed(computer.tmpAddress())
       node.address = "tmpfs"
+      return node
     end
   end)
 end

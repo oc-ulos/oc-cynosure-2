@@ -37,9 +37,10 @@ do
       error("cannot register device in subdirectory '"..path.."' of devfs", 2)
     end
 
-    printk(k.L_INFO, "devfs: registering device at %s", path)
-
     devices[path] = device
+
+    if path:sub(1,1) ~= "/" then path = "/" .. path end
+    printk(k.L_INFO, "devfs: registered device at %s", path)
   end
 
   k.devfs.register_device("/", {

@@ -71,10 +71,12 @@ do
 
   local function send(obj, sig)
     local pids = k.get_pids()
+    printk(k.L_DEBUG, "sending %s to pgroup %d", sig, obj.pgroup or -1)
 
     for i=1, #pids, 1 do
       local proc = k.get_process(pids[i])
       if proc.pgid == obj.pgroup then
+        printk(k.L_DEBUG, "sending %s to %d", sig, pids[i])
         table.insert(proc.sigqueue, sig)
       end
     end
@@ -231,9 +233,10 @@ do
     self:flush()
 
     local current = k.current_process()
-    if self.pgroup and current.pgid ~= self.pgroup then
+    if self.pgroup and current.pgid ~= self.pgroup and
+        k.pgroups[self.pgroup] then
       current:signal("SIGTTIN")
-      return true
+      return
     end
 
     while #self.rbuf < n do
