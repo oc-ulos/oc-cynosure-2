@@ -196,11 +196,11 @@ do
     elseif method == "setpg" then
       local current = k.current_process()
       if self.pgroup and current.pgid ~= self.pgroup then
-        current:signal("SIGTTOU")
-        return true
+        current:signal("SIGTTOU", true)
       end
 
       self.pgroup = args
+      return true
 
     elseif method == "getpg" then
       return self.pgroup or math.huge
@@ -234,9 +234,8 @@ do
 
     local current = k.current_process()
     if self.pgroup and current.pgid ~= self.pgroup and
-        k.pgroups[self.pgroup] then
-      current:signal("SIGTTIN")
-      return
+        k.is_pgroup(self.pgroup) then
+      current:signal("SIGTTIN", true)
     end
 
     while #self.rbuf < n do

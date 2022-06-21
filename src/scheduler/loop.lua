@@ -23,13 +23,35 @@ do
   local pid = 0
   local current = 0
 
-  -- k.sessions: All process sessions, each containing
-  -- its leader's PID and all the processes within it.
-  k.sessions = {[0] = { leader = 0, pids = {} }}
-  -- k.pgroups: All process groups, each containing the
-  -- session ID to which it belongs as well as all the
-  -- process within it.
-  k.pgroups = {[0] = { sid = 0, pids = {} }}
+  -- return whether the given session ID exists
+  function k.is_sid(id)
+    return not not (processes[id] and processes[id].sid == id)
+  end
+
+  -- return whether the given process group exists (i.e. has a leader)
+  function k.is_pgroup(id)
+    return not not (processes[id] and processes[id].pgid == id)
+  end
+
+  -- return all the PIDs in a process group
+  function k.pgroup_pids(id)
+    local result = {}
+    if not k.is_pgroup(id) then return result end
+    for pid, proc in pairs(processes) do
+      if proc.pgid == id then
+        result[#result+1] = pid
+      end
+    end
+    return result
+  end
+
+  -- return the session ID associated with a process group
+  function k.pgroup_sid(id)
+    if k.is_pgroup(id) then
+      return processes[id].sid
+    end
+    return 0
+  end
 
   function collectgarbage()
     local missed = {}

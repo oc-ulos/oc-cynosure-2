@@ -48,11 +48,12 @@ do
       end
     end
     local current = k.current_process()
-    printk(k.L_DEBUG, "%s[%d]: syscall %s(%s) => %s, %s", current.cmdline[0],
-      current.pid, name, table.concat(args, ", "),
-      (type(result[1]) == "string" and string.format("%q", result[1]) or tostring(result[1])):gsub("\n", "n"),
-      (type(result[2]) == "string" and string.format("%q", result[2]) or tostring(result[2])):gsub("\n", "n"))--]]
-
+    if current.pid ~= 1 then
+      printk(k.L_DEBUG, "%s[%d]: syscall %s(%s) => %s, %s", current.cmdline[0],
+        current.pid, name, table.concat(args, ", "),
+        (type(result[1]) == "string" and string.format("%q", result[1]) or tostring(result[1])):gsub("\n", "n"),
+        (type(result[2]) == "string" and string.format("%q", result[2]) or tostring(result[2])):gsub("\n", "n"))--]]
+    end
     return table.unpack(result, 1, result.n)
   end
 
@@ -750,9 +751,6 @@ do
       current.tty.pgroup = current.pgid
     end
 
-    k.sessions[current.sid] = { leader = current.pid,
-      pids = { [current.pid] = true } }
-
     return current.sid
   end
 
@@ -786,22 +784,22 @@ do
 
     local current = k.current_process()
     if pid == 0 then pid = current.pid end
-    if pg  == 0 then pg  = pid; k.pgroups[pg].sid = proc.sid end
+    if pg  == 0 then pg  = pid end
     local proc = k.get_process(pid)
 
     if proc.pid ~= current.pid and proc.ppid ~= current.pid then
       return nil, k.errno.EPERM
     end
 
-    if k.pgroups[pg].sid ~= proc.sid then
+    if pg ~= proc.pid and not k.is_pgroup(pg) then
       return nil, k.errno.EPERM
     end
 
-    k.pgroups[proc.pgid].pids[proc.pid] = nil
+    if k.is_pgroup(pg) and k.pgroup_sid(pg) ~= proc.sid then
+      return nil, k.errno.EPERM
+    end
+
     proc.pgid = pg
-    k.pgroups[proc.pgid] = k.pgroups[proc.pgid] or { sid = proc.sid,
-      pids = {} }
-    k.pgroups[proc.pgid].pids[proc.pid] = true
 
     return true
   end
@@ -846,49 +844,84 @@ do
 
   --- Set a handler for some POSIX signal.
   -- Signals are represented by their constant names rather than by numbers.
+  -- If `handler` is not provided the signal handler will be reset.
   -- @function sigaction
   -- @tparam string name The signal name
-  -- @tparam handler function The handler function to set
+  -- @tparam[opt] handler function The handler function to set
   function k.syscalls.sigaction(name, handler)
     checkArg(1, name, "string")
-    checkArg(2, handler, "function")
+    checkArg(2, handler, "function", "nil")
 
     if not valid_signals[name] then return nil, k.errno.EINVAL end
 
     local current = k.current_process()
-    current.signal_handlers[name] = handler
+    printk(k.L_DEBUG, "%d (%s): replacing signal handler for %s with %s",
+      current.pid, current.cmdline[0], name, tostring(handler))
+    local old = current.signal_handlers[name]
+    current.signal_handlers[name] = handler or k.default_signal_handlers[name]
 
-    return true
+    return old
   end
 
   --- Signal a process.
   -- Differs from the standard slightly: SIGEXIST, rather than 0, is used to check if a process exists - since signals don't have numeric IDs under Cynosure 2.
+  -- If `pid` is positive, the given signal is sent to that process.
+  -- If `pid` is `0`, the signal is sent to every process in the process group of the current process.
+  -- If `pid` is `-1`, the signal is sent to every process the calling process has permission to signal.
+  -- If `pid` is negative, the signal is sent to every process in the process group whose id is `abs(pid)`.
   -- @function kill
-  -- @tparam number pid The process to kill
+  -- @tparam number pid What to kill
   -- @tparam string name The signal to send
   function k.syscalls.kill(pid, name)
     checkArg(1, pid, "number")
     checkArg(2, name, "string")
 
-    local proc = k.get_process(pid)
     local current = k.current_process()
+
+    local pids
+    if pid > 0 then
+      pids = {pid}
+    elseif pid == 0 then
+      pids = k.pgroup_pids(current.pgid)
+    elseif pid == -1 then
+      pids = k.get_pids()
+    elseif pid < -1 then
+      if not k.is_pgroup(-pid) then
+        return nil, k.errno.ESRCH
+      end
+      pids = k.pgroup_pids(-pid)
+    end
 
     if valid_signals[name] == nil and name ~= "SIGEXIST" then
       return nil, k.errno.EINVAL
     end
 
-    if not proc then return nil, k.errno.ESRCH end
+    local signaled = 0
 
-    if current.uid == 0 or current.euid == 0 or current.uid == proc.uid or
-       current.euid == proc.uid or current.uid == proc.suid or
-       current.euid == proc.suid then
-      if name == "SIGEXIST" and proc then return true end
-      table.insert(proc.sigqueue, name)
+    for i=1, #pids, 1 do
+      local proc = k.get_process(pids[i])
 
-      return true
-    else
+      if (not proc) and #pids == 1 then
+        return nil, k.errno.ESRCH
+
+      else
+        if current.uid == 0 or current.euid == 0 or current.uid == proc.uid or
+            current.euid == proc.uid or current.uid == proc.suid or
+            current.euid == proc.suid then
+          signaled = signaled + 1
+
+          if name ~= "SIGEXIST" then
+            table.insert(proc.sigqueue, name)
+          end
+        end
+      end
+    end
+
+    if signaled == 0 then
       return nil, k.errno.EPERM
     end
+
+    return true
   end
 
 

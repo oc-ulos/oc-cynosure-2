@@ -50,9 +50,11 @@ do
       p.stopped = false
     end,
     SIGTTIN = function(p)
+      printk(k.L_DEBUG, "process %d (%s) got SIGTTIN", p.pid, p.cmdline[0])
       p.stopped = true
     end,
     SIGTTOU = function(p)
+      printk(k.L_DEBUG, "process %d (%s) got SIGTTOU", p.pid, p.cmdline[0])
       p.stopped = true
     end}, {__index = function(t, sig)
       t[sig] = function(p)
@@ -133,14 +135,19 @@ do
     return deadline
   end
 
-  function process:signal(sig)
+  function process:signal(sig, imm)
     if self.signal_handlers[sig] then
-      pcall(self.signal_handlers[sig])
+      printk(k.L_DEBUG, "%d: using custom signal handler for %s", self.pid, sig)
+      pcall(self.signal_handlers[sig], sigtonum[sig])
     else
+      printk(k.L_DEBUG, "%d: using default signal handler for %s", self.pid, sig)
       pcall(k.default_signal_handlers[sig], self)
     end
     if self.thread_count == 0 then
       self.reason = "signal"
+    end
+    if imm and (self.stopped or self.thread_count == 0) then
+      coroutine.yield(0)
     end
   end
 
