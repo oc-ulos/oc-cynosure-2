@@ -520,8 +520,14 @@ do
   -- If a process has exited, it will not be removed until @{wait} is called on it.
   -- @function wait
   -- @tparam number pid The process ID for which to wait
-  function k.syscalls.wait(pid)
+  -- @tparam[opt] boolean nohang Whether to block while waiting
+  -- @tparam[opt] boolean untraced Whether to report stopped children
+  -- @treturn string The exit reason
+  -- @treturn number The exit status
+  function k.syscalls.wait(pid, nohang, untraced)
     checkArg(1, pid, "number")
+    checkArg(2, nohang, "boolean", "nil")
+    checkArg(3, untraced, "boolean", "nil")
 
     if not k.get_process(pid) then
       return nil, k.errno.ESRCH
@@ -531,9 +537,13 @@ do
       return nil, k.errno.ECHILD
     end
 
-    while not k.get_process(pid).is_dead do
-      coroutine.yield(0)
-    end
+    local proc = k.get_process(pid)
+    repeat
+      if proc.stopped and untraced then
+        return "stopped", proc.status
+      end
+      if not nohang then coroutine.yield(0) end
+    until proc.is_dead or nohang
 
     local process = k.get_process(pid)
     local reason, status = process.reason, process.status or 0
@@ -549,12 +559,14 @@ do
 
   --- Wait for any child process.
   -- Optionally blocks.  Otherwise returns immediately if there are no child processes that have not been waited for.
-  -- @tparam boolean block Whether to block indefinitely while waiting
+  -- @tparam[opt] boolean block Whether to block indefinitely while waiting
+  -- @tparam[opt] boolean untraced Whether to report stopped children
   -- @treturn number The PID of the process that was waited for
   -- @treturn string The exit reason
   -- @treturn number The exit status
-  function k.syscalls.waitany(block)
+  function k.syscalls.waitany(block, untraced)
     checkArg(1, block, "boolean", "nil")
+    checkArg(2, untraced, "boolean", "nil")
 
     local cur = k.current_process().pid
     repeat
