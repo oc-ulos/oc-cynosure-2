@@ -52,8 +52,8 @@ do
       printk(k.L_DEBUG, "%s[%d]: syscall %s(%s) => %s, %s", current.cmdline[0],
         current.pid, name, table.concat(args, ", "),
         (type(result[1]) == "string" and string.format("%q", result[1]) or tostring(result[1])):gsub("\n", "n"),
-        (type(result[2]) == "string" and string.format("%q", result[2]) or tostring(result[2])):gsub("\n", "n"))--]]
-    end
+        (type(result[2]) == "string" and string.format("%q", result[2]) or tostring(result[2])):gsub("\n", "n"))
+    end--]]
     return table.unpack(result, 1, result.n)
   end
 
