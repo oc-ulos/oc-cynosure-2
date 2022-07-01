@@ -19,14 +19,22 @@
 printk(k.L_INFO, "fs/devfs_blockdev")
 
 do
+    local handler = {}
+
+    function k.devfs.register_blockdev(devtype, callbacks)
+        handler[devtype] = callbacks
+    end
+
     k.blacklist_signal("component_added")
     k.blacklist_signal("component_removed")
 
     k.add_signal_handler("component_added", function(_, address, type)
         printk(k.L_DEBUG, ("component_added: %s %s"):format(address, type))
+        -- TODO Compare with registered handlers and register chardev.
     end)
 
     k.add_signal_handler("component_removed", function(_, address, type)
         printk(k.L_DEBUG, ("component_removed: %s %s"):format(address, type))
+        -- TODO Compare with registered handlers and unregister chardev.
     end)
 end
