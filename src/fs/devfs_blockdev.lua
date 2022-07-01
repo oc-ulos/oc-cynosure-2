@@ -25,16 +25,56 @@ do
         handler[devtype] = callbacks
     end
 
+    local function comp_added(_, addr, t)
+        printk(k.L_DEBUG, ("component_added: %s %s"):format(addr, t))
+        if handler[t] then
+            local name, device = handler[t].init(addr)
+            if name then
+                k.devfs.register_device(name, device)
+            end
+        end
+    end
+
+    local function comp_removed(_, addr, t)
+        printk(k.L_DEBUG, ("component_removed: %s %s"):format(addr, t))
+        if handler[t] then
+            local name = handler[t].destroy(addr)
+            if name then
+                k.devfs.unregister_device(name)
+            end
+        end
+    end
+
+    do
+        local present = false
+
+        k.devfs.register_blockdev("eeprom", {
+            init = function(addr)
+                if not present then
+                    present = true
+                    return "eeprom", {
+                        read = function(self, addr, len)
+                            return "PLACEHOLDER"
+                        end,
+                        write = function(self, addr, data)
+                            return true
+                        end,
+                    }
+                end
+            end,
+            destroy = function(addr)
+                if present then
+                    present = false
+                    return "eeprom"
+                end
+            end,
+        })
+    end
+
     k.blacklist_signal("component_added")
     k.blacklist_signal("component_removed")
 
-    k.add_signal_handler("component_added", function(_, address, type)
-        printk(k.L_DEBUG, ("component_added: %s %s"):format(address, type))
-        -- TODO Compare with registered handlers and register chardev.
-    end)
+    k.add_signal_handler("component_added", comp_added)
 
-    k.add_signal_handler("component_removed", function(_, address, type)
-        printk(k.L_DEBUG, ("component_removed: %s %s"):format(address, type))
-        -- TODO Compare with registered handlers and unregister chardev.
-    end)
+    k.add_signal_handler("component_removed", comp_removed)
 end
