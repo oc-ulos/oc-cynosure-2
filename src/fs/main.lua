@@ -258,8 +258,10 @@ do
       stream:ioctl("setvbuf", fd.default_mode)
     end
 
-    opened[stream] = true
-    return { fd = stream, node = stream, refs = 1 }
+    local ret = { fd = stream, node = stream, refs = 1 }
+    opened[ret] = true
+
+    return ret
   end
 
   local function verify_fd(fd, dir)
@@ -329,7 +331,8 @@ do
     local fd, err = node:opendir(remain)
     if not fd then return nil, err end
 
-    return { fd = fd, node = node, dir = true, refs = 1 }
+    local ret = { fd = fd, node = node, dir = true, refs = 1 }
+    return ret
   end
 
   function k.readdir(dirfd)
@@ -342,7 +345,7 @@ do
     verify_fd(fd, fd.dir) -- close closes either type of fd
     fd.refs = fd.refs - 1
     if fd.node.flush then fd.node:flush(fd.fd) end
-    if fd.refs == 0 then
+    if fd.refs <= 0 then
       opened[fd] = false
       if not fd.node.close then return nil, k.errno.ENOSYS end
       if fd.dir then return fd.node:close(fd.fd) end

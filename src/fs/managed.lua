@@ -47,7 +47,7 @@ do
     local data = ""
 
     for key, val in pairs(attributes) do
-      data = data .. string.format("%s:%d\n", key, val)
+      data = data .. key .. ":" .. math.floor(val) .. "\n"
     end
 
     return data
@@ -57,15 +57,7 @@ do
   local function is_attribute(path)
     checkArg(1, path, "string")
 
-    local segments = k.split_path(path)
-    if #segments == 0 then return false end
-
-    local final = segments[#segments]
-    if final:sub(1,1) == "." and final:sub(-5) == ".attr" then
-      return true
-    end
-
-    return false
+    return not not path:match("%.[^/]+%.attr$")
   end
 
   local function attr_path(path)
@@ -242,6 +234,9 @@ do
     dirfd.index = dirfd.index + 1
     if dirfd.files[dirfd.index] then
       return { inode = -1, name = dirfd.files[dirfd.index]:gsub("/", "") }
+    else
+      -- might help with OOM issues
+      dirfd.files = nil
     end
   end
 
