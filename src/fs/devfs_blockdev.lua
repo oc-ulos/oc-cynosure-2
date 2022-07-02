@@ -53,6 +53,7 @@ do
         if not present then
           present = true
           local eeprom = component.proxy(addr)
+          local romdata = eeprom.get()
           return "eeprom", {
             stat = function()
               return {
@@ -69,7 +70,20 @@ do
                 ctime = 0,
                 mtime = 0
               }
-            end
+            end,
+            open = function()
+              return {pos = 0}
+            end,
+            read = function(_, fd, len)
+              -- printk(k.L_DEBUG, tostring(fd.pos))
+              if fd.pos < #romdata then
+                local data = romdata:sub(fd.pos+1, math.min(#romdata, fd.pos+len))
+                fd.pos = fd.pos + len
+                return data
+              else
+                return nil
+              end
+            end,
           }
         end
       end,

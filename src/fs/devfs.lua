@@ -43,7 +43,7 @@ do
     printk(k.L_INFO, "devfs: registered device at %s", path)
   end
 
-  function k.devfs.unregister_device(path) -- TODO Test this
+  function k.devfs.unregister_device(path)
     checkArg(1, path, "string")
 
     local segments = k.split_path(path)
