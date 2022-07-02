@@ -54,6 +54,7 @@ do
           present = true
           local eeprom = component.proxy(addr)
           local romdata = eeprom.get()
+          local romsize = eeprom.getSize()
           return "eeprom", {
             stat = function()
               return {
@@ -64,24 +65,34 @@ do
                 uid = 0,
                 gid = 0,
                 rdev = -1,
-                size = eeprom.getSize(),
-                blksize = eeprom.getSize(), -- Idk the difference between this and size
+                size = romsize,
+                blksize = romsize, -- Idk the difference between this and size
                 atime = 0,
                 ctime = 0,
                 mtime = 0
               }
             end,
-            open = function()
-              return {pos = 0}
+            open = function(_, _, mode)
+              local pos = 0
+              if mode == "w" then
+                romdata = ""
+              end
+              return {pos = pos, mode = mode}
             end,
             read = function(_, fd, len)
               -- printk(k.L_DEBUG, tostring(fd.pos))
-              if fd.pos < #romdata then
-                local data = romdata:sub(fd.pos+1, math.min(#romdata, fd.pos+len))
+              if fd.pos < romsize then
+                local data = romdata:sub(fd.pos+1, math.min(romsize, fd.pos+len))
                 fd.pos = fd.pos + len
                 return data
               else
                 return nil
+              end
+            end,
+            write = function(_, fd, data)
+              if fd.mode == "w" then
+                romdata = (romdata .. data):sub(1, romsize)
+                eeprom.set(romdata)
               end
             end,
           }
