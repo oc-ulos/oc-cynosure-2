@@ -77,4 +77,8 @@ do
     k.add_signal_handler("component_added", comp_added)
 
     k.add_signal_handler("component_removed", comp_removed)
+
+    for addr, ctype in component.list() do
+        comp_added(nil, addr, ctype)
+    end
 end
