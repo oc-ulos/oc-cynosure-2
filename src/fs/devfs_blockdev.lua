@@ -52,13 +52,24 @@ do
             init = function(addr)
                 if not present then
                     present = true
+                    local eeprom = component.proxy(addr)
                     return "eeprom", {
-                        read = function(self, addr, len)
-                            return "PLACEHOLDER"
-                        end,
-                        write = function(self, addr, data)
-                            return true
-                        end,
+                        stat = function()
+                            return {
+                                dev = -1,
+                                ino = -1,
+                                mode = 0x6000 + k.perm_string_to_bitmap("rw-rw----"),
+                                nlink = 1,
+                                uid = 0,
+                                gid = 0,
+                                rdev = -1,
+                                size = eeprom.getSize(),
+                                blksize = eeprom.getSize(), -- Idk the difference between this and size
+                                atime = 0,
+                                ctime = 0,
+                                mtime = 0
+                            }
+                        end
                     }
                 end
             end,
