@@ -32,10 +32,6 @@ do
     end
 
     local result = table.pack(pcall(k.syscalls[name], ...))
-    if result[1] then
-      table.remove(result, 1)
-      result.n = result.n - 1
-    end
 
     --[[ Uncomment for debugging purposes.
     local args = {}
@@ -48,13 +44,21 @@ do
       end
     end
     local current = k.current_process()
-    if current.pid ~= 1 then
+    --if current.pid ~= 1 then
+      local a, b
+      if result[1] then
+        a, b = result[2], result[3]
+      else
+        a, b = result[1], result[2]
+      end
+
       printk(k.L_DEBUG, "%s[%d]: syscall %s(%s) => %s, %s", current.cmdline[0],
         current.pid, name, table.concat(args, ", "),
-        (type(result[1]) == "string" and string.format("%q", result[1]) or tostring(result[1])):gsub("\n", "n"),
-        (type(result[2]) == "string" and string.format("%q", result[2]) or tostring(result[2])):gsub("\n", "n"))
-    end--]]
-    return table.unpack(result, 1, result.n)
+        (type(a) == "string" and string.format("%q", a) or tostring(a)):gsub("\n", "n"),
+        (type(b) == "string" and string.format("%q", b) or tostring(b)):gsub("\n", "n"))
+    --end
+    --]]
+    return table.unpack(result, result[1] and 2 or 1, result.n)
   end
 
   ------

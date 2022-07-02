@@ -332,6 +332,7 @@ do
     if not fd then return nil, err end
 
     local ret = { fd = fd, node = node, dir = true, refs = 1 }
+    opened[ret] = true
     return ret
   end
 

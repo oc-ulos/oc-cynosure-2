@@ -232,7 +232,7 @@ do
     end
 
     dirfd.index = dirfd.index + 1
-    if dirfd.files[dirfd.index] then
+    if dirfd.files and dirfd.files[dirfd.index] then
       return { inode = -1, name = dirfd.files[dirfd.index]:gsub("/", "") }
     else
       -- might help with OOM issues
