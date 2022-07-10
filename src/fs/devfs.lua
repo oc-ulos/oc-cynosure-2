@@ -43,6 +43,20 @@ do
     printk(k.L_INFO, "devfs: registered device at %s", path)
   end
 
+  function k.devfs.unregister_device(path)
+    checkArg(1, path, "string")
+
+    local segments = k.split_path(path)
+    if #segments > 1 then
+      error("cannot unregister device in subdirectory '"..path.."' of devfs", 2)
+    end
+
+    devices[path] = nil
+
+    if path:sub(1,1) ~= "/" then path = "/" .. path end
+    printk(k.L_INFO, "devfs: unregistered device at %s", path)
+  end
+
   k.devfs.register_device("/", {
     opendir = function()
       local devs = {}
@@ -149,5 +163,4 @@ do
 end
 
 --#include "src/fs/devfs_chardev.lua"
--- TODO
--- #include "src/fs/devfs_blockdev.lua"
+--#include "src/fs/devfs_blockdev.lua"
