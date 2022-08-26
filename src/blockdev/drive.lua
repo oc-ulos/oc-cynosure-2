@@ -35,9 +35,10 @@ do
       drives[index] = true
       byaddress[addr] = index
 
+      local size = proxy.getCapacity()
+
       return ("hd%s"):format(letter), {
         stat = function()
-          local size = proxy.getCapacity()
           return {
             dev = -1,
             ino = -1,
@@ -53,6 +54,65 @@ do
             mtime = 0
           }
         end,
+
+        open = function(_, _, mode)
+          return { pos = 0, mode = mode }
+        end,
+
+        read = function(_, fd, len)
+          if not fd.mode:match("[ra]") then
+            return nil, k.errno.EBADF
+          end
+
+          if fd.pos < size then
+            len = math.min(len, size - fd.pos)
+            local offset = fd.pos % 512
+            local data = ""
+
+            repeat
+              local sectorID = math.ceil((fd.pos+1) / 512)
+              local sector = proxy.readSector(sectorID)
+              local read = sector:sub(offset, offset+len)
+              data = data .. read
+              offset = 0
+              fd.pos = fd.pos + #read
+              len = len - #read
+            until len <= 0
+
+            return data
+          end
+        end,
+
+        write = function(_, fd, data)
+          if not fd.mode:match("[wa]") then
+            return nil, k.errno.EBADF
+          end
+
+          local offset = fd.pos % 512
+
+          repeat
+            local sectorID = math.ceil((fd.pos+1) / 512)
+            local sector = proxy.readSector(sectorID)
+            local write = data:sub(1, 512 - offset)
+            data = data:sub(#write + 1)
+            if #write == #sector then
+              sector = write
+            else
+              sector = sector:sub(0, offset) .. write ..
+                sector:sub(offset + #write)
+            end
+            proxy.writeSector(sectorID, sector)
+          until #data == 0
+
+          return true
+        end,
+
+        seek = function(_, fd, whence, offset)
+          whence = (whence == "set" and 0) or (whence == "cur" and fd.pos)
+              or (whence == "end" and size)
+          fd.pos = math.max(0, math.min(size, whence + offset))
+          return fd.pos
+        end
       }
     end,
 

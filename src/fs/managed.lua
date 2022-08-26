@@ -47,7 +47,7 @@ do
     local data = ""
 
     for key, val in pairs(attributes) do
-      data = data .. string.format("%s:%d\n", key, val)
+      data = data .. key .. ":" .. math.floor(val)
     end
 
     return data

@@ -22,12 +22,14 @@ do
   local handlers = {}
 
   function k.devfs.register_blockdev(devtype, callbacks)
+    printk(k.L_DEBUG, "registered block device type %s", devtype)
     handlers[devtype] = callbacks
   end
 
   local function comp_added(_, addr, t)
     printk(k.L_DEBUG, ("component_added: %s %s"):format(addr, t))
     if handlers[t] then
+      printk(k.L_DEBUG, "intializing device %s", addr)
       local name, device = handlers[t].init(addr)
       if name then
         k.devfs.register_device(name, device)
@@ -45,8 +47,8 @@ do
     end
   end
 
---#[{includeif("COMPONENT_EEPROM", "src/blockdev/eeprom.lua")}]
---#[{includeif("COMPONENT_DRIVE", "src/blockdev/drive.lua")}]
+--@[{includeif("COMPONENT_EEPROM", "src/blockdev/eeprom.lua")}]
+--@[{includeif("COMPONENT_DRIVE", "src/blockdev/drive.lua")}]
 
   k.blacklist_signal("component_added")
   k.blacklist_signal("component_removed")
