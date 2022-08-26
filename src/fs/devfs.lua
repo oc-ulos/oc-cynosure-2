@@ -65,8 +65,10 @@ do
     end,
     readdir = function(_, fd)
       fd.i = fd.i + 1
-      if fd.devs[fd.i] then
+      if fd.devs and fd.devs[fd.i] then
         return { inode = -1, name = fd.devs[fd.i] }
+      else
+        fd.devs = nil
       end
     end,
     stat = function()
