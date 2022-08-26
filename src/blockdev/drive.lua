@@ -41,7 +41,7 @@ do
           return {
             dev = -1,
             ino = -1,
-            mode = 0x6000 + k.perm_string_to_bitmap("rw-rw----"),
+            mode = 0x6000 | k.perm_string_to_bitmap("rw-rw----"),
             nlink = 1,
             uid = 0,
             gid = 0,
