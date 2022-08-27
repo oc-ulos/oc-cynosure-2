@@ -39,6 +39,7 @@ do
     k.sigtonum[key] = v
     k.sigtonum[v] = key
   end
+
   -- Default signal handlers
   k.default_signal_handlers = setmetatable({    SIGTSTP = function(p)
       p.stopped = true

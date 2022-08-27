@@ -61,6 +61,15 @@ do
     return table.unpack(result, result[1] and 2 or 1, result.n)
   end
 
+  --[[
+  function k.profile(name, func, ...)
+    local mem = computer.freeMemory()
+    local result = table.pack(func(...))
+    local used = mem - computer.freeMemory()
+    printk(k.L_DEBUG, "%s() used %d bytes - %d free", name, used, computer.freeMemory())
+    return table.unpack(result, 1, result.n)
+  end--]]
+
   ------
   -- This page contains all the system calls available under Cynosure 2.  Wrapper functions with identical functionality are provided by the `syscalls` library.
   -- All system calls return `nil` and an errno value on failure.

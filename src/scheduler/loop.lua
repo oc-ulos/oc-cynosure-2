@@ -56,7 +56,7 @@ do
   function collectgarbage()
     local missed = {}
     for i=1, 10, 1 do
-      local sig = table.pack(computer.pullSignal(0))
+      local sig = table.pack(computer.pullSignal(0.05))
       if sig.n > 0 then missed[#missed+1] = sig end
     end
     for i=1, #missed, 1 do
@@ -105,6 +105,7 @@ do
         if not process.is_dead then
           current = cpid
           if computer.uptime() >= process:deadline() or #signal > 0 then
+            --k.profile("proc_resume["..cpid.."]", process.resume, process, table.unpack(signal, 1, signal.n))
             process:resume(table.unpack(signal, 1, signal.n))
             if not next(process.threads) then
               process.is_dead = true
@@ -127,7 +128,7 @@ do
         end
       end
 
-      -- if <8k memory free, collect some garbage
+      -- if less than MEM_THRESHOLD memory free, collect some garbage
       if computer.freeMemory() < @[{bconf.MEM_THRESHOLD or 1024}] then
         printk(k.L_DEBUG, "low free memory - collecting garbage")
         collectgarbage()

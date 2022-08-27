@@ -412,9 +412,10 @@ do
 
   -- restore cursor location
   function commands:u()
-    self.saved = self.saved or {}
-    self.cx = self.saved.cx
-    self.cy = self.saved.cy
+    if self.saved then
+      self.cx = self.saved.cx
+      self.cy = self.saved.cy
+    end
   end
 
   -- who thought having ` as a command was a good idea?
