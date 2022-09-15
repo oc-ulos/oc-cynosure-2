@@ -214,6 +214,12 @@ do
 
   local opened = {}
 
+  local function count(t)
+    local n = 0
+    for _ in pairs(t) do n = n + 1 end
+    return n
+  end
+
   function k.open(file, mode)
     checkArg(1, file, "string")
     checkArg(2, mode, "string")
@@ -260,7 +266,6 @@ do
 
     local ret = { fd = stream, node = stream, refs = 1 }
     opened[ret] = true
-
     return ret
   end
 
@@ -347,7 +352,7 @@ do
     fd.refs = fd.refs - 1
     if fd.node.flush then fd.node:flush(fd.fd) end
     if fd.refs <= 0 then
-      opened[fd] = false
+      opened[fd] = nil
       if not fd.node.close then return nil, k.errno.ENOSYS end
       if fd.dir then return fd.node:close(fd.fd) end
       return fd.node.close(fd.fd)
