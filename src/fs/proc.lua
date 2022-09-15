@@ -25,10 +25,13 @@ do
 
   files.meminfo = { data = function()
     local avgfree = 0
+
     for i=1, 10, 1 do avgfree = avgfree + computer.freeMemory() end
     avgfree = avgfree / 10
+
     local total, free = math.floor(computer.totalMemory() / 1024),
       math.floor(avgfree / 1024)
+
     local used = total - free
     return string.format(
       "MemTotal: %d kB\nMemUsed: %d kB\nMemAvailable: %d kB\n",
@@ -37,10 +40,12 @@ do
 
   files.filesystems = { data = function()
     local result = {}
+
     for fs, rec in pairs(k.fstypes) do
       if rec(fs) then fs = fs .. " (nodev)" end
       result[#result+1] = fs
     end
+
     return table.concat(result, "\n") .. "\n"
   end }
 
@@ -88,6 +93,7 @@ do
     if segments[2] == "fds" then
       if #segments > 3 then
         return nil, k.errno.ENOENT
+
       elseif #segments == 3 then
         if narrow == 1 then return nil, k.errno.ENOTDIR end
       end
@@ -142,6 +148,7 @@ do
   local function to_fd(dat)
     dat = tostring(dat)
     local idx = 0
+
     return k.fd_from_rwf(function(_, n)
       local nidx = math.min(#dat + 1, idx + n)
       local chunk = dat:sub(idx, nidx)
@@ -159,8 +166,10 @@ do
     if (not proc) and type(node) == "table" and node.data then
       local data = type(node.data) == "function" and node.data() or node.data
       return { file = to_fd(data), ioctl = node.ioctl }
+
     elseif type(node) ~= "table" then
       return { file = to_fd(node), ioctl = function()end }
+
     else
       return nil, k.errno.EISDIR
     end
@@ -182,6 +191,7 @@ do
       end
 
       return { i = 0, files = flist }
+
     else
       return nil, k.errno.ENOTDIR
     end

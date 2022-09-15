@@ -33,13 +33,13 @@ do
       -- for example, will generally provide this.
       if self.stream.readline then
         return self.stream:readline()
+
       else
         -- if it does *not*, then go the slow way.
         -- XXX never use the "l" or "L" format on an unbuffered file stream
-        -- XXX unless it points to the TTY, unless you care absolutely nothing
-        -- XXX about performance, because it *will* be awful.
-        -- ...unless the filesystem driver implements a buffer, in which case
-        -- it'd *probably* be fine
+        -- XXX unless it points to the TTY, because it will NOT perform well.
+        -- (...unless the filesystem driver implements a buffer, in which case
+        -- it'd *probably* be fine)
         local dat = ""
 
         repeat
@@ -52,12 +52,12 @@ do
       end
 
     else
-
       -- if we don't have a newline in the buffer, we haven't read a full line,
       -- so just keep reading
       while not self.rbuf:match("\n") do
         local chunk = self.stream:read(bufsize)
         if not chunk then break end
+
         self.rbuf = self.rbuf .. chunk
       end
 
@@ -77,11 +77,13 @@ do
   -- read a number from the stream
   function buffer:readnum()
     local dat = ""
+
     if self.bufmode == "none" then
       -- this function depends on buffered mode, and will not work when
       -- bufmode="none".  there are ways around this and i'll implement
       -- them if it becomes an issue, but i only see that happening if
-      -- e.g. someone uses this with a TTY stream
+      -- e.g. someone needs to use this with a TTY stream.  also they
+      -- would probably massively increase code complexity.
       error(
         "bad argument to 'read' (format 'n' not supported in unbuffered mode)",
         0)
@@ -92,6 +94,7 @@ do
     local breakonwhitespace = false
     while true do
       local ch = self:readn(1)
+
       if not ch then
         -- oh no, we've run out of data
         break
@@ -104,6 +107,7 @@ do
           self.rbuf = ch .. self.rbuf
           break
         end
+
       else
         -- we've read a number now, so break on whitespace
         breakonwhitespace = true
@@ -157,19 +161,25 @@ do
     if type(fmt) == "number" then
       -- just read this number of bytes
       return self:readn(fmt)
+
     else
       -- support 5.2-style formats
       fmt = fmt:gsub("%*", "")
+
       if fmt == "a" then -- read whatever's left
         return self:readn(math.huge)
+
       elseif fmt == "l" then -- read a line without the trailing newline
         local line = self:readline()
         if not line then return nil end
         return line:gsub("\n$", "")
+
       elseif fmt == "L" then -- read a line WITH the trailing newline
         return self:readline()
+
       elseif fmt == "n" then -- read a number
         return self:readnum()
+
       else -- ???
         error("bad argument to 'read' (format '"..fmt.."' not supported)", 0)
       end
@@ -178,23 +188,28 @@ do
 
   local function chvarargs(...)
     local args = table.pack(...)
+
     for i=1, args.n, 1 do
       checkArg(i, args[i], "string", "number")
     end
+
     return args
   end
 
   function buffer:read(...)
     local args = chvarargs(...)
     local ret = {}
+
     for i=1, args.n, 1 do
       ret[#ret+1] = self:readfmt(args[i])
     end
+
     return table.unpack(ret, 1, args.n)
   end
 
   function buffer:write(...)
     local args = chvarargs(...)
+
     for i=1, args.n, 1 do
       self.wbuf = self.wbuf .. tostring(args[i])
     end
@@ -231,10 +246,12 @@ do
   function buffer:seek(whence, offset)
     checkArg(1, whence, "string", "nil")
     checkArg(2, offset, "number", "nil")
+
     self:flush()
     if self.stream.seek then
       return self.stream:seek(whence or "cur", offset or 0)
     end
+
     return nil, k.errno.EBADF
   end
 
@@ -243,9 +260,11 @@ do
       self.stream:write(self.wbuf)
       self.wbuf = ""
     end
+
     if self.stream.flush then
       self.stream:flush()
     end
+
     return true
   end
 
@@ -259,18 +278,24 @@ do
   local modes = { full = true, line = true, none = true }
   function buffer:ioctl(op, mode, ...)
     checkArg(1, op, "string")
+
     if op ~= "setvbuf" or (self.stream.proxy
         and self.stream.proxy.override_setvbuf) then
+
       if self.stream.proxy and self.stream.proxy.ioctl then
         return self.stream.proxy.ioctl(self.stream.fd, op, mode, ...)
+
       elseif self.stream.ioctl then
         return self.stream.ioctl(self.stream, op, mode, ...)
+
       else
         return nil, k.errno.ENOSYS
       end
     end
+
     checkArg(2, mode, "string")
     if not modes[mode] then return nil, k.errno.EINVAL end
+
     self.bufmode = mode
     return true
   end
@@ -284,6 +309,7 @@ do
   function k.buffer_from_stream(stream, mode)
     checkArg(1, stream, "table")
     checkArg(2, mode, "string")
+
     return setmetatable({
       stream = stream,
       mode = split_chars(mode),

@@ -51,6 +51,7 @@ do
     local top, bot = self.scrolltop, self.scrollbot
     local height = bot - top + 1
     self.gpu.copy(1, top, self.w, height, 0, -n)
+
     if n < 0 then n = self.h + n end
     self.gpu.fill(1, bot - n + 1, self.w, n, " ")
   end
@@ -94,6 +95,7 @@ do
   -- DECSC - save state
   nocsi["7"] = function(self)
     self.saved = {}
+
     for i=1, #save, 1 do
       self.saved[save[i]] = self[save[i]]
     end
@@ -105,6 +107,7 @@ do
       for i=1, #save, 1 do
         self[save[i]] = self.saved[save[i]]
       end
+
       self.gpu.setForeground(self.fg, self.fgpal)
       self.gpu.setBackground(self.bg, self.bgpal)
     end
@@ -170,9 +173,12 @@ do
   function commands:J(args)
     local n = args[1] or 0
     if n == 0 then
-      self.gpu.fill(1, self.cy, self.w, self.h - self.cy, " ")
+      self.gpu.fill(self.cx, self.cy, self.w - self.cx, 1, " ")
+      self.gpu.fill(1, self.cy + 1, self.w, self.h - self.cy - 1, " ")
+
     elseif n == 1 then
       self.gpu.fill(1, self.cx, self.w, self.cy, " ")
+
     elseif n == 2 then
       self.gpu.fill(1, 1, self.w, self.h, " ")
     end
@@ -183,8 +189,10 @@ do
     local n = args[1] or 0
     if n == 0 then
       self.gpu.fill(self.cx, self.cy, self.w - self.cx, 1, " ")
+
     elseif n == 1 then
       self.gpu.fill(1, self.cy, self.cx, 1, " ")
+
     elseif n == 2 then
       self.gpu.fill(1, self.cy, self.w, 1, " ")
     end
@@ -269,19 +277,24 @@ do
   local function hl(self, set, args)
     for i=1, #args, 1 do
       local n = args[i]
+
       -- 1 - cursor keys send ESC O prefix rather than ESC [
       if n == 1 then
         self.altcursor = set
+
       -- 9 - X10 mouse reporting
       elseif n == 9 then
         self.mousereport = set and 1 or 0
+
       -- 20 - automatically add carriage return after line feed, vertical tab,
       --      or form feed
       elseif n == 20 then
         self.autocr = set
+
       -- 25 - make cursor visible
       elseif n == 25 then
         self.cursor = set
+
       -- 1000 - X11 mouse reporting
       elseif n == 1000 then
         self.mousereport = set and 2 or 0
@@ -306,11 +319,14 @@ do
     i = i + 1
     if args[i] == 2 then -- 24-bit color mode
       if i + 3 > #args then return math.huge end
+
       local r, g, b = args[i+1], args[i+2], args[i+3]
       i = i + 3
-      local rgb = r*0x10000 + g*0x100 + b
+      local rgb = (r << 16) + (g << 8) + b
+
       self[field] = rgb
       setter(rgb)
+
     elseif args[i] == 5 then
       -- 256-color mode is not implemented
     end
@@ -334,6 +350,7 @@ do
         self.gpu.setForeground(self.fg, true)
         self.gpu.setBackground(self.bg, true)
         self.echo = true
+
       -- bold mode (1) not implemented
       -- half-bright (2) not implemented
       -- underscore (4) not implemented
@@ -344,35 +361,44 @@ do
         self.fg, self.bg = self.bg, self.fg
         self.gpu.setForeground(self.fg, self.fgpal)
         self.gpu.setBackground(self.bg, self.bgpal)
+
       elseif n == 8 or n == 28 then
         self.echo = n == 28
+
       -- 10, 11, 12, 21, 22, 25 not implemented
       elseif n > 29 and n < 38 then
         self.fg = n - 30
         self.fgpal = true
         self.gpu.setForeground(self.fg, true)
+
       elseif n > 89 and n < 98 then
         self.fg = n - 82
         self.fgpal = true
         self.gpu.setForeground(self.fg, true)
+
       elseif n > 39 and n < 48 then
         self.bg = n - 40
         self.bgpal = true
         self.gpu.setBackground(self.bg, true)
+
       elseif n > 99 and n < 108 then
         self.bg = n - 92
         self.bgpal = true
         self.gpu.setBackground(self.bg, true)
+
       elseif n == 38 then
         self.fgpal = false
         i = processFancyColor(self, "fg", self.gpu.setForeground, args, i)
+
       elseif n == 48 then
         self.bgpal = false
         i = processFancyColor(self, "bg", self.gpu.setBackground, args, i)
+
       elseif n == 39 then
         self.fg = 7
         self.fgpal = true
         self.gpu.setForeground(self.fg, true)
+
       elseif n == 49 then
         self.bg = 0
         self.bgpal = true
@@ -384,9 +410,11 @@ do
   -- DSR - status report
   function commands:n(args)
     local n = args[1] or 0
+
     if self.discipline then
       if n == 5 then
         self.discipline:processInput("\27[0n")
+
       elseif n == 6 then
         self.discipline:processInput(string.format("\27[%d;%dR",
           self.cy, self.cx))
@@ -452,9 +480,11 @@ do
   -- write some text
   local function textwrite(self, line)
     if not self.echo then line = (" "):rep(#line) end
+
     while #line > 0 do
       corral(self)
       local chunk = line:sub(1, self.w - self.cx + 1)
+
       line = line:sub(#chunk + 1)
       self.gpu.set(self.cx, self.cy, chunk)
       self.cx = self.cx + #chunk
@@ -474,18 +504,22 @@ do
 
         if char == "\r" then
           self.cx = 1
+
         elseif char == "\t" then
           self.cx = 8 * math.floor((self.cx + 9) / 8) - 1
           if self.cx > self.w then self.cx = 1 self.cy = self.cy + 1 end
           corral(self)
+
         else
           if self.just_wrapped then
             self.just_wrapped = false
+
           else
             self.cy = self.cy + 1
             corral(self)
           end
         end
+
       else
         textwrite(self, chunk)
         self.just_wrapped = self.cx == 81
@@ -497,8 +531,10 @@ do
 
   local function togglecursor(self)
     if not self.cursor then return end
+
     corral(self)
     local cc, cf, cb, pf, pb = self.gpu.get(self.cx, self.cy)
+
     self.gpu.setForeground(pb or cb, not not pb, true)
     self.gpu.setBackground(pf or cf, not not pf, true)
     self.gpu.set(self.cx, self.cy, cc)
@@ -517,16 +553,11 @@ do
       line = line:gsub("[\n\v\f]", "%1\r")
     end
 
-    --[[
-    line = line:gsub("[\n\v\f]", "\27[B")
-      :gsub("\r", "\27[G")
-      -- TODO: perhaps custom escape for tab?
-      :gsub("\t", "  ")]]
-
     while #line > 0 do
       local nesc = line:find("\27", nil, true)
       local e = (nesc and nesc - 1) or #line
       local chunk = line:sub(1, e)
+
       line = line:sub(#chunk + 1)
       if #chunk > 0 then writelines(self, chunk) end
 
@@ -540,12 +571,15 @@ do
           local args = {}
           local num = ""
           local plen = #params
+
           for pos, c in params:gmatch("()(.)") do
             if c == ";" then
               args[#args+1] = tonumber(num) or 0
               num = ""
+
             elseif tonumber(c) then
               num = num .. c
+
               if pos == plen then
                 args[#args+1] = tonumber(num) or 0
               end
@@ -556,11 +590,14 @@ do
             local func = commands[csc]
             if func then func(self, args)
               else printk(k.L_DEBUG, "unknown terminal escape: %q", csc) end
+
           elseif css == "]" or css == "?" then
             local func = controllers[csc]
             if func then func(self, args) end
+
           elseif css == "#" then -- it is hilarious to me that this exists
             self.gpu.fill(1, 1, self.w, self.h, "E")
+
           else
             local func = nocsi[css]
             if func then func(self, args) end
@@ -585,6 +622,7 @@ do
   function k.open_tty(gpu, screen)
     checkArg(1, gpu, "string", "table")
     checkArg(2, screen, "string", "nil")
+
     if type(gpu) == "string" then gpu = component.proxy(gpu) end
     screen = screen or gpu.getScreen()
     gpu.bind(screen)
@@ -607,10 +645,13 @@ do
     -- Tier 1 GPUs suck, frankly, but we have to support them.
     if gpu.maxDepth() == 1 then
       local fg, bg = gpu.setForeground, gpu.setBackground
+
       function gpu.setPaletteColor() end
+
       function gpu.setForeground(a,_,t)
         if t and a == 0 then fg(0) else fg(0xFFFFFF) end
       end
+
       function gpu.setBackground(a,_,t)
         if t and a > 0 then bg(0xFFFFFF) else bg(0) end
       end
@@ -639,6 +680,7 @@ do
         local c = scancode_lookups[code]
         local interim = new.altcursor and "O" or "["
         to_buffer = "\27" .. interim .. c
+
       elseif char > 0 then
         to_buffer = string.char(char)
       end

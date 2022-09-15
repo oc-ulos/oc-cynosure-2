@@ -38,10 +38,12 @@ do
     if not func then
       return nil, err
     end
+
     return function(args)
       for i=1, #args, 1 do
         words[#words+1] = args[i]
       end
+
       return func(words)
     end
   end)

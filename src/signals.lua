@@ -24,16 +24,20 @@ do
   function k.add_signal_handler(name, callback)
     checkArg(1, name, "string")
     checkArg(2, callback, "function")
+
     local id
     repeat id = math.random(100000, 999999) until not handlers[id]
+
     handlers[id] = {signal = name, callback = callback}
     return id
   end
 
   function k.remove_signal_handler(id)
     checkArg(1, id, "number")
+
     local success = not not handlers[id]
     handlers[id] = nil
+
     return success
   end
 
@@ -45,6 +49,7 @@ do
       if handler.signal == sig[1] then
         local success, err = pcall(handler.callback,
           table.unpack(sig, 1, sig.n))
+
         if not success and err then
           printk(k.L_WARNING,
             "error in signal handler %d while handling signal %s: %s", id,
@@ -57,6 +62,7 @@ do
   local push_blacklist = {}
   function k.blacklist_signal(signal)
     checkArg(1, signal, "string")
+
     push_blacklist[signal] = true
     return true
   end
@@ -64,9 +70,11 @@ do
   function k.pushSignal(sig, ...)
     assert(sig ~= nil,
       "bad argument #1 to 'pushSignal' (value expected, got nil)")
+
     if push_blacklist[sig] then
       return nil, k.errno.EACCES
     end
+
     pushsignal(sig, ...)
     return true
   end

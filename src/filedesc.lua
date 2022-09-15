@@ -23,14 +23,17 @@ do
     if not self.proxy.read then return nil, k.errno.ENOTSUP end
     return self.proxy:read(self.fd, n)
   end
+
   local function fwrite(self, d)
     if not self.proxy.write then return nil, k.errno.ENOTSUP end
     return self.proxy:write(self.fd, d)
   end
+
   local function fseek(self, w, o)
     if not self.proxy.seek then return nil, k.errno.ENOTSUP end
     return self.proxy:seek(self.fd, w, o)
   end
+
   local function fclose(self)
     if not self.proxy.close then return nil, k.errno.ENOTSUP end
     return self.proxy:close(self.fd)
@@ -46,10 +49,12 @@ do
     -- ocvm returns userdata rather than a table
     checkArg(2, fd, "table", "userdata")
     checkArg(3, mode, "string")
+
     local new = k.buffer_from_stream({
       read = fread, write = fwrite, seek = fseek, close = fclose,
       fd = fd, proxy = proxy
     }, mode)
+
     return new
   end
 
@@ -66,6 +71,7 @@ do
     checkArg(1, read, "function", write and "nil")
     checkArg(2, write, "function", read and "nil")
     checkArg(3, close, "function", "nil")
+
     return {
       read = read or ebadf, write = write or ebadf,
       close = close or function() end

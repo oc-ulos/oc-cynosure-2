@@ -75,9 +75,11 @@ do
       local current = k.current_process()
       local fds = current.fds
       local id = #fds + 1
+
       fds[id] = fd
       table.insert(args, 1, ldcache)
       table.insert(args, 1, id)
+
       return interpreter(args)
     end
   end

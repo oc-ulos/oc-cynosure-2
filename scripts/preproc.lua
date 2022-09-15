@@ -36,16 +36,20 @@ dirs = {
         break
       end
     end
+
     if not done then
       error(a .. ": not defined")
     end
   end},
+
   {"$%[%{(.-)%}%]", function(ex)
     return assert(io.popen(ex, "r"):read("a")):gsub("\n$","")
   end},
+
   {"@%[%{(.+)%}%]", function(ex)
     return assert(load("return " .. ex, "=eval", "t", _G))()
   end},
+
   {"(%-%-#include \")(.+)(\" ?)(.-)", function(_, f, _, e)
     if (e == "force") or not included[f] then
       included[f] = true
@@ -64,14 +68,17 @@ _G.proc = function(f)
     _G.proc = nil
     os.exit(1)
   end
+
   for line in handle:lines("l") do
     for k, v in ipairs(dirs) do
       line = line:gsub(v[1], v[2])
     end
+
     if not line:match("#include") then
       outhandle:write(line .. "\n")
     end
   end
+
   handle:close()
 end
 

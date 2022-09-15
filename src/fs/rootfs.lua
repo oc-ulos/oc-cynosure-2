@@ -37,10 +37,13 @@ do
   -- Method 1.
   if k.cmdline.root then
     address = k.cmdline.root
+
   elseif computer.getBootAddress then -- Method 2.
     address = computer.getBootAddress()
+
   else -- Method 3.
     local mounted
+
     for addr in component.list("filesystem") do
       if addr ~= computer.tmpAddress() then
         address = addr

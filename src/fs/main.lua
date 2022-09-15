@@ -44,9 +44,11 @@ do
   function k.register_fstype(name, recognizer)
     checkArg(1, name, "string")
     checkArg(2, recognizer, "function")
+
     if k.fstypes[name] then
       panic("attempted to double-register fstype " .. name)
     end
+
     k.fstypes[name] = recognizer
     return true
   end
@@ -56,6 +58,7 @@ do
       local fs = recognizer(component)
       if fs then fs.mountType = fstype return fs end
     end
+
     return nil
   end
 
@@ -63,14 +66,17 @@ do
 
   function k.split_path(path)
     checkArg(1, path, "string")
+
     local segments = {}
     for piece in path:gmatch("[^/\\]+") do
       if piece == ".." then
         segments[#segments] = nil
+
       elseif piece ~= "." then
         segments[#segments+1] = piece
       end
     end
+
     return segments
   end
 
@@ -81,13 +87,16 @@ do
 
   function k.check_absolute(path)
     checkArg(1, path, "string")
+
     if path:sub(1, 1) == "/" then
       return "/" .. table.concat(k.split_path(path), "/")
+
     else
       local current = k.current_process()
       if current then
         return "/" .. table.concat(k.split_path(current.cwd .. "/" .. path),
           "/")
+
       else
         return "/" .. table.concat(k.split_path(path), "/")
       end
@@ -139,6 +148,7 @@ do
       local stat = k.stat(path)
       if (not stat) then
         return nil, k.errno.ENOENT
+
       elseif (stat.mode & 0xF000) ~= 0x4000 then
         return nil, k.errno.ENOTDIR
       end
@@ -240,6 +250,7 @@ do
     local stat, err
     if not exists then
       stat, err = node:stat(dir)
+
     else
       stat, err = node:stat(remain)
     end
@@ -271,9 +282,11 @@ do
 
   local function verify_fd(fd, dir)
     checkArg(1, fd, "table")
+
     if not (fd.fd and fd.node) then
       error("bad argument #1 (file descriptor expected)", 2)
     end
+
     -- Casts both sides to booleans to ensure correctness when comparing
     if (not not fd.dir) ~= (not not dir) then
       error("bad argument #1 (cannot supply dirfd where fd is required, or vice versa)", 2)
@@ -283,10 +296,12 @@ do
   function k.ioctl(fd, op, ...)
     verify_fd(fd)
     checkArg(2, op, "string")
+
     if op == "setcloexec" then
       fd.cloexec = not not ...
       return true
     end
+
     if not fd.node.ioctl then return nil, k.errno.ENOSYS end
     return fd.node.ioctl(fd.fd, op, ...)
   end
@@ -294,6 +309,7 @@ do
   function k.read(fd, fmt)
     verify_fd(fd)
     checkArg(2, fmt, "string", "number")
+
     if not fd.node.read then return nil, k.errno.ENOSYS end
     return fd.node.read(fd.fd, fmt)
   end
@@ -301,6 +317,7 @@ do
   function k.write(fd, data)
     verify_fd(fd)
     checkArg(2, data, "string")
+
     if not fd.node.write then return nil, k.errno.ENOSYS end
     return fd.node.write(fd.fd, data)
   end
@@ -309,12 +326,14 @@ do
     verify_fd(fd)
     checkArg(2, whence, "string")
     checkArg(3, offset, "number")
+
     return fd.node.seek(fd.fd, whence, offset)
   end
 
   function k.flush(fd)
     if fd.dir then return end -- cannot flush dirfd
     verify_fd(fd)
+
     if not fd.node.flush then return nil, k.errno.ENOSYS end
     return fd.node.flush(fd.fd)
   end
@@ -348,9 +367,11 @@ do
   end
 
   function k.close(fd)
-    verify_fd(fd, fd.dir) -- close closes either type of fd
+    verify_fd(fd, fd.dir) -- can close either type of fd
+
     fd.refs = fd.refs - 1
     if fd.node.flush then fd.node:flush(fd.fd) end
+
     if fd.refs <= 0 then
       opened[fd] = nil
       if not fd.node.close then return nil, k.errno.ENOSYS end
@@ -384,6 +405,7 @@ do
   function k.mkdir(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number", "nil")
+
     local node, remain = path_to_node(path)
     if not node.mkdir then return nil, k.errno.ENOSYS end
     if node:exists(remain) then return nil, k.errno.EEXIST end
@@ -430,6 +452,7 @@ do
 
   function k.unlink(path)
     checkArg(1, path, "string")
+
     local node, remain = path_to_node(path)
     if not node.unlink then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
@@ -448,6 +471,7 @@ do
   function k.chmod(path, mode)
     checkArg(1, path, "string")
     checkArg(2, mode, "number")
+
     local node, remain = path_to_node(path)
     if not node.chmod then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end
@@ -466,6 +490,7 @@ do
     checkArg(1, path, "string")
     checkArg(2, uid, "number")
     checkArg(3, gid, "number")
+
     local node, remain = path_to_node(path)
     if not node.chown then return nil, k.errno.ENOSYS end
     if not node:exists(remain) then return nil, k.errno.ENOENT end

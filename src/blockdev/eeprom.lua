@@ -28,6 +28,7 @@ do
         local eeprom = component.proxy(addr)
         local romdata = eeprom.get()
         local romsize = eeprom.getSize()
+
         return "eeprom", {
           stat = function()
             return {
@@ -60,6 +61,7 @@ do
               local data = romdata:sub(fd.pos+1, math.min(romsize, fd.pos+len))
               fd.pos = fd.pos + len
               return data
+
             else
               return nil
             end

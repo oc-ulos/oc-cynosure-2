@@ -63,14 +63,17 @@ do
       for k in pairs(devices) do if k ~= "/" then devs[#devs+1] = k end end
       return { devs = devs, i = 0 }
     end,
+
     readdir = function(_, fd)
       fd.i = fd.i + 1
       if fd.devs and fd.devs[fd.i] then
         return { inode = -1, name = fd.devs[fd.i] }
+
       else
         fd.devs = nil
       end
     end,
+
     stat = function()
       return { dev = -1, ino = -1, mode = 0x41A4, nlink = 1,
         uid = 0, gid = 0, rdev = -1, size = 0, blksize = 2048,
@@ -87,6 +90,7 @@ do
 
     if not devices[segments[1]] then
       return nil, k.errno.ENOENT
+
     else
       return devices[segments[1]], table.concat(segments, "/", 2, segments.n)
     end
@@ -102,13 +106,14 @@ do
   -- The following code is primarily intended to reduce the
   -- amount of LOC, and probably memory usage.
   --
-  -- The checks for open, opendir, and ioctl are edge cases
-  -- as a result of the kernel's buffering implementation.
+  -- The checks for open, opendir, and ioctl are needed to
+  -- work properly with the kernel's buffering implementation.
   local function autocall(calling, pathorfd, ...)
     checkArg(1, pathorfd, "string", "table")
 
     if type(pathorfd) == "string" then
       local device, path = path_to_node(pathorfd)
+
       if not device then return nil, k.errno.ENOENT end
       if not device[calling] then return nil, k.errno.ENOSYS end
 
@@ -119,9 +124,11 @@ do
       if result and (calling == "open" or calling == "opendir") then
         return { node = device, fd = result,
           default_mode = result.default_mode }
+
       else
         return result, err
       end
+
     else
       if not (pathorfd.node and pathorfd.fd) then
         return nil, k.errno.EBADF
@@ -133,6 +140,7 @@ do
       local result, err
       if calling == "ioctl" and not device.is_dev then
         result, err = device[calling](fd, ...)
+
       else
         result, err = device[calling](device, fd, ...)
       end
@@ -148,6 +156,7 @@ do
       return function(_, ...)
         return autocall(k, ...)
       end
+
     else
       return function(...)
         return autocall(k, ...)

@@ -30,11 +30,14 @@ do
       printk(k.L_DEBUG, "load failed - %s", tostring(err))
       return nil, k.errno.ENOEXEC
     end
+
     return function(args)
       local result = table.pack(xpcall(chunk, debug.traceback, args))
+
       if not result[1] then
         printk(k.L_NOTICE, "Lua error: %s", result[2])
         k.syscalls.exit(1)
+
       else
         k.syscalls.exit(0)
       end

@@ -62,6 +62,7 @@ do
   end
 
   --[[
+  -- Also for debugging!
   function k.profile(name, func, ...)
     local mem = computer.freeMemory()
     local result = table.pack(func(...))
@@ -438,8 +439,10 @@ do
 
     local clean = k.check_absolute(path)
     local stat, err = k.stat(clean)
+
     if not stat then
       return nil, err
+
     elseif (stat.mode & 0xF000) ~= 0x4000 then
       return nil, k.errno.ENOTDIR
     end
@@ -502,6 +505,7 @@ do
       current.euid = stat.uid
       current.suid = stat.uid
     end
+
     if (stat.mode & k.FS_SETGID) ~= 0 then
       current.gid = stat.gid
       current.egid = stat.egid
@@ -512,6 +516,7 @@ do
     current.thread_count = 0
     current.environ = env or current.environ
     current.cmdline = args
+
     current:add_thread(k.thread_from_function(function()
       return func(args)
     end))
@@ -555,6 +560,7 @@ do
       if proc.stopped and untraced then
         return "stopped", proc.status
       end
+
       if not nohang then coroutine.yield(0) end
     until proc.is_dead or nohang
 
@@ -589,6 +595,7 @@ do
           return pid, k.syscalls.wait(pid)
         end
       end
+
       if block then coroutine.yield(0.5) end
     until not block
 
@@ -647,15 +654,18 @@ do
   -- @tparam number uid The new user ID
   function k.syscalls.setuid(uid)
     checkArg(1, uid, "number")
+
     local current = k.current_process()
     if current.euid == 0 then
       current.suid = uid
       current.euid = uid
       current.uid = uid
       return true
+
     elseif uid==current.uid or uid==current.euid or uid==current.suid then
       current.euid = uid
       return true
+
     else
       return nil, k.errno.EPERM
     end
@@ -667,12 +677,15 @@ do
   -- @tparam number uid The new user ID
   function k.syscalls.seteuid(uid)
     checkArg(1, uid, "number")
+
     local current = k.current_process()
     if current.euid == 0 then
       current.euid = uid
       current.suid = 0
+
     elseif uid==current.uid or uid==current.euid or uid==current.suid then
       current.euid = uid
+
     else
       return nil, k.errno.EPERM
     end
@@ -700,13 +713,16 @@ do
   -- @tparam number uid The new group ID
   function k.syscalls.setgid(gid)
     checkArg(1, gid, "number")
+
     local current = k.current_process()
     if current.egid == 0 then
       current.sgid = gid
       current.egid = gid
       current.gid = gid
+
     elseif gid==current.gid or gid==current.egid or gid==current.sgid then
       current.egid = gid
+
     else
       return nil, k.errno.EPERM
     end
@@ -718,12 +734,15 @@ do
   -- @tparam number uid The new group ID
   function k.syscalls.setegid(gid)
     checkArg(1, gid, "number")
+
     local current = k.current_process()
     if current.egid == 0 then
       current.sgid = gid
       current.egid = gid
+
     elseif gid==current.gid or gid==current.egid or gid==current.sgid then
       current.egid = gid
+
     else
       return nil, k.errno.EPERM
     end
@@ -765,12 +784,14 @@ do
   -- @treturn number The new session ID
   function k.syscalls.setsid()
     local current = k.current_process()
+
     if current.pgid == current.pid then
       return nil, k.errno.EPERM
     end
 
     current.pgid = current.pid
     current.sid = current.pid
+
     if current.tty then
       current.tty.session = current.sid
       current.tty.pgroup = current.pgid
@@ -880,8 +901,10 @@ do
     if not valid_signals[name] then return nil, k.errno.EINVAL end
 
     local current = k.current_process()
+
     printk(k.L_DEBUG, "%d (%s): replacing signal handler for %s with %s",
       current.pid, current.cmdline[0], name, tostring(handler))
+
     local old = current.signal_handlers[name]
     current.signal_handlers[name] = handler or k.default_signal_handlers[name]
 
@@ -906,14 +929,18 @@ do
     local pids
     if pid > 0 then
       pids = {pid}
+
     elseif pid == 0 then
       pids = k.pgroup_pids(current.pgid)
+
     elseif pid == -1 then
       pids = k.get_pids()
+
     elseif pid < -1 then
       if not k.is_pgroup(-pid) then
         return nil, k.errno.ESRCH
       end
+
       pids = k.pgroup_pids(-pid)
     end
 
@@ -986,11 +1013,14 @@ do
   -- @treturn number The old umask
   function k.syscalls.umask(num)
     checkArg(1, num, "number")
+
     local cur = k.current_process()
     local old = cur.umask
+
     if tonumber(num) then
       cur.umask = (math.floor(num) & 511)
     end
+
     return old
   end
 
@@ -1004,8 +1034,6 @@ do
     local closed = false
 
     local instream = k.fd_from_rwf(function(_, _, n)
-      printk(k.L_DEBUG, "READ(%d)", n)
-      printk(k.L_DEBUG, "BL(%d)", #buf)
       while #buf < n and not closed do coroutine.yield(0) end
       local data = buf:sub(1, math.min(n, #buf))
       buf = buf:sub(#data + 1)
@@ -1061,13 +1089,16 @@ do
     if cmd == "halt" then
       k.shutdown()
       printk(k.L_INFO, "System halted.")
+
       while true do
         computer.pullSignal()
       end
+
     elseif cmd == "poweroff" then
       printk(k.L_INFO, "Power down.")
       k.shutdown()
       computer.shutdown()
+
     elseif cmd == "restart" then
       printk(k.L_INFO, "Restarting system.")
       k.shutdown()

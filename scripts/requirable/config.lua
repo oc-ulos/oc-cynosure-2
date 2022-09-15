@@ -12,6 +12,7 @@ function lib.load(file)
       if not k and v then
         error("bad config entry: " .. line)
       end
+
       conf[k] = tonumber(v) or v
       order[#order+1] = k
     end

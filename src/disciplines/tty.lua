@@ -75,6 +75,7 @@ do
 
     for i=1, #pids, 1 do
       local proc = k.get_process(pids[i])
+
       if proc.pgid == obj.pgroup then
         printk(k.L_DEBUG, "sending %s to %d", sig, pids[i])
         table.insert(proc.sigqueue, sig)
@@ -85,10 +86,13 @@ do
   local function pchar(self, c)
     if self.echo then
       local byte = string.byte(c)
+
       if (not self.raw) and sub32_lookups_notraw[byte] then
         self.obj:write(sub32_lookups_notraw[byte])
+
       elseif sub32_lookups[byte] then
         self.obj:write("^"..sub32_lookups[byte])
+
       elseif byte < 126 then
         self.obj:write(c)
       end
@@ -113,6 +117,7 @@ do
               if self.echo then
                 if last:byte() < 32 then
                   self.obj:write("\27[2D  \27[2D")
+
                 else
                   self.obj:write("\27[D \27[D")
                 end
@@ -120,6 +125,7 @@ do
               self.rbuf = self.rbuf:sub(1, -2)
             end
           end
+
         elseif c == self.eof then
           wchar(self, c)
 
@@ -147,6 +153,7 @@ do
         else
           wchar(self, c)
         end
+
       else
         wchar(self, c)
       end
@@ -211,6 +218,7 @@ do
     elseif method == "setvbuf" then
       if args == "line" or args == "none" then
         self.mode = args
+
       else
         return nil, k.errno.EINVAL
       end
@@ -262,6 +270,7 @@ do
       if data == self.eof then return nil end
       if data:sub(-1) == self.eof then return data:sub(1, -2) end
     end
+
     return data
   end
 
@@ -295,6 +304,7 @@ do
     if proc.tty == self then
       proc.tty = false
     end
+
     return true
   end
 

@@ -37,6 +37,7 @@ do
   function k.pgroup_pids(id)
     local result = {}
     if not k.is_pgroup(id) then return result end
+
     for pid, proc in pairs(processes) do
       if proc.pgid == id then
         result[#result+1] = pid
@@ -50,15 +51,18 @@ do
     if k.is_pgroup(id) then
       return processes[id].sid
     end
+
     return 0
   end
 
   function collectgarbage()
     local missed = {}
+
     for i=1, 10, 1 do
       local sig = table.pack(computer.pullSignal(0.05))
       if sig.n > 0 then missed[#missed+1] = sig end
     end
+
     for i=1, #missed, 1 do
       computer.pushSignal(table.unpack(missed[i], 1, missed[i].n))
     end
@@ -84,6 +88,7 @@ do
       local deadline = math.huge
       for _, process in pairs(processes) do
         local proc_deadline = process:deadline()
+
         if proc_deadline < deadline then
           deadline = proc_deadline
           if deadline < 0 then break end
@@ -96,6 +101,7 @@ do
           last_yield = computer.uptime()
           signal = table.pack(k.pullSignal(0))
         end
+
       else
         last_yield = computer.uptime()
         signal = table.pack(k.pullSignal(deadline - computer.uptime()))
@@ -104,8 +110,8 @@ do
       for cpid, process in pairs(processes) do
         if not process.is_dead then
           current = cpid
+
           if computer.uptime() >= process:deadline() or #signal > 0 then
-            --k.profile("proc_resume["..cpid.."]", process.resume, process, table.unpack(signal, 1, signal.n))
             process:resume(table.unpack(signal, 1, signal.n))
             if not next(process.threads) then
               process.is_dead = true
@@ -121,6 +127,7 @@ do
               end
             end
           end
+
         else
           if not processes[process.ppid] then
             process.ppid = 1

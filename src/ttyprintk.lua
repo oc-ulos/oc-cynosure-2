@@ -25,6 +25,7 @@ do
   if not console then
     panic("cannot open console: " .. err)
   end
+
   console = k.fd_from_node(devfs, console, "w")
   console = { fd = console, node = console, refs = 1 }
 
@@ -32,6 +33,7 @@ do
 
   k.ioctl(console, "setvbuf", "line")
   k.write(console, "\27[39;49m\27[2J")
+
   function k.log_to_screen(message)
     k.write(console, message.."\n")
   end

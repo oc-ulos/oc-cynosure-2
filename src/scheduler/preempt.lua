@@ -57,6 +57,7 @@ do
       local next_quote = math.min(code:find('"', nil, true) or math.huge,
         code:find("'", nil, true) or math.huge,
         code:find("[", nil, true) or math.huge)
+
       if next_quote == math.huge then
         wrapped = wrapped .. gsub(code)
         break
@@ -69,32 +70,40 @@ do
         wrapped = wrapped .. gsub(code)
         break
       end
+
       code = code:sub(#chunk + 2)
       if quote == '"' or quote == "'" then
         if in_str == quote then
           in_str = false
           wrapped = wrapped .. chunk .. quote
+
         elseif not in_str then
           in_str = quote
           wrapped = wrapped .. gsub(chunk) .. quote
+
         else
           wrapped = wrapped .. gsub(chunk) .. quote
         end
+
       elseif quote == "[" then
         local prefix = "%]"
+
         if code:sub(1,1) == "[" then
           prefix = "%]%]"
           code = code:sub(2)
           wrapped = wrapped .. gsub(chunk) .. quote .. "["
+
         elseif code:sub(1,1) == "=" then
           local pch = code:find("(=-%[)")
           if not pch then -- syntax error
             return wrapped .. chunk .. quote .. code
           end
+
           local e = code:sub(1, pch)
           prefix = prefix .. e .. "%]"
           code = code:sub(pch+#e+1)
           wrapped = wrapped .. gsub(chunk) .. "[" .. e .. "["
+
         else
           wrapped = wrapped .. gsub(chunk) .. quote
         end
@@ -118,6 +127,7 @@ do
 
     if k.cmdline.debug_load then
       local fd = k.open("/load.txt", "a") or k.open("/load.txt", "w")
+
       if fd then
         k.write(fd, "== LOAD ==\n" .. chunk)
         k.close(fd)

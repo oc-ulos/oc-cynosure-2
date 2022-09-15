@@ -24,14 +24,17 @@ do
   -- dynamically register ttys
   function k.init_ttys()
     local screens = {}
+
     for gpu in component.list("gpu", true) do
       for screen in component.list("screen", true) do
         if not screens[screen] then
           screens[screen] = true
           printk(k.L_DEBUG, "registering tty%d on %s,%s", ttyn,
             gpu:sub(1,6), screen:sub(1,6))
+
           local cdev = k.chardev.new(k.open_tty(gpu, screen), "tty")
           cdev.stream.name = string.format("tty%d", ttyn)
+
           k.devfs.register_device(string.format("tty%d", ttyn), cdev)
           ttyn = ttyn + 1
           break

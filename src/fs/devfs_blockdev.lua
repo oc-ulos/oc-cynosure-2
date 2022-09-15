@@ -27,10 +27,12 @@ do
   end
 
   local function comp_added(_, addr, t)
-    printk(k.L_DEBUG, ("component_added: %s %s"):format(addr, t))
+    printk(k.L_DEBUG, "component_added: %s %s", addr, t)
+
     if handlers[t] then
       printk(k.L_DEBUG, "intializing device %s", addr)
       local name, device = handlers[t].init(addr)
+
       if name then
         k.devfs.register_device(name, device)
       end
@@ -38,7 +40,8 @@ do
   end
 
   local function comp_removed(_, addr, t)
-    printk(k.L_DEBUG, ("component_removed: %s %s"):format(addr, t))
+    printk(k.L_DEBUG, "component_removed: %s %s", addr, t)
+
     if handlers[t] then
       local name = handlers[t].destroy(addr)
       if name then

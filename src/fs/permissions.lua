@@ -69,8 +69,10 @@ do
     for c in perm:gmatch(".") do
       if c == "r" then
         val_check = (val_check | order[base_index])
+
       elseif c == "w" then
         val_check = (val_check | order[base_index - 1])
+
       elseif c == "x" then
         val_check = (val_check | order[base_index - 2])
       end

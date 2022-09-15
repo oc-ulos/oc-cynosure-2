@@ -25,6 +25,7 @@ do
     local function check(want, ...)
       if not want then
         return false
+
       else
         return have == want or check(...)
       end
@@ -32,16 +33,20 @@ do
 
     if type(n) == "number" then n = string.format("#%d", n)
     else n = "'"..tostring(n).."'" end
+
     if not check(...) then
       local name = debug.getinfo(3, 'n').name
       local msg
+
       if name then
          msg = string.format("bad argument %s to '%s' (%s expected, got %s)",
           n, name, table.concat(table.pack(...), " or "), have)
+
       else
         msg = string.format("bad argument %s (%s expected, got %s)", n,
           table.concat(table.pack(...), " or "), have)
       end
+
       error(debug.traceback(msg, 2), 2)
     end
   end

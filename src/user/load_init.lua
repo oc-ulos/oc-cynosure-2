@@ -42,12 +42,15 @@ do
   if k.cmdline.init then
     func, err = k.load_executable(k.cmdline.init, proc.env)
     proc.cmdline[0] = k.cmdline.init
+
   else -- 2) init_paths
     for _, path in ipairs(init_paths) do
       func, err = k.load_executable(path, proc.env)
+
       if func then
         proc.cmdline[0] = path
         break
+
       elseif err ~= k.errno.ENOENT then
         panic_with_error(err)
       end

@@ -34,6 +34,7 @@ do
     SIGTTIN   = 21,
     SIGTTOU   = 22
   }
+
   k.sigtonum = {}
   for key,v in pairs(sigtonum) do
     k.sigtonum[key] = v
@@ -41,19 +42,24 @@ do
   end
 
   -- Default signal handlers
-  k.default_signal_handlers = setmetatable({    SIGTSTP = function(p)
+  k.default_signal_handlers = setmetatable({
+    SIGTSTP = function(p)
       p.stopped = true
     end,
+
     SIGSTOP = function(p)
       p.stopped = true
     end,
+
     SIGCONT = function(p)
       p.stopped = false
     end,
+
     SIGTTIN = function(p)
       printk(k.L_DEBUG, "process %d (%s) got SIGTTIN", p.pid, p.cmdline[0])
       p.stopped = true
     end,
+
     SIGTTOU = function(p)
       printk(k.L_DEBUG, "process %d (%s) got SIGTTOU", p.pid, p.cmdline[0])
       p.stopped = true
@@ -62,6 +68,7 @@ do
         p.threads = {}
         p.thread_count = 0
       end
+
       return t[sig]
     end})
 
@@ -71,6 +78,7 @@ do
   -- sorts.
   local process = {}
   local default = {n = 0}
+
   function process:resume(sig, ...)
     -- We handle user-provided signals this way because otherwise
     -- a signal handler calling exit() would make the sending process
@@ -96,6 +104,7 @@ do
     local signal = default
     if #self.queue > 0 then
       signal = table.remove(self.queue, 1)
+
     elseif self:deadline() > computer.uptime() then
       return
     end
@@ -126,13 +135,16 @@ do
       if thread.deadline < deadline then
         deadline = thread.deadline
       end
+
       if thread.status == "y" then
         return -1
       end
+
       if thread.status == "w" and #self.queue > 0 then
         return -1
       end
     end
+
     return deadline
   end
 
@@ -140,13 +152,16 @@ do
     if self.signal_handlers[sig] then
       printk(k.L_DEBUG, "%d: using custom signal handler for %s", self.pid, sig)
       pcall(self.signal_handlers[sig], sigtonum[sig])
+
     else
       printk(k.L_DEBUG, "%d: using default signal handler for %s", self.pid, sig)
       pcall(k.default_signal_handlers[sig], self)
     end
+
     if self.thread_count == 0 then
       self.reason = "signal"
     end
+
     if imm and (self.stopped or self.thread_count == 0) then
       coroutine.yield(0)
     end
@@ -240,9 +255,11 @@ do
           for k, v in pairs(parent.environ) do
             t[k] = v
           end
+
           for k,v in next, tab, nil do
             t[k] = v
           end
+
           return next, t, nil
         end, __metatable = {}})
     }, process_mt)

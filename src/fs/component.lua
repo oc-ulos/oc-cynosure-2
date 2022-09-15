@@ -27,6 +27,7 @@ do
   -- full address.
   local function resolve_address(addr, ctype)
     if not addr then return end
+
     for check in component.list(ctype, true) do
       if check:sub(1, #addr) == addr then
         return check
@@ -41,8 +42,10 @@ do
     if caddr then
       return not not component.list(ctype,
         true)[resolve_address(caddr) or caddr]
+
     elseif ctype then
       return not not component.list(ctype, true)()
+
     else
       return true
     end
@@ -130,6 +133,7 @@ do
 
     if ioctls[method] then
       return ioctls[method](fd, ...)
+
     else
       return nil, k.errno.ENOTTY
     end
@@ -155,6 +159,7 @@ do
         i = i + 1
         return types[i]
       end }
+
     else
       local iter = component.list(segments[1], true)
       return { iterator = function()

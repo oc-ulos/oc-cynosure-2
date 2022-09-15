@@ -63,6 +63,7 @@ do
   local function attr_path(path)
     local segments = k.split_path(path)
     if #segments == 0 then return "/.attr" end
+
     return "/" .. table.concat(segments, "/", 1, #segments - 1) .. "/." ..
       segments[#segments] .. ".attr"
   end
@@ -72,9 +73,11 @@ do
   -- to my successors to fix this, if anybody cares at that point.
   function _node:lastModified(file)
     local last = self.fs.lastModified(file)
+
     if last > 9999999999 then
       return math.floor(last / 1000)
     end
+
     return last
   end
 
@@ -185,6 +188,7 @@ do
     local attributes = self:get_attributes(path)
     attributes.uid = uid
     attributes.gid = gid
+
     return self:set_attributes(path, attributes)
   end
 
@@ -227,6 +231,7 @@ do
 
   function _node:readdir(dirfd)
     checkArg(1, dirfd, "table")
+
     if not (dirfd.index and dirfd.files) then
       error("bad argument #1 to 'readdir' (expected dirfd)")
     end
@@ -234,9 +239,6 @@ do
     dirfd.index = dirfd.index + 1
     if dirfd.files and dirfd.files[dirfd.index] then
       return { inode = -1, name = dirfd.files[dirfd.index]:gsub("/", "") }
-    else
-      -- might help with OOM issues
-      dirfd.files = nil
     end
   end
 
@@ -257,12 +259,14 @@ do
   function _node:read(fd, count)
     checkArg(1, fd, "table")
     checkArg(2, count, "number")
+
     return self.fs.read(fd, count)
   end
 
   function _node:write(fd, data)
     checkArg(1, fd, "table")
     checkArg(2, data, "string")
+
     return self.fs.write(fd, data)
   end
 
@@ -270,6 +274,7 @@ do
     checkArg(1, fd, "table")
     checkArg(2, whence, "string")
     checkArg(3, offset, "number")
+
     return self.fs.seek(fd, whence, offset)
   end
 
@@ -278,6 +283,7 @@ do
 
   function _node:close(fd)
     checkArg(1, fd, "table")
+
     if fd.index then return true end
     return self.fs.close(fd)
   end

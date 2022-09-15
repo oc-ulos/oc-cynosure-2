@@ -36,8 +36,10 @@ do
     local area = math.random(1, 3)
     if area == 1 then -- number
       return string.char(math.random(48, 57))
+
     elseif area == 2 then -- uppercase letter
       return string.char(math.random(65, 90))
+
     elseif area == 3 then -- lowercase letter
       return string.char(math.random(97, 122))
     end
@@ -58,6 +60,7 @@ do
   --  * [y]ielded (forcibly pre-empted)
   -- Each thread maintains a queue of signals up to 256 items long.
   local thread = {}
+
   function thread:resume(sig, ...)
     if sig and #self.queue < 256 then
       table.insert(self.queue, table.pack(sig, ...))
@@ -83,9 +86,11 @@ do
 
     local result
     self.status = "r"
+
     if resume_args then
       result = table.pack(coroutine.resume(self.coro, table.unpack(resume_args,
         1, resume_args.n)))
+
     else
       result = table.pack(coroutine.resume(self.coro))
     end
@@ -100,6 +105,7 @@ do
       if k.cmdline.log_process_deaths then
         printk(k.L_DEBUG, "thread died: %s", result[1])
       end
+
       return 1
     end
 
@@ -112,12 +118,15 @@ do
     -- The if/else chain here isn't ordered quite like that for speed reasons.
     if result[1] == sysyield_string then
       self.status = "y"
+
     elseif result.n == 0 then
       self.deadline = math.huge
       self.status = "w"
+
     elseif type(result[1]) == "number" then
       self.deadline = computer.uptime() + result[1]
       self.status = "w"
+
     else
       self.deadline = math.huge
       self.status = "w"
@@ -132,6 +141,7 @@ do
   -- Create a thread from a function
   function k.thread_from_function(func)
     checkArg(1, func, "function")
+
     return setmetatable({
       coro = coroutine.create(func),
       queue = {},

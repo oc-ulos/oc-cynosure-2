@@ -7,13 +7,16 @@
 
   function commands:U(args)
     if #args == 0 then return end
+
     if args[1] == 1 then
       if #args < 6 then return end
       args[6] = unicode.char(args[6])
       self.gpu.fill(table.unpack(args, 2))
+
     elseif args[1] == 2 then
       if #args < 7 then return end
       self.gpu.copy(table.unpack(args, 2))
+
     elseif args[1] == 3 then
       if #args < 3 then return end
       self.gpu.setPaletteColor(table.unpack(args, 2))

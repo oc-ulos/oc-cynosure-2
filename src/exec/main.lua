@@ -29,6 +29,7 @@ do
     checkArg(1, name, "string")
     checkArg(2, recognizer, "function")
     checkArg(3, loader, "function")
+
     if formats[name] then
       return nil, k.errno.EEXIST
     end

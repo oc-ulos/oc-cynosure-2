@@ -21,6 +21,7 @@ do
   local gpu, screen
   for addr in component.list("gpu") do
     screen = component.invoke(addr, "getScreen")
+
     if screen then
       gpu = component.proxy(addr)
       break
@@ -35,25 +36,31 @@ do
   if gpu then
     if type(gpu) == "string" then gpu = component.proxy(gpu) end
     gpu.bind(screen)
+
     local w, h = gpu.getResolution()
     gpu.fill(1, 1, w, h, " ")
     local current_line = 0
 
     function k.log_to_screen(lines)
       lines = lines:gsub("\t", "  ")
+
       for message in lines:gmatch("[^\n]+") do
         while #message > 0 do
           local line = message:sub(1, w)
+
           message = message:sub(#line + 1)
           current_line = current_line + 1
+
           if current_line > h then
             gpu.copy(1, 1, w, h, 0, -1)
             gpu.fill(1, h, w, 1, " ")
           end
+
           gpu.set(1, current_line, line)
         end
       end
     end
+
   else
     k.log_to_screen = function() end
   end
@@ -64,9 +71,12 @@ do
   local log_buffer = {}
   k.log_buffer = log_buffer
   local sandbox = component.list("sandbox")()
+
   local function log_to_buffer(message)
     log_buffer[#log_buffer + 1] = message
+
     if sandbox then component.invoke(sandbox, "log", message) end
+
     if #log_buffer > computer.totalMemory() / 1024 then
       table.remove(log_buffer, 1)
     end
@@ -95,9 +105,11 @@ do
   function _G.printk(level, fmt, ...)
     local message = string.format("[%08.02f] %s: ", computer.uptime(),
       reverse[level]) .. string.format(fmt, ...)
+
     if level <= k.cmdline.loglevel then
       k.log_to_screen(message)
     end
+
     log_to_buffer(message)
   end
 
@@ -105,11 +117,13 @@ do
   -- kernel panic!!!
   function _G.panic(reason)
     printk(k.L_EMERG, "#### stack traceback ####")
+
     for line in debug.traceback():gmatch("[^\n]+") do
       if line ~= "stack traceback:" then
         printk(k.L_EMERG, "%s", line)
       end
     end
+
     printk(k.L_EMERG, "#### end traceback ####")
     printk(k.L_EMERG, "kernel panic - not syncing: %s", reason)
     while true do pullSignal() end

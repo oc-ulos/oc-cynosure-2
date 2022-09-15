@@ -39,6 +39,7 @@ do
 
   function chardev:open(path)
     if #path > 0 then return nil, k.errno.ENOTDIR end
+
     return { fd = k.disciplines[self.discipline].wrap(self.stream),
       default_mode = k.disciplines[self.discipline].default_mode or "none" }
   end

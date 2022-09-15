@@ -24,6 +24,7 @@ do
   local function foreach(x, call, ...)
     local ret = x
     local args = table.pack(...)
+
     for _, arg in ipairs(args) do
       ret = call(ret, arg)
     end
