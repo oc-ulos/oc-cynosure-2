@@ -41,8 +41,7 @@ do
 
   function protocol.request(parts)
     local http = table.remove(parts, 1)
-    local name = table.remove(parts, 1)
-    local url = http .. "://" .. name .. "." .. table.concat(parts, "/")
+    local url = http .. "://" .. table.concat(parts, "/")
 
     local internet = component.list("internet")()
     if not internet then

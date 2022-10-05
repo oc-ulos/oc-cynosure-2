@@ -101,9 +101,9 @@ do
   if k.request then
     --- Request a given network path.
     -- Uses any protocol supported by the kernel.  Returns a file descriptor.
-    -- Paths must be bang paths, i.e. `https!example!com!404.html` or `mtel!upm!packages!list`
+    -- Paths must be standard URLs, i.e. `https://example.com/404.html` or `mtel://upm/packages/list`
     -- @function request
-    -- @tparam string path The bang path to request
+    -- @tparam string path The path to request
     -- @treturn number The file descriptor
     function k.syscalls.request(path)
       checkArg(1, path, "string")

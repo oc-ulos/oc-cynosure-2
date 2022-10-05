@@ -33,11 +33,16 @@ do
   end
 
   local function separate(path)
-    local bangs = {}
-    for part in path:gmatch("[^!]+") do
-      bangs[#bangs+1] = part
+    local proto = path:match("([^:/]+)://")
+    if not proto then return end
+
+    local segments = { proto }
+
+    for part in path:gmatch("[^/]+") do
+      segments[#segments+1] = part
     end
-    return bangs
+
+    return segments
   end
 
   -- Takes a bang path and returns a file descriptor.
@@ -46,6 +51,10 @@ do
     checkArg(1, path, "string")
 
     local parts = separate(path)
+    if not parts then
+      return nil, k.errno.EINVAL
+    end
+
     local protocol = k.protocols[parts[1]]
     if not protocol then
       return nil, k.errno.ENOPROTOOPT

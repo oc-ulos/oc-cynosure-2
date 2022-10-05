@@ -44,8 +44,7 @@ do
 
   function protocol.request(parts)
     table.remove(parts, 1) -- remove tcp
-    local name = table.remove(parts, 1) -- remove secondary domain
-    local url = "https://" .. name .. "." .. table.concat(parts, "/")
+    local url = "https://" .. table.concat(parts, "/")
 
     local internet = component.list("internet")()
     if not internet then
