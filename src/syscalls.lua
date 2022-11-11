@@ -108,9 +108,9 @@ do
     function k.syscalls.request(path)
       checkArg(1, path, "string")
 
-      local fd, err = k.request(path)
+      local fd, err, detail = k.request(path)
       if not fd then
-        return nil, err
+        return nil, err, detail
       end
 
       local current = k.current_process()

@@ -48,7 +48,12 @@ do
       return nil, k.errno.ENODEV
     end
 
-    local handle = component.invoke(internet, "request", url)
+    printk(k.L_DEBUG, url)
+    local handle, err = component.invoke(internet, "request", url)
+    if not handle then
+      return nil, k.errno.ENOENT, err
+    end
+
     while not handle.finishConnect() do
       coroutine.yield(0)
     end
@@ -56,6 +61,6 @@ do
     return setmetatable({fd = handle}, {__index = request})
   end
 
-  k.protocols.http = request
-  k.protocols.https = request
+  k.protocols.http = protocol.request
+  k.protocols.https = protocol.request
 end

@@ -38,7 +38,7 @@ do
 
     local segments = { proto }
 
-    for part in path:gmatch("[^/]+") do
+    for part in path:sub(#proto+3):gmatch("[^/]+") do
       segments[#segments+1] = part
     end
 
@@ -60,7 +60,11 @@ do
       return nil, k.errno.ENOPROTOOPT
     end
 
-    local request = protocol(parts)
+    local request, errno, detail = protocol(parts)
+    if not request then
+      return nil, errno, detail
+    end
+
     local stream = k.buffer_from_stream(request, "rw")
     return { fd = stream, node = stream, refs = 1 }
   end
