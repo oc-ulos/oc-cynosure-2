@@ -1,0 +1,6 @@
+name=cynosure2
+authors=Ocawesome101,Wattana
+version=$[{lua scripts/version.lua}]
+license=GPLv3
+srcdir=/pkg/
+prebuild=./scripts/build.lua

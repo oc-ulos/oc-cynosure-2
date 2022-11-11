@@ -6,4 +6,7 @@ print(log.indent .. "Assembling kernel")
 
 local preproc = assert(loadfile("scripts/preproc.lua"))
 
-preproc("src/main.lua", "kernel.lua", "-strip-comments")
+os.execute("rm -r ./pkg")
+os.execute("mkdir -p ./pkg/boot")
+
+preproc("src/main.lua", "pkg/boot/cynosure.lua", "-strip-comments")
