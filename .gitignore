@@ -2,3 +2,6 @@
 kernel.lua
 .nvim_globals.lua
 doc/*
+*.mtar
+pkg/*
+uptbuild.conf

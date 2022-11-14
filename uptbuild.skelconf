@@ -1,5 +1,6 @@
 name=cynosure2
 authors=Ocawesome101,Wattana
+description=The Cynosure 2 kernel, the heart of ULOS 2
 version=$[{lua scripts/version.lua}]
 license=GPLv3
 srcdir=/pkg/

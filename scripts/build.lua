@@ -1,3 +1,4 @@
+#!/usr/bin/env lua
 --== Overly fancy build system ==--
 
 local depcheck = require("scripts/requirable/depcheck")
