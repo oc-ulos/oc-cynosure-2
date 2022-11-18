@@ -42,38 +42,4 @@ do
     ENOPROTOOPT = 92,
     ENOTSUP = 95,
   }
-
-  function k.fix_error(err, name)
-    -- this gsub fixes up line numbers because preemption makes them
-    -- seemingly incorrect
-    return err
-      @[{bconf.PREEMPT_MODE ~= 'none' and ':gsub(name:gsub("[%.%%%[%]%*%$%^%.%?%+%-]", "%%%1")..":(%d+):", function(d)return name..":"..(tonumber(d)-1)..":"end)' or ''}]
-  end
-
-  local old_pcall, old_xpcall = _G.pcall, _G.xpcall
-  function _G.pcall(...)
-    local result = table.pack(old_pcall(...))
-
-    if not result[1] then
-      if type(result[2]) == "string" then
-        local name = result[2]:match("^[^:]+") or ""
-        result[2] = k.fix_error(result[2], name)
-      end
-    end
-
-    return table.unpack(result, 1, result.n)
-  end
-
-  function _G.xpcall(...)
-    local result = table.pack(old_xpcall(...))
-
-    if not result[1] then
-      if type(result[2]) == "string" then
-        local name = result[2]:match("^[^:]+") or ""
-        result[2] = k.fix_error(result[2], name)
-      end
-    end
-
-    return table.unpack(result, 1, result.n)
-  end
 end

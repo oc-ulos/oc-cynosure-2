@@ -28,10 +28,7 @@ do
     { "([%);\n ])repeat([ \n%(])", "%1repeat%2"..sys.."() " },
   }
 
-  local template = ([[
-    local %s = %s
-    if _G then _G.%s = nil end
-]])
+  local template = ("local %s = %s; if _G then _G.%s = nil end;")
     :format(sys, sys, sys)
 
   local function gsub(s)
