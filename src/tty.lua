@@ -502,6 +502,12 @@ do
 
         if #ln > 0 then textwrite(self, ln) end
 
+        local wrapped = false
+        if self.cx == 81 then
+          wrapped = true
+          corral(self)
+        end
+
         if char == "\r" then
           self.cx = 1
 
@@ -511,7 +517,7 @@ do
           corral(self)
 
         else
-          if self.just_wrapped then
+          if wrapped or self.just_wrapped then
             self.just_wrapped = false
 
           else
