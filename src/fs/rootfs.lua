@@ -64,6 +64,11 @@ do
     panic("No valid root filesystem found")
   end
 
+  if address == "mtar" then
+    address = k.fstypes.managed(_G.mtarfs)
+    _G.mtarfs = nil
+  end
+
   local success, err = k.mount(address, "/")
   if not success then
     panic_with_err(component.type(address) .. " " .. address, err)

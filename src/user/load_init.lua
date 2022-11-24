@@ -27,12 +27,13 @@ do
   }
 
   local function panic_with_error(err)
-    panic("No working init found - " ..
+    panic("No working init found (" ..
       ((err == k.errno.ENOEXEC and "Exec format error")
       or (err == k.errno.ELIBEXEC and "Cannot execute a shared library")
       or (err == k.errno.ENOENT and "No such file or directory")
       or (err == k.errno.EISDIR and "Is a directory")
-      or "Please specify a working one"))
+      or err)
+       ..") - Please specify a working one")
   end
 
   local func, err
