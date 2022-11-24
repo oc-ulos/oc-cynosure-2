@@ -55,7 +55,7 @@ do
 
   --- Check if the specified owner/group/other has the specified r, w, or x
   --- permission(s) in the provided mode.
-  ---@param ogo number Owner=1/Group=2/Other=3
+  ---@param ogo number Owner=3/Group=2/Other=1
   ---@param mode number The mode (e.g. file mode) to check
   ---@param perm string The combination of "r", "w", or "x" to check
   function k.has_permission(ogo, mode, perm)
@@ -87,7 +87,7 @@ do
     checkArg(3, perm, "string")
 
     -- TODO: more fine-grained rules for precisely when root can do certain
-    -- TODO: things
+    --       things
     if proc.euid == 0 and perm ~= "x" then return true end
 
     local ogo = (proc.euid == stat.uid and 3) or (proc.egid == stat.gid and 2)
