@@ -503,7 +503,7 @@ do
         if #ln > 0 then textwrite(self, ln) end
 
         local wrapped = false
-        if self.cx == 81 then
+        if self.cx == self.w + 1 then
           wrapped = true
           corral(self)
         end
@@ -528,7 +528,7 @@ do
 
       else
         textwrite(self, chunk)
-        self.just_wrapped = self.cx == 81
+        self.just_wrapped = self.cx == self.w + 1
         corral(self)
         break
       end
