@@ -1,3 +1,3 @@
   local function sysyield()
-    coroutine.yield(k.sysyield_string)
+    pcall(coroutine.yield, k.sysyield_string)
   end

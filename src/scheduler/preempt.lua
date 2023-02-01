@@ -28,7 +28,7 @@ do
     { "([%);\n ])repeat([ \n%(])", "%1repeat%2"..sys.."() " },
   }
 
-  local template = ("local %s = %s; if _G then _G.%s = nil end;")
+  local template = ("local %s = ...;return function(...)")
     :format(sys, sys, sys)
 
   local function gsub(s)
@@ -113,14 +113,13 @@ do
       end
     end
 
-    return wrapped
+    return wrapped .. ";end"
   end
 
   --@[{bconf.PREEMPT_MODE=='good' and '#include "src/scheduler/sysyield_good.lua"' or bconf.PREEMPT_MODE=='fast' and '#include "src/scheduler/sysyield_fast.lua"'}]
 
   function k.load(chunk, name, mode, env)
     chunk = wrap(chunk)
-    env[sys] = sysyield
 
     if k.cmdline.debug_load then
       local fd = k.open("/load.txt", "a") or k.open("/load.txt", "w")
@@ -131,6 +130,16 @@ do
       end
     end
 
-    return load(chunk, name, mode, env)
+    local func, err = load(chunk, name, mode, env)
+    if not func then
+      return nil, err
+    else
+      local result = table.pack(pcall(func, sysyield))
+      if not result[1] then
+        return nil, result[2]
+      else
+        return table.unpack(result, 2, result.n)
+      end
+    end
   end
 end
