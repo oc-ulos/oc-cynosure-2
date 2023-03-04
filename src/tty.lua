@@ -491,6 +491,7 @@ do
     end
   end
 
+  local tab_width = tonumber(k.cmdline["tty.tab_width"]) or 8
   local function writelines(self, chunk)
     while #chunk > 0 do
       local fnrtv = chunk:find("[\f\n\r\t\v]")
@@ -512,7 +513,8 @@ do
           self.cx = 1
 
         elseif char == "\t" then
-          self.cx = 8 * math.floor((self.cx + 9) / 8) - 1
+          self.cx =
+            tab_width * math.floor((self.cx + tab_width + 1) / tab_width) - 1
           if self.cx > self.w then self.cx = 1 self.cy = self.cy + 1 end
           corral(self)
 
