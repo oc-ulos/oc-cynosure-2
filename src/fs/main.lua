@@ -158,7 +158,6 @@ do
 
     local proxy = node
     if type(node) == "string" then
-      --[[TODO: support mounting file paths?
       if node:find("/", nil, true) then
         local absolute = k.check_absolute(node)
         local node, rem = k.lookup_file(node)
@@ -174,18 +173,32 @@ do
           return nil, drem
         end
 
-        if dentry.type ~= "blkdev" then
+        if dentry.address == "components" then
+          local hand, err = dentry:open(drem)
+          if not hand then
+            return nil, err
+          end
+
+          if hand.proxy.type ~= "filesystem" and
+              hand.proxy.type ~= "drive" then
+            return nil, k.errno.ENOTBLK
+          end
+          proxy = recognize_filesystem(hand.proxy)
+
+        elseif dentry.type == "blkdev" then
+          proxy = dentry.fs
+        else
           return nil, k.errno.ENOTBLK
         end
 
-        proxy = dentry.fs
+        if proxy then proxy = recognize_filesystem(proxy) end
         if not proxy then return nil, k.errno.EUNATCH end
 
-      else]]
-      node = component.proxy(node) or node
-      proxy = recognize_filesystem(node)
-      if not proxy then return nil, k.errno.EUNATCH end
-      --end
+      else
+        node = component.proxy(node) or node
+        proxy = recognize_filesystem(node)
+        if not proxy then return nil, k.errno.EUNATCH end
+      end
     end
     if not node then return nil, k.errno.ENODEV end
 

@@ -541,7 +541,7 @@ do
   -- @function wait
   -- @tparam number pid The process ID for which to wait
   -- @tparam[opt] boolean nohang Whether to block while waiting
-  -- @tparam[opt] boolean untraced Whether to report stopped children
+  -- @tparam[opt] boolean untraced Whether to report stopped children, not just dead ones
   -- @treturn string The exit reason
   -- @treturn number The exit status
   function k.syscalls.wait(pid, nohang, untraced)
