@@ -447,7 +447,9 @@ do
       return nil, k.errno.ENOTDIR
     end
 
-    k.current_process().root = path
+    clean = k.clean_path(k.current_process().root .. "/" .. clean)
+
+    k.current_process().root = clean .. "/"
 
     return true
   end

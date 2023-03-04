@@ -93,13 +93,10 @@ do
 
     else
       local current = k.current_process()
-      if current then
-        return "/" .. table.concat(k.split_path(current.cwd .. "/" .. path),
-          "/")
+      local cwd = current and current.cwd or "/"
+      return "/" .. table.concat(k.split_path(cwd .. "/" .. path),
+        "/")
 
-      else
-        return "/" .. table.concat(k.split_path(path), "/")
-      end
     end
   end
 
