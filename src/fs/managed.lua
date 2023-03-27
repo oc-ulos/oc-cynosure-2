@@ -69,7 +69,7 @@ do
   end
 
   -- This is an ugly hack that will only work for about 250 years
-  -- (specifically, until 2286-11020 at 12:46:39).  I leave it up
+  -- (specifically, until 2286-11-20 at 12:46:39).  I leave it up
   -- to my successors to fix this, if anybody cares at that point.
   function _node:lastModified(file)
     local last = self.fs.lastModified(file)
