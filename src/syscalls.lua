@@ -503,13 +503,11 @@ do
 
     local stat = k.stat(path)
     if (stat.mode & k.FS_SETUID) ~= 0 then
-      current.uid = stat.uid
       current.euid = stat.uid
       current.suid = stat.uid
     end
 
     if (stat.mode & k.FS_SETGID) ~= 0 then
-      current.gid = stat.gid
       current.egid = stat.egid
       current.sgid = stat.egid
     end
@@ -580,6 +578,7 @@ do
 
   --- Wait for any child process.
   -- Optionally blocks.  Otherwise returns immediately if there are no child processes that have not been waited for.
+  -- @function waitany
   -- @tparam[opt] boolean block Whether to block indefinitely while waiting
   -- @tparam[opt] boolean untraced Whether to report stopped children
   -- @treturn number The PID of the process that was waited for

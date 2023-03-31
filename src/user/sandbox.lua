@@ -51,6 +51,8 @@ do
     k = true, component = true, computer = true, printk = true, panic = true
   }
 
+  k.max_proc_time = tonumber(k.cmdline.max_proc_time or "3") or 3
+
   function k.create_env(base)
     checkArg(1, base, "table", "nil")
 
@@ -71,7 +73,7 @@ do
       local last_yield = proc.last_yield or computer.uptime()
 
       if request == "syscall" then
-        if computer.uptime() - last_yield > 3 then
+        if computer.uptime() - last_yield > k.max_proc_time then
           coroutine.yield(k.sysyield_string)
           proc.last_yield = computer.uptime()
         end
