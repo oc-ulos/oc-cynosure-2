@@ -86,6 +86,7 @@ do
     checkArg(1, file, "string")
 
     if is_attribute(file) then return nil, k.errno.EACCES end
+    local isdir = self.fs.isDirectory(file)
 
     local fd = self.fs.open(attr_path(file), "r")
     if not fd then
@@ -93,7 +94,7 @@ do
       return {
         uid = k.syscalls and k.syscalls.geteuid() or 0,
         gid = k.syscalls and k.syscalls.getegid() or 0,
-        mode = self.fs.isDirectory(file) and 0x41A4 or 0x81A4,
+        mode = isdir and 0x41A4 or 0x81A4,
         created = self:lastModified(file)
       }
     end
@@ -105,8 +106,23 @@ do
     attributes.uid = attributes.uid or 0
     attributes.gid = attributes.gid or 0
     -- default to root/root, rwxrwxrwx permissions
-    attributes.mode = attributes.mode or (self.fs.isDirectory(file)
-      and 0x4000 or 0x8000) + (0x1FF ~ k.current_process().umask)
+    attributes.mode = attributes.mode or
+      (isdir and 0x4000 or 0x8000) + (0x1FF ~ k.current_process().umask)
+    -- fix incorrect directory modes when we find them
+    -- checks if
+    if (isdir and (attributes.mode & 0x4000 == 0)) then
+      --  1) IS a directory and directory bit is NOT set
+      attributes.mode = attributes.mode | 0x4000
+      if attributes.mode & 0x8000 ~= 0 then
+        attributes.mode = attributes.mode ~ 0x8000
+      end
+    elseif (not isdir) and (attributes.mode & 0x4000 ~= 0) then
+      --  2) is NOT a directory and directory bit IS set
+      attributes.mode = attributes.mode ~ 0x4000
+      if attributes.mode & 0x4000 ~= 0 then
+        attributes.mode = attributes.mode ~ 0x4000
+      end
+    end
     attributes.created = attributes.created or self:lastModified(file)
 
     return attributes
