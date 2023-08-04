@@ -515,7 +515,16 @@ do
     return mounts
   end
 
+  function k.sync_fs()
+    for _, node in pairs(mounts) do
+      if node.sync then node:sync("dummy") end
+    end
+  end
+
   k.add_signal_handler("shutdown", function()
+    k.sync_buffers()
+    k.sync_fs()
+
     for fd in pairs(opened) do
       fd.refs = 1
       k.close(fd)

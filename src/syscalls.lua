@@ -463,10 +463,18 @@ end
   -- @tparam string path The path at which to mount it
   k.syscalls.mount = k.mount
 
-  -- Unmount a filesystem.
+  --- Unmount a filesystem.
   -- @function unmount
   -- @tparam string path The path to unmount
   k.syscalls.unmount = k.unmount
+
+  --- Flush all open file buffers and filesystem metadata
+  -- @function sync
+  function k.syscalls.sync()
+    k.sync_buffers()
+    k.sync_fs()
+    return true
+  end
 
 
   -- Process-related system calls --
@@ -1091,19 +1099,19 @@ end
 
     if cmd == "halt" then
       k.shutdown()
-      printk(k.L_INFO, "System halted.")
+      printk(k.L_SYSTEM, "System halted.")
 
       while true do
         computer.pullSignal()
       end
 
     elseif cmd == "poweroff" then
-      printk(k.L_INFO, "Power down.")
+      printk(k.L_SYSTEM, "Power down.")
       k.shutdown()
       computer.shutdown()
 
     elseif cmd == "restart" then
-      printk(k.L_INFO, "Restarting system.")
+      printk(k.L_SYSTEM, "Restarting system.")
       k.shutdown()
       computer.shutdown(true)
     end
