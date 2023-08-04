@@ -224,9 +224,7 @@ do
     end
 
     local node = mounts[path]
-    if node.unmount then
-      node:unmount(path)
-    end
+    if node.unmount then node:unmount(path) end
 
     mounts[path] = nil
     return true
@@ -492,7 +490,7 @@ do
     end
 
     -- only preserve the lower 12 bits
-    mode = (mode & 0x1FF)
+    mode = (mode & 0xFFF)
     return node:chmod(remain, mode)
   end
 

@@ -143,6 +143,8 @@ do
     return true
   end
 
+  --== BEGIN REQUIRED FILESYSTEM NODE FUNCTIONS ==--
+
   -- Takes a file path and returns only whether that path exists.  Similar to
   -- stat(), but faster since there's no attribute checking.
   function _node:exists(path)
@@ -189,7 +191,7 @@ do
 
     local attributes = self:get_attributes(path)
     -- userspace can't change the file type of a file
-    attributes.mode = ((attributes.mode & 0xF000) | mode)
+    attributes.mode = ((attributes.mode & 0xF000) | (mode & 0xFFF))
     return self:set_attributes(path, attributes)
   end
 

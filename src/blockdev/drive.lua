@@ -37,7 +37,10 @@ do
 
       local size = proxy.getCapacity()
 
-      return ("hd%s"):format(letter), {
+      return "hd"..letter, {
+        fs = proxy,
+        address = "hd"..letter,
+        type = "blkdev",
         stat = function()
           return {
             dev = -1,

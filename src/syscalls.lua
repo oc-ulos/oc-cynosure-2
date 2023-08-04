@@ -44,7 +44,8 @@ do
       end
     end
     local current = k.current_process()
-    --if current.pid ~= 1 then
+    --
+if current.pid ~= 1 then
       local a, b
       if result[1] then
         a, b = result[2], result[3]
@@ -56,7 +57,8 @@ do
         current.pid, name, table.concat(args, ", "),
         (type(a) == "string" and string.format("%q", a) or tostring(a)):gsub("\n", "n"),
         (type(b) == "string" and string.format("%q", b) or tostring(b)):gsub("\n", "n"))
-    --end
+    --
+end
     --]]
     return table.unpack(result, result[1] and 2 or 1, result.n)
   end
