@@ -271,7 +271,8 @@ do
       return nil, k.errno.EACCES
     end
 
-    local fd, err = node:open(remain, mode)
+    local umask = (cur_proc().umask or 0) ~ 511
+    local fd, err = node:open(remain, mode, stat.mode & umask)
     if not fd then return nil, err end
 
     local stream = k.fd_from_node(node, fd, mode)
@@ -429,11 +430,9 @@ do
 
     local umask = (cur_proc().umask or 0) ~ 511
 
-    local done, failed = node:mkdir(remain)
+    local done, failed = node:mkdir(remain, (mode or stat.mode) & umask)
     if not done then return nil, failed end
-    if node.chmod then node:chmod(remain,
-        ((mode or stat.mode) & umask)) end
-    return done, failed
+    return not not done
   end
 
   function k.link(source, dest)

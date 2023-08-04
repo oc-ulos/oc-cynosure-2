@@ -227,9 +227,20 @@ do
     return true
   end
 
-  function _node:mkdir(path)
+  function _node:mkdir(path, mode)
     checkArg(1, path, "string")
-    return (not is_attribute(path)) and self.fs.makeDirectory(path)
+    checkArg(2, mode, "number")
+
+    local result = (not is_attribute(path)) and self.fs.makeDirectory(path)
+    if not result then return result end
+
+    local attributes = {}
+    attributes.mode = (k.FS_DIR | (mode & 0xFFF))
+    attributes.uid = k.syscalls and k.syscalls.geteuid() or 0
+    attributes.gid = k.syscalls and k.syscalls.getegid() or 0
+    self:set_attributes(path, attributes)
+
+    return result
   end
 
   function _node:opendir(path)
@@ -260,7 +271,7 @@ do
     end
   end
 
-  function _node:open(path, mode)
+  function _node:open(path, mode, permissions)
     checkArg(1, path, "string")
     checkArg(2, mode, "string")
 
@@ -271,7 +282,18 @@ do
     end
 
     local fd = self.fs.open(path, mode)
-    if not fd then return nil, k.errno.ENOENT else return fd end
+    if not fd then
+      return nil, k.errno.ENOENT
+    else
+      if mode == "w" then
+        local attributes = {}
+        attributes.mode = (k.FS_REG | (permissions & 0xFFF))
+        attributes.uid = k.syscalls and k.syscalls.geteuid() or 0
+        attributes.gid = k.syscalls and k.syscalls.getegid() or 0
+        self:set_attributes(path, attributes)
+      end
+      return fd
+    end
   end
 
   function _node:read(fd, count)
