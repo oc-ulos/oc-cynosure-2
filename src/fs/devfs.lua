@@ -25,8 +25,25 @@ do
   -- particularly since it supports sub-pseudo-filesystems e.g.
   -- componentfs - and I don't see large devfs trees being common.
   local devices = {}
+  -- Each device type can have one or more "handlers" associated with it.
+  -- Each handler must have a register() and deregister() function.
+  -- Programs can ioctl() these devices with "reregister" to rerun those
+  -- handlers for e.g. if userspace changes a partition table.
+  local handlers = {}
 
   k.devfs = {}
+
+  function k.devfs.register_device_handler(devtype, registrar, deregistrar)
+    checkArg(1, devtype, "string")
+    checkArg(2, registrar, "function")
+    checkArg(3, deregistrar, "function")
+
+    handlers[devtype] = handlers[devtype] or {}
+    local id = math.random(0, 999999)
+    handlers[devtype][id] = {register = registrar, deregister = deregistrar}
+
+    return id
+  end
 
   function k.devfs.register_device(path, device)
     checkArg(1, path, "string")
@@ -38,6 +55,11 @@ do
     end
 
     devices[path] = device
+    if handlers[device.type] then
+      for _, handler in pairs(device.type) do
+        handler.register(path, device)
+      end
+    end
 
     if path:sub(1,1) ~= "/" then path = "/" .. path end
     printk(k.L_INFO, "devfs: registered device at %s", path)
@@ -138,7 +160,17 @@ do
       if not device[calling] then return nil, k.errno.ENOSYS end
 
       local result, err
-      if calling == "ioctl" and not device.is_dev then
+      if calling == "ioctl" and (...) == "reregister" then
+        if handlers[device.type] then
+          for _, handler in pairs(device.type) do
+            handler.deregister(path, device)
+          end
+          for _, handler in pairs(device.type) do
+            handler.register(path, device)
+          end
+          result = true
+        end
+      elseif calling == "ioctl" and not device.is_dev then
         result, err = device[calling](fd, ...)
 
       else
