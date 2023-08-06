@@ -540,6 +540,9 @@ end
 --@[{includeif("FS_MANAGED", "src/fs/managed.lua")}]
 --@[{depend("SimpleFS support", "COMPONENT_DRIVE", "FS_SFS")}]
 --@[{includeif("FS_SFS", "src/fs/simplefs.lua")}]
+--register partitions before rootfs but after filesystem types
+--@[{depend("Partition table support", "COMPONENT_DRIVE", "PART_ENABLE")}]
+--@[{includeif("PART_ENABLE", "src/fs/partition/main.lua")}]
 --#include "src/fs/rootfs.lua"
 --#include "src/fs/tty.lua"
 --@[{includeif("FS_COMPONENT", "src/fs/component.lua")}]
