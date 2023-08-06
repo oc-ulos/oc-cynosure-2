@@ -89,8 +89,8 @@ do
       drives[drive] = {address=device.address,count=#partitions}
       for i=1, #partitions do
         local spec = partitions[i]
-        local device = create_subdrive(drive, spec.start, spec.size)
-        k.devfs.register_device(device.address..i, device)
+        local subdevice = create_subdrive(drive, spec.start, spec.size)
+        k.devfs.register_device(device.address..i, subdevice)
       end
     end,
     function(path, device) -- deregistrar

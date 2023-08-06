@@ -619,8 +619,8 @@ do
         printk(k.L_WARN, "simplefs: filesystem was not cleanly unmounted")
       end
       self.sblock.flags = self.sblock.flags | constants.SB_MOUNTED
-      self.label = self.sblock.label:gsub(null, "")
-      if #self.label == 0 then self.label = self.drive.address:sub(1,8) end
+      self.address = self.sblock.label:gsub(null, "")
+      if #self.address == 0 then self.address = self.drive.address:sub(1,8) end
       self:writeSuperblock()
       self:readBlockMap()
     end
