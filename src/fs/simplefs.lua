@@ -37,6 +37,7 @@ do
     blockmap = 1,
     namelist = 2,
     F_TYPE = 0xF000,
+    SB_MOUNTED = 0x1
   }
 
   local function pack(name, data)
@@ -84,7 +85,7 @@ do
 
   function _node:writeBlock(n, d)
     for i=1, self.bstosect do
-      local chunk = d:sub(self.sect*(i-1),self.sect*i)
+      local chunk = d:sub(self.sect*(i-1)+1,self.sect*i)
       self.drive.writeSector(i+n*self.bstosect, chunk)
     end
   end
@@ -333,7 +334,7 @@ do
       if nxt == 0 then
         if create then
           nxt = self:allocateBlocks(1)[1]
-          data = data:sub(1,-4)..("<I3"):pack(nxt)
+          data = data:sub(1, self.sblock.blocksize-3)..("<I3"):pack(nxt)
           self:writeBlock(current, data)
         else
           if all then return current, all end
@@ -548,6 +549,7 @@ do
       end
 
       self:writeBlock(blockID, block)
+      offset = fd.pos % (self.sblock.blocksize-3)
     until #data == 0
 
     return true
@@ -592,6 +594,7 @@ do
     if self.opened[fd.eid] <= 0 and self.removing[fd.eid] then
       self:freeDataBlocks(fd.eid, self.removing[fd.eid])
       self.removing[fd.eid] = nil
+      self.opened[fd.eid] = nil
 
     else
       if fd.mode == "w" then fd.entry.modified = time() end
@@ -612,15 +615,23 @@ do
   function _node:mount()
     if self.mounts == 0 then
       self:readSuperblock()
+      if self.sblock.flags & constants.SB_MOUNTED ~= 0 then
+        printk(k.L_WARN, "simplefs: filesystem was not cleanly unmounted")
+      end
+      self.sblock.flags = self.sblock.flags | constants.SB_MOUNTED
+      self:writeSuperblock()
       self:readBlockMap()
     end
     self.mounts = self.mounts + 1
   end
 
   function _node:unmount()
+    self.mounts = self.mounts - 1
+    if self.mounts == 0 then
+      self.sblock.flags = self.sblock.flags ~ constants.SB_MOUNTED
+    end
     self:writeSuperblock()
     self:writeBlockMap()
-    self.mounts = self.mounts - 1
   end
 
   local function newnode(drive)
