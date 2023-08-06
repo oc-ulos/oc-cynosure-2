@@ -95,7 +95,7 @@ BIT32=y
 # errors related to file IO, try decreasing it.
 BUFFER_SIZE=1024
 # When available free memory goes below this threshold, the kernel's
-# automated garbage collection code will fire.
+# automated garbage collection code will activate.
 MEM_THRESHOLD=1024
 # Whether to give each process its own individual environment or
 # make all processes share the same (still sandboxed) environment.

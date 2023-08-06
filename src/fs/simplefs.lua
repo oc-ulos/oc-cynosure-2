@@ -16,15 +16,15 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "src/fs/simplefs")
+printk(k.L_INFO, "fs/simplefs")
 
 do
   local _node = {}
 
   local structures = {
     superblock = {
-      pack = "<c4BBI2I2I3I3",
-      names = {"signature", "flags", "revision", "nl_blocks", "blocksize", "blocks", "blocks_used"}
+      pack = "<c4BBI2I2I3I3c19",
+      names = {"signature", "flags", "revision", "nl_blocks", "blocksize", "blocks", "blocks_used", "label"}
     },
     nl_entry = {
       pack = "<I2I2I2I2I2I4I8I8I2I2c30",
@@ -619,6 +619,8 @@ do
         printk(k.L_WARN, "simplefs: filesystem was not cleanly unmounted")
       end
       self.sblock.flags = self.sblock.flags | constants.SB_MOUNTED
+      self.label = self.sblock.label:gsub(null, "")
+      if #self.label == 0 then self.label = self.drive.address:sub(1,8) end
       self:writeSuperblock()
       self:readBlockMap()
     end

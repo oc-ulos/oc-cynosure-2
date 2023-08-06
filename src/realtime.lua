@@ -16,7 +16,7 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "src/realtime")
+printk(k.L_INFO, "realtime")
 
 do
   function k.realtime()
