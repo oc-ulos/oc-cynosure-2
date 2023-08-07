@@ -32,7 +32,7 @@ do
       if #meta[1] > 0 then
         partitions[#partitions+1] = {start = meta[3], size = meta[4]}
       end
-    until #sector == 0
+    until #sector <= 64
     return partitions
   end)
 end

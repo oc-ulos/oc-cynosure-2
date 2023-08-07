@@ -633,7 +633,7 @@ do
 
     if type(gpu) == "string" then gpu = component.proxy(gpu) end
     screen = screen or gpu.getScreen()
-    gpu.bind(screen)
+    gpu.bind(screen, false)
 
     local w, h = gpu.getResolution()
 

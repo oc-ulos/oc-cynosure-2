@@ -84,12 +84,15 @@ do
 
       local drive = device.fs
       local partitions = read_partitions(drive)
-      if #partitions == 0 or not partitions then return end
+      if (not partitions) or #partitions == 0 then return end
 
       drives[drive] = {address=device.address,count=#partitions}
       for i=1, #partitions do
         local spec = partitions[i]
-        local subdevice = create_subdrive(drive, spec.start, spec.size)
+        local subdrive = create_subdrive(drive, spec.start, spec.size)
+        local _, subdevice = k.devfs.get_blockdev_handlers()
+          .drive.init(subdrive, true)
+        subdevice.address = device.address..i
         k.devfs.register_device(device.address..i, subdevice)
       end
     end,
@@ -98,9 +101,12 @@ do
 
       local drive = device.fs
       local info = drives[drive]
+      for i=1, info.count do
+        k.devfs.unregister_device(device.address..i)
+      end
       drives[drive] = nil
     end)
 end
 
---@[{includeif("PART_OSDI", "src/fs/partition/mtpt.lua")}]
+--@[{includeif("PART_OSDI", "src/fs/partition/osdi.lua")}]
 --@[{includeif("PART_MTPT", "src/fs/partition/mtpt.lua")}]

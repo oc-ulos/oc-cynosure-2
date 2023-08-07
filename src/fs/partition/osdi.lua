@@ -34,10 +34,10 @@ do
       sector = sector:sub(65)
       meta = {format:unpack(sector)}
       meta[3] = meta[3]:gsub("\0", "")
-      if #meta[4] > 0 then
+      if #meta[5] > 0 then
         partitions[#partitions+1] = {start=meta[1], size=meta[2]}
       end
-    until #sector = 0
+    until #sector <= 64
     return partitions
   end)
 end

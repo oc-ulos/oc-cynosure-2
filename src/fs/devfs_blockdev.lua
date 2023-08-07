@@ -26,12 +26,17 @@ do
     handlers[devtype] = callbacks
   end
 
+  function k.devfs.get_blockdev_handlers()
+    return handlers
+  end
+
   local function comp_added(_, addr, t)
     printk(k.L_DEBUG, "component_added: %s %s", addr, t)
 
     if handlers[t] then
       printk(k.L_DEBUG, "intializing device %s", addr)
       local name, device = handlers[t].init(addr)
+      device.type = device.type or "blkdev"
 
       if name then
         k.devfs.register_device(name, device)

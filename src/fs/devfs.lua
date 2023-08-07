@@ -56,13 +56,14 @@ do
 
     devices[path] = device
     if handlers[device.type] then
-      for _, handler in pairs(device.type) do
+      for _, handler in pairs(handlers[device.type]) do
         handler.register(path, device)
       end
     end
 
     if path:sub(1,1) ~= "/" then path = "/" .. path end
-    printk(k.L_INFO, "devfs: registered device at %s", path)
+    printk(k.L_INFO, "devfs: registered device at %s type=%s", path,
+      device.type)
   end
 
   function k.devfs.unregister_device(path)
@@ -119,6 +120,19 @@ do
   end
 
   k.devfs.lookup = path_to_node
+  -- get devices by type
+  function k.devfs.get_by_type(dtype)
+    checkArg(1, dtype, "string")
+    local matches = {}
+
+    for path, dev in pairs(devices) do
+      if dev.type == dtype then
+        matches[#matches+1] = {path=path, device=dev}
+      end
+    end
+
+    return matches
+  end
 
   function provider:exists(path)
     checkArg(1, path, "string")
@@ -157,24 +171,26 @@ do
       end
 
       local device, fd = pathorfd.node, pathorfd.fd
-      if not device[calling] then return nil, k.errno.ENOSYS end
 
       local result, err
       if calling == "ioctl" and (...) == "reregister" then
         if handlers[device.type] then
-          for _, handler in pairs(device.type) do
+          for _, handler in pairs(handlers[device.type]) do
             handler.deregister(path, device)
           end
-          for _, handler in pairs(device.type) do
+          for _, handler in pairs(handlers[device.type]) do
             handler.register(path, device)
           end
           result = true
         end
-      elseif calling == "ioctl" and not device.is_dev then
-        result, err = device[calling](fd, ...)
-
       else
-        result, err = device[calling](device, fd, ...)
+        if not device[calling] then return nil, k.errno.ENOSYS end
+        if calling == "ioctl" and not device.is_dev then
+          result, err = device[calling](fd, ...)
+
+        else
+          result, err = device[calling](device, fd, ...)
+        end
       end
 
       return result, err
@@ -197,11 +213,16 @@ do
   end})
 
   provider.address = "devfs"
+  provider.type = "root"
 
   k.register_fstype("devfs", function(x)
     return x == "devfs" and provider
   end)
 end
 
+-- include this here because it registers blockdev handlers and
+-- devfs/blockdev registers block devices.  alternative is extra logic.
+--@[{depend("Partition table support", "COMPONENT_DRIVE", "PART_ENABLE")}]
+--@[{includeif("PART_ENABLE", "src/fs/partition/main.lua")}]
 --#include "src/fs/devfs_chardev.lua"
 --#include "src/fs/devfs_blockdev.lua"

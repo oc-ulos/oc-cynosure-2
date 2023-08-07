@@ -23,7 +23,7 @@ do
   local byaddress = {}
 
   k.devfs.register_blockdev("drive", {
-    init = function(addr)
+    init = function(addr, noindex)
       local index = 0
 
       while drives[index] do
@@ -31,16 +31,15 @@ do
       end
 
       local letter = string.char(string.byte("a") + index)
-      local proxy = component.proxy(addr)
-      drives[index] = true
-      byaddress[addr] = index
+      local proxy = noindex and addr or component.proxy(addr)
+      if not noindex then drives[index] = true end
+      if not noindex then byaddress[addr] = index end
 
       local size = proxy.getCapacity()
 
       return "hd"..letter, {
         fs = proxy,
         address = "hd"..letter,
-        type = "blkdev",
         stat = function()
           return {
             dev = -1,

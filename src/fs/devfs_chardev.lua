@@ -31,7 +31,8 @@ do
       error("no line discipline '"..discipline.."'")
     end
 
-    local new = setmetatable({stream = stream, discipline = discipline},
+    local new = setmetatable({
+      stream = stream, discipline = discipline, type="chardev"},
       {__index = chardev})
 
     return new
