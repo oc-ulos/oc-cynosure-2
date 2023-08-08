@@ -47,7 +47,7 @@ do
 
   local function create_subdrive(drive, start, size)
     local sub = {}
-    local sector, byte = start - 1, (start - 1) * drive.getSectorSize()
+    local sector, byte = start, (start - 1) * drive.getSectorSize()
     local byteSize = size * drive.getSectorSize()
     function sub.readSector(n)
       if n < 1 or n > size then
@@ -73,6 +73,7 @@ do
     function sub.getCapacity()
       return drive.getSectorSize() * size
     end
+    sub.type = "drive"
     return sub
   end
 
@@ -93,6 +94,7 @@ do
         local _, subdevice = k.devfs.get_blockdev_handlers()
           .drive.init(subdrive, true)
         subdevice.address = device.address..i
+        subdevice.type = "blkdev"
         k.devfs.register_device(device.address..i, subdevice)
       end
     end,
@@ -101,8 +103,10 @@ do
 
       local drive = device.fs
       local info = drives[drive]
-      for i=1, info.count do
-        k.devfs.unregister_device(device.address..i)
+      if info then
+        for i=1, info.count do
+          k.devfs.unregister_device(device.address..i)
+        end
       end
       drives[drive] = nil
     end)

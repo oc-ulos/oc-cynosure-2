@@ -31,13 +31,14 @@ do
     if meta[1] ~= 1 or meta[2] ~= 0 or meta[3] ~= magic then return end
     local partitions = {}
     repeat
-      sector = sector:sub(65)
+      sector = sector:sub(33)
       meta = {format:unpack(sector)}
       meta[3] = meta[3]:gsub("\0", "")
+      meta[5] = meta[5]:gsub("\0", "")
       if #meta[5] > 0 then
         partitions[#partitions+1] = {start=meta[1], size=meta[2]}
       end
-    until #sector <= 64
+    until #sector <= 32
     return partitions
   end)
 end

@@ -26,13 +26,13 @@ do
     if meta[2] ~= "mtpt" then return end -- invalid, don't continue
     local partitions = {}
     repeat
-      sector = sector:sub(65)
+      sector = sector:sub(33)
       meta = {format:unpack(sector)}
       meta[1] = meta[1]:gsub("\0", "")
       if #meta[1] > 0 then
         partitions[#partitions+1] = {start = meta[3], size = meta[4]}
       end
-    until #sector <= 64
+    until #sector <= 32
     return partitions
   end)
 end
