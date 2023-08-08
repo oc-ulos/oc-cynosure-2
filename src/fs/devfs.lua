@@ -54,6 +54,11 @@ do
       error("cannot register device in subdirectory '"..path.."' of devfs", 2)
     end
 
+    if not device.type then
+      printk(k.L_WARN, "device '%s' has no 'type' field!", path)
+      device.type = "unknown"
+    end
+
     devices[path] = device
     if handlers[device.type] then
       for _, handler in pairs(handlers[device.type]) do
