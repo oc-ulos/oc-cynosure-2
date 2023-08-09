@@ -616,7 +616,7 @@ do
     if self.mounts == 0 then
       self:readSuperblock()
       if self.sblock.flags & constants.SB_MOUNTED ~= 0 then
-        printk(k.L_WARN, "simplefs: filesystem was not cleanly unmounted")
+        printk(k.L_WARNING, "simplefs: filesystem was not cleanly unmounted")
       end
       self.sblock.flags = self.sblock.flags | constants.SB_MOUNTED
       self.address = self.sblock.label:gsub(null, "")

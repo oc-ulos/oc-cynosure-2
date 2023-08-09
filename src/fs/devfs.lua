@@ -55,7 +55,7 @@ do
     end
 
     if not device.type then
-      printk(k.L_WARN, "device '%s' has no 'type' field!", path)
+      printk(k.L_WARNING, "device '%s' has no 'type' field!", path)
       device.type = "unknown"
     end
 
