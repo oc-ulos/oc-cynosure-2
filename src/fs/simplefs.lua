@@ -324,27 +324,33 @@ do
     return entry, n
   end
 
-  function _node:getBlock(ent, pos, create, all)
-    local count = math.ceil((pos+1) / (self.sblock.blocksize-3))
+  function _node:getBlock(ent, pos, create, get_all, blocks)
     local current = ent.datablock
+    local count = math.ceil((pos+1) / (self.sblock.blocksize-3))
     local all = {}
     for i=1, count-1 do
-      local data = self:readBlock(current)
-      local nxt = ("<I3"):unpack(data:sub(-3))
+      local nxt, data = blocks[current]
+      if not nxt then
+        data = self:readBlock(current)
+        nxt = ("<I3"):unpack(data:sub(-3))
+      end
       if nxt == 0 then
         if create then
           nxt = self:allocateBlocks(1)[1]
           data = data:sub(1, self.sblock.blocksize-3)..("<I3"):pack(nxt)
           self:writeBlock(current, data)
+          blocks[current] = nxt
         else
-          if all then return current, all end
+          blocks[current] = nxt
+          if get_all then return current, all end
           return current
         end
       end
       all[#all+1] = current
+      blocks[current] = nxt
       current = nxt
     end
-    if all then return current, all end
+    if get_all then return current, all end
     return current
   end
 
@@ -478,7 +484,7 @@ do
 
     local pos = 0
     if mode == "w" then
-      local final, blocks = self:getBlock(entry, 0xFFFFFF, false, true)
+      local final, blocks = self:getBlock(entry, 0xFFFFFF, false, true, {})
       blocks[#blocks+1] = final
       self:freeBlocks(blocks)
       entry.datablock = self:allocateBlocks(1)[1]
@@ -488,7 +494,7 @@ do
     end
 
     local fd = {
-      entry = entry, eid = eid, pos = 0, mode = mode
+      entry = entry, eid = eid, pos = 0, mode = mode, blocks = {}
     }
     self.opened[fd.eid] = (self.opened[fd.eid] or 0) + 1
     self.fds[fd] = true
@@ -510,7 +516,8 @@ do
       local data = ""
 
       repeat
-        local blockID = self:getBlock(fd.entry, fd.pos)
+        local blockID = self:getBlock(fd.entry, fd.pos, nil, nil,
+          fd.blocks)
         local block = self:readBlock(blockID)
         local read = block:sub(offset, math.min(#block-3, offset+len-1))
         data = data .. read
@@ -534,7 +541,8 @@ do
     local offset = fd.pos % (self.sblock.blocksize-3)
 
     repeat
-      local blockID = self:getBlock(fd.entry, fd.pos, true)
+      local blockID = self:getBlock(fd.entry, fd.pos, true, nil,
+        fd.blocks)
       local block = self:readBlock(blockID)
       local write = data:sub(1, (self.sblock.blocksize-3) - offset)
       data = data:sub(#write+1)
