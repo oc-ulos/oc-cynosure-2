@@ -94,6 +94,7 @@ do
 
           repeat
             local sectorID = math.ceil((fd.pos+1) / 512)
+            if sectorID > size/512 then return end
             local sector = proxy.readSector(sectorID)
             local write = data:sub(1, 512 - offset)
             data = data:sub(#write + 1)

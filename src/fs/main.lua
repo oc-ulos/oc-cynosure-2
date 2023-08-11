@@ -195,7 +195,8 @@ do
         if not proxy then return nil, k.errno.EUNATCH end
 
       else
-        node = component.proxy(node) or node
+        node = component.proxy(node) or k.devfs.lookup(node) or node
+        if node.type == "blkdev" and node.fs then node = node.fs end
         proxy = recognize_filesystem(node)
         if not proxy then return nil, k.errno.EUNATCH end
       end
