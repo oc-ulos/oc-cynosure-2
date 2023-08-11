@@ -292,7 +292,7 @@ end
       current.fds[fd] = nil
     end
 
-    return true
+    return true, not current.fds[fd]
   end
 
   --- Check if a file descriptor refers to a TTY.
@@ -1064,7 +1064,6 @@ end
       end
 
       buf = buf .. data
-      printk(k.L_DEBUG, "BL(%d)", #buf)
       return true
     end, function() closed = true end)
 

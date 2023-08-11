@@ -153,7 +153,7 @@ do
 
     -- pop data from beginning of the read buffer
     local data = self.rbuf:sub(1, n)
-    self.rbuf = self.rbuf:sub(n + 1)
+    self.rbuf = self.rbuf:sub(#data + 1)
 
     -- return it
     return data
