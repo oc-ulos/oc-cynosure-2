@@ -86,9 +86,11 @@ NET_TCP=n
 NET_MTEL=n
 NET_GERT=n
 # miscellaneous options
+# Whether to enable specialized escape sequences in the TTY that directly
+# perform actions on a GPU component
 TTY_ENABLE_GPU=y
 # Whether to enable the bit32 compatibility layer.  If this is disabled, the
-# resulting kernel cannot run Lua 5.2 programs.
+# resulting kernel cannot run some Lua 5.2 programs.
 BIT32=y
 # How big stream buffers are allowed to get.
 # This impacts how much memory a buffer can use, but can also determine
