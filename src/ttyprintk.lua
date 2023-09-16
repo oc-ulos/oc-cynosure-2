@@ -37,4 +37,8 @@ do
   function k.log_to_screen(message)
     k.write(console, message.."\n")
   end
+
+  for i=1, #k.log_buffer do
+    k.log_to_screen(k.log_buffer[i])
+  end
 end

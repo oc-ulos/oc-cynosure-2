@@ -71,6 +71,6 @@ do
 
   local success, err = k.mount(address, "/")
   if not success then
-    panic_with_err(component.type(address) .. " " .. address, err)
+    panic_with_err((component.type(address) or "unknown").." "..address, err)
   end
 end

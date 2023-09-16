@@ -27,7 +27,7 @@ do
       names = {"signature", "flags", "revision", "nl_blocks", "blocksize", "blocks", "blocks_used", "label"}
     },
     nl_entry = {
-      pack = "<I2I2I2I2I2I4I8I8I2I2c30",
+      pack = "<I2I2I2I2I2I4I8I8I2I2c94",
       names = {"flags", "datablock", "next_entry", "last_entry", "parent", "size", "created", "modified", "uid", "gid", "fname"}
     },
   }
@@ -149,11 +149,11 @@ do
   end
 
   function _node:readNamelistEntry(n)
-    local offset = n * 64 % self.sblock.blocksize + 1
+    local offset = n * 128 % self.sblock.blocksize + 1
     local block = math.floor(n/8)
     -- superblock is first block, blockmap is second, namelist comes after those
     local blockData = self:readBlock(block+constants.namelist)
-    local namelistEntry = blockData:sub(offset, offset + 63)
+    local namelistEntry = blockData:sub(offset, offset + 127)
     local ent = unpack("nl_entry", namelistEntry)
     ent.fname = ent.fname:gsub("\0", "")
     return ent
@@ -161,11 +161,11 @@ do
 
   function _node:writeNamelistEntry(n, ent)
     local data = pack("nl_entry", ent)
-    local offset = n * 64 % self.sblock.blocksize
+    local offset = n * 128 % self.sblock.blocksize
     local block = math.floor(n/8)
     -- superblock is first block, blockmap is second, namelist comes after those
     local blockData = self:readBlock(block+constants.namelist)
-    blockData = blockData:sub(0, offset)..data..blockData:sub(offset + 65)
+    blockData = blockData:sub(0, offset)..data..blockData:sub(offset + 129)
     self:writeBlock(block+constants.namelist, blockData)
   end
 
@@ -179,11 +179,11 @@ do
     local blockData
     local lastBlock = 0
     for n=0, self.sblock.nl_blocks*8 do
-      local offset = n * 64 % self.sblock.blocksize + 1
+      local offset = n * 128 % self.sblock.blocksize + 1
       local block = math.floor(n/8)
       if block ~= lastBlock then blockData = nil end
       blockData = blockData or self:readBlock(block+constants.namelist)
-      local namelistEntry = blockData:sub(offset, offset + 63)
+      local namelistEntry = blockData:sub(offset, offset + 127)
       local v = unpack("nl_entry", namelistEntry)
       self.knownNamelist[n] = true
       self.maxKnown = math.max(self.maxKnown, n)
@@ -241,7 +241,7 @@ do
   function _node:freeDataBlocks(n, entry)
     -- free data blocks
     local datablock = entry.datablock
-    local final, blocks = self:getBlock(entry, 0xFFFFFF, false, true)
+    local final, blocks = self:getBlock(entry, 0xFFFFFF, false, true, {})
     blocks[#blocks+1] = final
     self:freeBlocks(blocks)
   end
@@ -580,7 +580,7 @@ do
 
     if fd.mode == "w" then
       fd.entry.size = math.max(0, math.min(fd.entry.size, pos))
-      self:getBlock(fd.entry, pos, true)
+      self:getBlock(fd.entry, pos, true, nil, fd.blocks)
     end
     fd.pos = math.max(0, math.min(fd.entry.size, pos))
 
