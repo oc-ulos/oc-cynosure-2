@@ -75,9 +75,13 @@ do
     local matches = k.devfs.get_by_type("blkdev")
 
     for i=1, #matches do
-      if matches[i].device.fs.address:sub(1,#addr) == addr then
-        address = matches[i].device.address..part
-        printk(k.L_NOTICE, "resolved rootfs=%s", address)
+      local match = matches[i]
+      if match.device.fs and match.device.fs.address and
+          match.device.fs.address:sub(1,#addr) == addr then
+        -- e.g. hda2
+        address = match.device.address..part
+        printk(k.L_NOTICE, "resolved rootfs=%s from %s",
+          match.device.address..part, address)
         break
       end
     end
