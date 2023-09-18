@@ -415,6 +415,7 @@ do
     local entry, eid = self:resolve(name)
     if not entry then return nil, k.errno.enoent end
 
+    printk(k.L_DEBUG, "rm %d", eid)
     return self:freeNamelistEntry(eid, true)
   end
 
@@ -602,12 +603,15 @@ do
     if self.opened[fd.eid] <= 0 and self.removing[fd.eid] then
       self:freeDataBlocks(fd.eid, self.removing[fd.eid])
       self.removing[fd.eid] = nil
-      self.opened[fd.eid] = nil
 
     else
-      if fd.mode == "w" then fd.entry.modified = time() end
-      self:writeNamelistEntry(fd.eid, fd.entry)
+      if fd.mode == "w" then
+        fd.entry.modified = time()
+        self:writeNamelistEntry(fd.eid, fd.entry)
+      end
     end
+
+    if self.opened[fd.eid] <= 0 then self.opened[fd.eid] = nil end
 
     return true
   end
