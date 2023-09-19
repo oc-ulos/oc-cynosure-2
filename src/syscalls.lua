@@ -44,7 +44,8 @@ do
       end
     end
     local current = k.current_process()
-    --if current.pid ~= 1 then
+    --
+if current.pid ~= 1 then
       local a, b
       if result[1] then
         a, b = result[2], result[3]
@@ -56,7 +57,8 @@ do
         current.pid, name, table.concat(args, ", "),
         (type(a) == "string" and string.format("%q", a) or tostring(a)):gsub("\n", "n"),
         (type(b) == "string" and string.format("%q", b) or tostring(b)):gsub("\n", "n"))
-    --end
+    --
+end
     --]]
     return table.unpack(result, result[1] and 2 or 1, result.n)
   end
@@ -290,7 +292,7 @@ do
       current.fds[fd] = nil
     end
 
-    return true
+    return true, not current.fds[fd]
   end
 
   --- Check if a file descriptor refers to a TTY.
@@ -461,10 +463,18 @@ do
   -- @tparam string path The path at which to mount it
   k.syscalls.mount = k.mount
 
-  -- Unmount a filesystem.
+  --- Unmount a filesystem.
   -- @function unmount
   -- @tparam string path The path to unmount
   k.syscalls.unmount = k.unmount
+
+  --- Flush all open file buffers and filesystem metadata
+  -- @function sync
+  function k.syscalls.sync()
+    k.sync_buffers()
+    k.sync_fs()
+    return true
+  end
 
 
   -- Process-related system calls --
@@ -1054,7 +1064,6 @@ do
       end
 
       buf = buf .. data
-      printk(k.L_DEBUG, "BL(%d)", #buf)
       return true
     end, function() closed = true end)
 
@@ -1089,19 +1098,19 @@ do
 
     if cmd == "halt" then
       k.shutdown()
-      printk(k.L_INFO, "System halted.")
+      printk(k.L_SYSTEM, "System halted.")
 
       while true do
         computer.pullSignal()
       end
 
     elseif cmd == "poweroff" then
-      printk(k.L_INFO, "Power down.")
+      printk(k.L_SYSTEM, "Power down.")
       k.shutdown()
       computer.shutdown()
 
     elseif cmd == "restart" then
-      printk(k.L_INFO, "Restarting system.")
+      printk(k.L_SYSTEM, "Restarting system.")
       k.shutdown()
       computer.shutdown(true)
     end

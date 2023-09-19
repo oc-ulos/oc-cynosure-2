@@ -24,6 +24,8 @@ do
     or tonumber("@[{bconf.BUFFER_SIZE or 512}]")
 
   local buffer = {}
+  local buffers = {}
+
   -- read a line from the buffer
   function buffer:readline()
     -- slow cop-out for non-buffered streams...
@@ -151,7 +153,7 @@ do
 
     -- pop data from beginning of the read buffer
     local data = self.rbuf:sub(1, n)
-    self.rbuf = self.rbuf:sub(n + 1)
+    self.rbuf = self.rbuf:sub(#data + 1)
 
     -- return it
     return data
@@ -270,6 +272,7 @@ do
 
   function buffer:close()
     self.closed = true
+    buffers[self] = nil
     if self.stream.close then
       self.stream:close()
     end
@@ -310,7 +313,7 @@ do
     checkArg(1, stream, "table")
     checkArg(2, mode, "string")
 
-    return setmetatable({
+    local buf = setmetatable({
       stream = stream,
       mode = split_chars(mode),
       rbuf = "",
@@ -318,5 +321,14 @@ do
       bufmode = stream.proxy and stream.proxy.override_setvbuf
         and "none" or "full"
     }, {__index = buffer})
+    buffers[buf] = true
+
+    return buf
+  end
+
+  function k.sync_buffers()
+    for buffer in pairs(buffers) do
+      buffer:flush()
+    end
   end
 end

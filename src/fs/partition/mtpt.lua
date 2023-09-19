@@ -1,5 +1,5 @@
 --[[
-  Template kernel source file
+  Minitel partition table support
   Copyright (C) 2023 Ocawesome101
 
   This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,23 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "template")
+printk(k.L_INFO, "fs/partition/mtpt")
 
 do
+  local format = "c20c4>I4>I4"
+  k.register_partition_type("mtpt", function(drive)
+    local sector = drive.readSector(drive.getCapacity()/drive.getSectorSize())
+    local meta = {format:unpack(sector)}
+    if meta[2] ~= "mtpt" then return end -- invalid, don't continue
+    local partitions = {}
+    repeat
+      sector = sector:sub(33)
+      meta = {format:unpack(sector)}
+      meta[1] = meta[1]:gsub("\0", "")
+      if #meta[1] > 0 then
+        partitions[#partitions+1] = {start = meta[3], size = meta[4]}
+      end
+    until #sector <= 32
+    return partitions
+  end)
 end

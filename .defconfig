@@ -61,7 +61,7 @@ EXEC_CLE=n
 EXEC_SHEBANG=y
 EXEC_LUA=y
 # File systems
-# * SFS: the Simple File System
+# * SFS: the Simple File System (if y, recommend PART_ENABLE=y)
 # * Managed: OpenComputers' managed filesystems
 FS_SFS=n
 FS_MANAGED=y
@@ -72,6 +72,12 @@ FS_PROC=y
 PROCFS_CONFIG=y
 PROCFS_BINFMT=n
 PROCFS_EVENT=y
+# Partition table support
+# * MTPT: Minitel partition table used by PsychOS
+# * OSDI: Open Simple Disk Info v1.1
+PART_ENABLE=n
+PART_MTPT=n
+PART_OSDI=n
 # networking protocols
 NET_ENABLE=n
 DEFAULT_HOSTNAME=localhost
@@ -80,9 +86,11 @@ NET_TCP=n
 NET_MTEL=n
 NET_GERT=n
 # miscellaneous options
+# Whether to enable specialized escape sequences in the TTY that directly
+# perform actions on a GPU component
 TTY_ENABLE_GPU=y
 # Whether to enable the bit32 compatibility layer.  If this is disabled, the
-# resulting kernel cannot run Lua 5.2 programs.
+# resulting kernel cannot run some Lua 5.2 programs.
 BIT32=y
 # How big stream buffers are allowed to get.
 # This impacts how much memory a buffer can use, but can also determine
@@ -95,7 +103,7 @@ BIT32=y
 # errors related to file IO, try decreasing it.
 BUFFER_SIZE=1024
 # When available free memory goes below this threshold, the kernel's
-# automated garbage collection code will fire.
+# automated garbage collection code will activate.
 MEM_THRESHOLD=1024
 # Whether to give each process its own individual environment or
 # make all processes share the same (still sandboxed) environment.

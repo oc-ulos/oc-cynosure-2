@@ -82,6 +82,7 @@ do
     end
   end
 
+  k.L_SYSTEM  = -1
   k.L_EMERG   = 0
   k.L_ALERT   = 1
   k.L_CRIT    = 2

@@ -25,8 +25,25 @@ do
   -- particularly since it supports sub-pseudo-filesystems e.g.
   -- componentfs - and I don't see large devfs trees being common.
   local devices = {}
+  -- Each device type can have one or more "handlers" associated with it.
+  -- Each handler must have a register() and deregister() function.
+  -- Programs can ioctl() these devices with "reregister" to rerun those
+  -- handlers for e.g. if userspace changes a partition table.
+  local handlers = {}
 
   k.devfs = {}
+
+  function k.devfs.register_device_handler(devtype, registrar, deregistrar)
+    checkArg(1, devtype, "string")
+    checkArg(2, registrar, "function")
+    checkArg(3, deregistrar, "function")
+
+    handlers[devtype] = handlers[devtype] or {}
+    local id = math.random(0, 999999)
+    handlers[devtype][id] = {register = registrar, deregister = deregistrar}
+
+    return id
+  end
 
   function k.devfs.register_device(path, device)
     checkArg(1, path, "string")
@@ -37,10 +54,21 @@ do
       error("cannot register device in subdirectory '"..path.."' of devfs", 2)
     end
 
+    if not device.type then
+      printk(k.L_WARNING, "device '%s' has no 'type' field!", path)
+      device.type = "unknown"
+    end
+
     devices[path] = device
+    if handlers[device.type] then
+      for _, handler in pairs(handlers[device.type]) do
+        handler.register(path, device)
+      end
+    end
 
     if path:sub(1,1) ~= "/" then path = "/" .. path end
-    printk(k.L_INFO, "devfs: registered device at %s", path)
+    printk(k.L_INFO, "devfs: registered device at %s type=%s", path,
+      device.type)
   end
 
   function k.devfs.unregister_device(path)
@@ -97,6 +125,19 @@ do
   end
 
   k.devfs.lookup = path_to_node
+  -- get devices by type
+  function k.devfs.get_by_type(dtype)
+    checkArg(1, dtype, "string")
+    local matches = {}
+
+    for path, dev in pairs(devices) do
+      if dev.type == dtype then
+        matches[#matches+1] = {path=path, device=dev}
+      end
+    end
+
+    return matches
+  end
 
   function provider:exists(path)
     checkArg(1, path, "string")
@@ -135,14 +176,26 @@ do
       end
 
       local device, fd = pathorfd.node, pathorfd.fd
-      if not device[calling] then return nil, k.errno.ENOSYS end
 
       local result, err
-      if calling == "ioctl" and not device.is_dev then
-        result, err = device[calling](fd, ...)
-
+      if calling == "ioctl" and (...) == "reregister" then
+        if handlers[device.type] then
+          for _, handler in pairs(handlers[device.type]) do
+            handler.deregister(path, device)
+          end
+          for _, handler in pairs(handlers[device.type]) do
+            handler.register(path, device)
+          end
+          result = true
+        end
       else
-        result, err = device[calling](device, fd, ...)
+        if not device[calling] then return nil, k.errno.ENOSYS end
+        if calling == "ioctl" and not device.is_dev then
+          result, err = device[calling](fd, ...)
+
+        else
+          result, err = device[calling](device, fd, ...)
+        end
       end
 
       return result, err
@@ -165,11 +218,16 @@ do
   end})
 
   provider.address = "devfs"
+  provider.type = "root"
 
   k.register_fstype("devfs", function(x)
     return x == "devfs" and provider
   end)
 end
 
+-- include this here because it registers blockdev handlers and
+-- devfs/blockdev registers block devices.  alternative is extra logic.
+--@[{depend("Partition table support", "COMPONENT_DRIVE", "PART_ENABLE")}]
+--@[{includeif("PART_ENABLE", "src/fs/partition/main.lua")}]
 --#include "src/fs/devfs_chardev.lua"
 --#include "src/fs/devfs_blockdev.lua"

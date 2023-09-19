@@ -23,7 +23,7 @@ do
   local byaddress = {}
 
   k.devfs.register_blockdev("drive", {
-    init = function(addr)
+    init = function(addr, noindex)
       local index = 0
 
       while drives[index] do
@@ -31,13 +31,15 @@ do
       end
 
       local letter = string.char(string.byte("a") + index)
-      local proxy = component.proxy(addr)
-      drives[index] = true
-      byaddress[addr] = index
+      local proxy = noindex and addr or component.proxy(addr)
+      if not noindex then drives[index] = true end
+      if not noindex then byaddress[addr] = index end
 
       local size = proxy.getCapacity()
 
-      return ("hd%s"):format(letter), {
+      return "hd"..letter, {
+        fs = proxy,
+        address = "hd"..letter,
         stat = function()
           return {
             dev = -1,
@@ -66,16 +68,16 @@ do
 
           if fd.pos < size then
             len = math.min(len, size - fd.pos)
-            local offset = fd.pos % 512
+            local offset = fd.pos % 512 + 1
             local data = ""
 
             repeat
               local sectorID = math.ceil((fd.pos+1) / 512)
               local sector = proxy.readSector(sectorID)
-              local read = sector:sub(offset, offset+len)
+              local read = sector:sub(offset, offset+len-1)
               data = data .. read
-              offset = 0
               fd.pos = fd.pos + #read
+              offset = fd.pos % 512 + 1
               len = len - #read
             until len <= 0
 
@@ -92,17 +94,19 @@ do
 
           repeat
             local sectorID = math.ceil((fd.pos+1) / 512)
+            if sectorID > size/512 then return end
             local sector = proxy.readSector(sectorID)
             local write = data:sub(1, 512 - offset)
             data = data:sub(#write + 1)
+            fd.pos = fd.pos + #write
 
             if #write == #sector then
               sector = write
-
             else
               sector = sector:sub(0, offset) .. write ..
-                sector:sub(offset + #write)
+                sector:sub(offset + #write + 1)
             end
+            offset = (offset + #write + 0) % 512
 
             proxy.writeSector(sectorID, sector)
           until #data == 0

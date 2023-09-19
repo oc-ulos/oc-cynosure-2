@@ -183,6 +183,7 @@ do
   function provider:close() end
 
   provider.address = "components"
+  provider.type = "directory"
 
   k.devfs.register_device("components", provider)
 end

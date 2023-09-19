@@ -195,7 +195,8 @@ do
         if not proxy then return nil, k.errno.EUNATCH end
 
       else
-        node = component.proxy(node) or node
+        node = component.proxy(node) or k.devfs.lookup(node) or node
+        if node.type == "blkdev" and node.fs then node = node.fs end
         proxy = recognize_filesystem(node)
         if not proxy then return nil, k.errno.EUNATCH end
       end
@@ -224,9 +225,7 @@ do
     end
 
     local node = mounts[path]
-    if node.unmount then
-      node:unmount(path)
-    end
+    if node.unmount then node:unmount(path) end
 
     mounts[path] = nil
     return true
@@ -273,7 +272,8 @@ do
       return nil, k.errno.EACCES
     end
 
-    local fd, err = node:open(remain, mode)
+    local umask = (cur_proc().umask or 0) ~ 511
+    local fd, err = node:open(remain, mode, stat.mode & umask)
     if not fd then return nil, err end
 
     local stream = k.fd_from_node(node, fd, mode)
@@ -431,11 +431,9 @@ do
 
     local umask = (cur_proc().umask or 0) ~ 511
 
-    local done, failed = node:mkdir(remain)
+    local done, failed = node:mkdir(remain, (mode or stat.mode) & umask)
     if not done then return nil, failed end
-    if node.chmod then node:chmod(remain,
-        ((mode or stat.mode) & umask)) end
-    return done, failed
+    return not not done
   end
 
   function k.link(source, dest)
@@ -492,7 +490,7 @@ do
     end
 
     -- only preserve the lower 12 bits
-    mode = (mode & 0x1FF)
+    mode = (mode & 0xFFF)
     return node:chmod(remain, mode)
   end
 
@@ -517,7 +515,16 @@ do
     return mounts
   end
 
+  function k.sync_fs()
+    for _, node in pairs(mounts) do
+      if node.sync then node:sync("dummy") end
+    end
+  end
+
   k.add_signal_handler("shutdown", function()
+    k.sync_buffers()
+    k.sync_fs()
+
     for fd in pairs(opened) do
       fd.refs = 1
       k.close(fd)

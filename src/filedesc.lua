@@ -33,6 +33,11 @@ do
     if not self.proxy.seek then return nil, k.errno.ENOTSUP end
     return self.proxy:seek(self.fd, w, o)
   end
+  
+  local function fflush(self)
+    if not self.proxy.flush then return nil, k.errno.ENOTSUP end
+    return self.proxy:flush(self.fd)
+  end
 
   local function fclose(self)
     if not self.proxy.close then return nil, k.errno.ENOTSUP end
@@ -51,7 +56,8 @@ do
     checkArg(3, mode, "string")
 
     local new = k.buffer_from_stream({
-      read = fread, write = fwrite, seek = fseek, close = fclose,
+      read = fread, write = fwrite, seek = fseek,
+      flush = fflush, close = fclose,
       fd = fd, proxy = proxy
     }, mode)
 

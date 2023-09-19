@@ -69,8 +69,26 @@ do
     _G.mtarfs = nil
   end
 
+  -- allow e.g. 523bc4,1
+  if address:sub(-2,-2) == "," then
+    local addr, part = address:sub(1, -3), address:sub(-1)
+    local matches = k.devfs.get_by_type("blkdev")
+
+    for i=1, #matches do
+      local match = matches[i]
+      if match.device.fs and match.device.fs.address and
+          match.device.fs.address:sub(1,#addr) == addr then
+        -- e.g. hda2
+        address = match.device.address..part
+        printk(k.L_NOTICE, "resolved rootfs=%s from %s",
+          match.device.address..part, address)
+        break
+      end
+    end
+  end
+
   local success, err = k.mount(address, "/")
   if not success then
-    panic_with_err(component.type(address) .. " " .. address, err)
+    panic_with_err((component.type(address) or "unknown").." "..address, err)
   end
 end

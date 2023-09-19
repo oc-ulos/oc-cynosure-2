@@ -1,5 +1,5 @@
 --[[
-  Template kernel source file
+  Get the real-world time from the tmpfs
   Copyright (C) 2023 Ocawesome101
 
   This program is free software: you can redistribute it and/or modify
@@ -16,7 +16,14 @@
   along with this program.  If not, see <https://www.gnu.org/licenses/>.
 ]]--
 
-printk(k.L_INFO, "template")
+printk(k.L_INFO, "realtime")
 
 do
+  function k.realtime()
+    local tmpfs = component.proxy(computer.tmpAddress())
+    tmpfs.close(tmpfs.open("realtime","w"))
+    local time = tmpfs.lastModified("realtime")
+    tmpfs.remove("realtime")
+    return time
+  end
 end
