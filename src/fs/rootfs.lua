@@ -64,11 +64,6 @@ do
     panic("No valid root filesystem found")
   end
 
-  if address == "mtar" then
-    address = k.fstypes.managed(_G.mtarfs)
-    _G.mtarfs = nil
-  end
-
   -- allow e.g. 523bc4,1
   if address:sub(-2,-2) == "," then
     local addr, part = address:sub(1, -3), address:sub(-1)
@@ -85,6 +80,11 @@ do
         break
       end
     end
+  end
+
+  if address == "mtar" then
+    address = k.fstypes.managed(_G.mtarfs)
+    _G.mtarfs = nil
   end
 
   local success, err = k.mount(address, "/")
