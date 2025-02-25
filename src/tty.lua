@@ -156,10 +156,10 @@ do
 
     local function scroll(n)
       if n < 0 then
-        gpu.copy(1, st, w, sb+n, 0, -n)
-        gpu.fill(1, 1, w, -n, " ")
+        gpu.copy(1, st, w, math.max(0, (sb - st + 1) + n), 0, -n)
+        gpu.fill(1, st, w, math.min(sb - st + 1, -n), " ")
       else
-        gpu.copy(1, st+n, w, sb, 0, -n)
+        gpu.copy(1, st+n, w, math.max(0, (sb - st + 1) - n), 0, -n)
         gpu.fill(1, sb - n + 1, w, n, " ")
       end
     end
@@ -206,13 +206,15 @@ do
       if #str == 0 then return end
 
       setcursor(false)
-      if shouldchange then
-        gpu.setForeground(reverse and bg or fg)
-        gpu.setBackground(reverse and fg or bg)
-      end
 
-      local pi = 1
+      local pi = mode == MODE_NORMAL and 1 or -1     -- If MODE_ESC as last character in previous write
       for i, c in get_iter(str) do
+        
+        if shouldchange then       -- Possible that a control sequence in the same str set fg/bg then gpu.fill
+          gpu.setForeground(reverse and bg or fg)
+          gpu.setBackground(reverse and fg or bg)
+        end
+
         if control_chars[c] then
           if pi > 0 then
             wbuf = wbuf .. sub(str, pi, i-1)
@@ -458,7 +460,7 @@ do
             end
           -- no [ q / DECLL, keyboard LEDs not implemented
           elseif c == "r" then -- DECSTBM / set scrolling region
-            st, sb = seq[1] or 1, seq[2] or h
+            st, sb = seq[1] or 1, seq[3] or h
           elseif c == "s" then -- ? / save cursor position
             scx, scy = cx, cy
           elseif c == "u" then -- ? / restore cursor position
