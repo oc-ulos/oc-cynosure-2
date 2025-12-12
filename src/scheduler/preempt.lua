@@ -97,14 +97,15 @@ do
           wrapped = wrapped .. gsub(chunk) .. quote .. "["
 
         elseif code:sub(1,1) == "=" then
-          local pch = code:find("(=-%[)")
+          local pch = code:match("(=-%[)")
           if not pch then -- syntax error
             return wrapped .. chunk .. quote .. code
           end
 
-          local e = code:sub(1, pch)
+          pch = #pch
+          local e = code:sub(1, pch-1)
           prefix = prefix .. e .. "%]"
-          code = code:sub(pch+#e+1)
+          code = code:sub(pch+1)
           wrapped = wrapped .. gsub(chunk) .. "[" .. e .. "["
 
         else
