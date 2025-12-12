@@ -76,7 +76,7 @@ do
 
       code = code:sub(#chunk + 2)
       if quote == '"' or quote == "'" then
-        if in_str == quote then
+        if in_str == quote and #chunk:match("\\*$") % 2 == 0 then
           in_str = false
           wrapped = wrapped .. chunk .. quote
 
@@ -91,12 +91,12 @@ do
       elseif quote == "[" then
         local prefix = "%]"
 
-        if code:sub(1,1) == "[" then
+        if code:sub(1,1) == "[" and not in_str then
           prefix = "%]%]"
           code = code:sub(2)
           wrapped = wrapped .. gsub(chunk) .. quote .. "["
 
-        elseif code:sub(1,1) == "=" then
+        elseif code:sub(1,1) == "=" and not in_str then
           local pch = code:match("(=-%[)")
           if not pch then -- syntax error
             return wrapped .. chunk .. quote .. code
